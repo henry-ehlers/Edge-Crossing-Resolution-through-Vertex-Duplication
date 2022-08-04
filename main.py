@@ -26,10 +26,8 @@ if __name__ == '__main__':
     assert vertex_edge_crossing_equality(vertex_crossings, edge_crossings)
 
     # Find vertex involved in the largest number of edge crossings
-    target_vertex_index = get_target_vertex_index(vertex_crossings)
-    print(vertex_crossings)
-    print(target_vertex_index)
-    graph.nodes[target_vertex_index]["split"] = 1
+    target_vertex_index = get_target_vertex_index(vertex_crossings, graph)
+    graph.nodes[target_vertex_index]["target"] = 1
 
     # Draw Graph
     draw_graph(graph=graph, positions=positions)

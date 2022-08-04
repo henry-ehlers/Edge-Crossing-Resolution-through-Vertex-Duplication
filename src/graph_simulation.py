@@ -18,6 +18,7 @@ def create_barabasi_albert_graph(n, m, seed, root_dir="data/simulated"):
         # Append the 'split' field to the graph object
         for vertex in graph:
             graph.nodes[vertex]["split"] = 0
+            graph.nodes[vertex]["target"] = 0
 
     # If the file does not exist, then create the graph object first, then save it to file
     else:
@@ -29,6 +30,7 @@ def create_barabasi_albert_graph(n, m, seed, root_dir="data/simulated"):
         # Append the 'split' field to the graph object
         for vertex in graph:
             graph.nodes[vertex]["split"] = 0
+            graph.nodes[vertex]["target"] = 0
 
     # Return
     return graph

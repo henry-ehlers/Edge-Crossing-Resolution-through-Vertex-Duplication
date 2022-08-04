@@ -13,7 +13,7 @@ def embed_graph(graph, embedding, n_iter=None, seed=None):
 def color_split_vertices(graph):
     node_color_map = []
     for vertex in graph:
-        if graph.nodes[vertex]["split"] == 0:
+        if graph.nodes[vertex]["target"] == 0:
             node_color_map.append("grey")
         else:
             node_color_map.append("red")

@@ -76,8 +76,24 @@ def line_intersection(p1, p2, p3, p4):
     return x, y
 
 
-def get_target_vertex_index(vertex_crossings):
-    return np.argmax(vertex_crossings)
+def get_target_vertex_index(vertex_crossings, graph):
+
+    # TODO: maybe also account for the number of edge crossings a vertex has already undergone?
+
+    # Find all vertices which are involved in the maximal number of edge crossings
+    potential_targets = np.argwhere(vertex_crossings == np.amax(vertex_crossings)).flatten().tolist()
+
+    # If only one vertex fulfills the maximum criterion, return said vertex's index
+    if len(potential_targets) == 1:
+        target = potential_targets[0]
+
+    # If multiple vertices fulfill the criterion, return the one with the lowest degree
+    else:
+        adjacency = [len(graph[target_index]) for target_index in potential_targets]
+        target = potential_targets[np.argmin(adjacency)]
+
+    # Return the target vertex's index
+    return target
 
 
 def vertex_edge_crossing_equality(vertex_crossings, edge_crossings):
