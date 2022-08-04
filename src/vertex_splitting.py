@@ -1,15 +1,47 @@
+import numpy as np
+
+
 def planarize_graph(graph):
     #  return some graph
     return None
 
 
 def locate_edge_crossings(graph, positions):
-    for edge in graph.edges:
-        print(edge)
-        print(edge[0])
-        print(edge[1])
-    #  return two dicts, one for vertices and one for edges
+
+    # Initialize vector and edge crossing containers
+    edges = list(graph.edges)
+    vertex_crossings = np.zeros(shape=len(graph.nodes), dtype=int)
+
+    # ALl to all comparison of edges
+    for edge_index_a in range(len(edges)):
+        for edge_index_b in range(edge_index_a+1, len(edges)):
+            print("{} - {}".format(edge_index_a, edge_index_b))
+            # Skip if the two edges are identical
+            if edge_index_a == edge_index_b: continue
+
+            # Extract edges from edge list
+            edge_a = edges[edge_index_a]
+            edge_b = edges[edge_index_b]
+
+            # Check whether edges intersect and (if so) where
+            intersection = edge_intersection(edge_a, edge_b, positions)
+            if intersection is None: continue
+
+            # Append edge crossing information
+            for vertex_index in np.append(np.asarray(edge_a), np.asarray(edge_b)):
+                vertex_crossings[vertex_index] += 1
+
+    print(vertex_crossings)
+    #  return two dicts, one for vertices and one for edge
     return None
+
+
+def edge_intersection(edge_a, edge_b, vertex_positions):
+    point_a_0 = vertex_positions[edge_a[0]]
+    point_a_1 = vertex_positions[edge_a[1]]
+    point_b_0 = vertex_positions[edge_b[0]]
+    point_b_1 = vertex_positions[edge_b[1]]
+    return line_intersection(point_a_0, point_a_1, point_b_0, point_b_1)
 
 
 def line_intersection(p1, p2, p3, p4):
@@ -17,39 +49,19 @@ def line_intersection(p1, p2, p3, p4):
     x2, y2 = p2
     x3, y3 = p3
     x4, y4 = p4
-    denom = (y4-y3)*(x2-x1) - (x4-x3)*(y2-y1)
-    if denom == 0: # parallel
+    denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+    if denom == 0:  # parallel
         return None
-    ua = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / denom
+    ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom
     if ua < 0 or ua > 1:
         return None
-    ub = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / denom
+    ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom
     if ub < 0 or ub > 1:
         return None
-    x = x1 + ua * (x2-x1)
-    y = y1 + ua * (y2-y1)
+    x = x1 + ua * (x2 - x1)
+    y = y1 + ua * (y2 - y1)
     return (x, y)
 
-
-# From: https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
-def ccw(A,B,C):
-    return (C[1]-A[1]) * (B[0]-A[0]) > (B[1]-A[1]) * (C[0]-A[0])
-
-
-def sign(p1, p2, p3):
-    return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1]) > 0
-
-
-def intersect(A,B,C,D):
-    return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)
-
-
-def check_pairwise_edge_crossing(edge_a, edge_b, vertices):
-    # Check if any two terminal vertices are identical. if so, cannot be intersecting
-    if edge_a[0] == edge_b[0] or edge_a[1] == edge_b[1] or edge_a[1] == edge_b[0] or edge_a[0] == edge_b[1]:
-        return False
-    else:
-        return intersect(vertices[edge_a[0]], vertices[edge_a[1]], vertices[edge_b[0]], vertices[edge_b[1]])
 
 
 # # Investigate Edges (upper triangle)

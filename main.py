@@ -23,7 +23,7 @@ if __name__ == '__main__':
     positions = embed_graph(graph=graph, embedding=embedding)
     draw_graph(graph=graph, positions=positions)
 
-    #locate_edge_crossings(graph, positions)
+    locate_edge_crossings(graph, positions)
 
     # Save Drawing
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed)
