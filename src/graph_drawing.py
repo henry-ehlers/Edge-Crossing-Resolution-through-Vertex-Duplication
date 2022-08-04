@@ -3,7 +3,7 @@ from pathlib import Path
 import networkx as nx
 
 
-def calculate_vertex_positions(graph, embedding, n_iter=None, seed=None):
+def embed_graph(graph, embedding, n_iter=None, seed=None):
     if embedding == "kamada_kawai":
         return nx.kamada_kawai_layout(G=graph)
     elif embedding == "fruchterman-reingold":
@@ -49,10 +49,7 @@ def save_drawn_graph(output_path):
     plt.clf()
 
 
-def draw_graph(graph, embedding):
-
-    # Embed Graph in 2D space to obtain vertex positions
-    pos = calculate_vertex_positions(graph=graph, embedding=embedding)
+def draw_graph(graph, positions):
 
     # Color Map for both edges and vertices
     node_color_map = color_split_vertices(graph)
@@ -60,5 +57,5 @@ def draw_graph(graph, embedding):
     node_shape_map = shape_split_vertices(graph)  # CAN ONLY BE IMPLEMEMENTED USING MULTIPLE PASSES
 
     # Draw Graph Embedding
-    nx.draw(G=graph, pos=pos, node_color=node_color_map, edge_color=edge_color_map, node_shape='o')
-    nx.draw_networkx_labels(G=graph, pos=pos)
+    nx.draw(G=graph, pos=positions, node_color=node_color_map, edge_color=edge_color_map, node_shape='o')
+    nx.draw_networkx_labels(G=graph, pos=positions)

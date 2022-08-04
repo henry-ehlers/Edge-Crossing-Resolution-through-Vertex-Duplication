@@ -1,5 +1,6 @@
 from src.graph_simulation import *
 from src.graph_drawing import *
+from src.vertex_splitting import *
 import matplotlib.pyplot as plt
 import networkx as nx
 from pathlib import Path
@@ -19,7 +20,10 @@ if __name__ == '__main__':
     graph.nodes[0]["split"] = 1  # Arbitrarily color node as though it were split
 
     # Embed and Draw Graph
-    draw_graph(graph=graph, embedding=embedding)
+    positions = embed_graph(graph=graph, embedding=embedding)
+    draw_graph(graph=graph, positions=positions)
+
+    #locate_edge_crossings(graph, positions)
 
     # Save Drawing
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed)
