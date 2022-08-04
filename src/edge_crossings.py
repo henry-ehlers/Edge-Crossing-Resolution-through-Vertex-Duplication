@@ -1,15 +1,22 @@
 import numpy as np
 
 
-def planarize_graph(graph):
-    #  return some graph
+def planarize_graph(graph, positions, edge_crossings):
+
+    # TODO: remove edges involved in edge crossing
+    # TODO: add new vertices to drawing where edge crossings are located
+    # TODO: add new edges between old and new vertices
+
+    #  return some new graph and new vertex positions
     return None
 
 
 def locate_edge_crossings(graph, positions):
 
-    # Initialize vector and edge crossing containers
+    # Create object of edges for easier use
     edges = list(graph.edges)
+
+    # Initialize vector and edge crossing containers
     vertex_crossings = np.zeros(shape=len(graph.nodes), dtype=int)
     edge_crossings = np.empty(shape=len(edges), dtype=object)
 
@@ -55,54 +62,34 @@ def line_intersection(p1, p2, p3, p4):
     x2, y2 = p2
     x3, y3 = p3
     x4, y4 = p4
-    denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-    if denom == 0:  # parallel
+    denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+    if denominator == 0:  # parallel
         return None
-    ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom
+    ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
     if ua < 0 or ua > 1:
         return None
-    ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom
+    ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
     if ub < 0 or ub > 1:
         return None
     x = x1 + ua * (x2 - x1)
     y = y1 + ua * (y2 - y1)
-    return (x, y)
+    return x, y
 
 
+def get_target_vertex_index(vertex_crossings):
+    return np.argmax(vertex_crossings)
 
-# # Investigate Edges (upper triangle)
-# edges = list(G.edges)
-# intersections = list()
-# for edge_a in range(len(edges)):
-#     for edge_b in range(edge_a + 1, len(edges)):
-#         if check_pairwise_edge_crossing(edges[edge_a], edges[edge_b], pos):
-#             intersections.append([edges[edge_a], edges[edge_b]])
-#
-# # Calculate Crossing Number
-# crossing_number = dict()
-# for intersection in intersections:
-#     for edge in intersection:
-#         if edge in crossing_number:
-#             crossing_number[edge] += 1
-#         else:
-#             crossing_number[edge] = 1
-# print("Crossing Numbers:")
-# print(crossing_number)
-#
-# # find edge with most crossings
-# maxima = find_maxima(crossing_number)
-#
-# # Find points of intersection along split-target edge
-# # TODO: hunting down a bug in the crossing number
-# crossings = list()
-# for intersection in intersections:
-#     if split_target in intersection:
-#         if split_target == intersection[0]:
-#             crossing_edge = intersection[1]
-#         else:
-#             crossing_edge = intersection[0]
-#         a1 = pos[split_target[0]]
-#         a2 = pos[split_target[1]]
-#         b1 = pos[crossing_edge[0]]
-#         b2 = pos[crossing_edge[1]]
-#         crossings.append(line_intersection(a1, a2, b1, b2))
+
+def vertex_edge_crossing_equality(vertex_crossings, edge_crossings):
+
+    # Calculate all vertices' total edge crossing number
+    vertex_sum = sum(vertex_crossings)
+
+    # Calculate all recording unique edge crossings (for non None entries)
+    edge_sum = 0
+    for edge_crossing in edge_crossings:
+        if not edge_crossing is None:
+            edge_sum += len(edge_crossing)
+
+    return edge_sum == (vertex_sum / 4)
+
