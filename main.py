@@ -1,6 +1,7 @@
 from src.create_random_graphs import create_barabasi_albert_graph
 import matplotlib.pyplot as plt
 import networkx as nx
+from pathlib import Path
 
 
 def calculate_vertex_positions(graph, embedding, n_iter=None, seed=None):
@@ -33,8 +34,9 @@ if __name__ == '__main__':
 
     # Name Currently Embedded/Drawn Graph
     n_split_events = 0
-    output_directory = "./drawings/{}".format(embedding)
-    file_name = "barabasi_albert_{}_{}_{}_{}.png".format(n_vertices, m_edges, seed, n_split_events)
+    output_directory = "./drawings/{}/barabasi_albert_{}_{}_{}".format(embedding, n_vertices, m_edges, seed)
+    Path(output_directory).mkdir(parents=True, exist_ok=True)
+    file_name = "{}.png".format(n_split_events)
     output_path = "{}/{}".format(output_directory, file_name)
 
     # Draw Graph Embedding
