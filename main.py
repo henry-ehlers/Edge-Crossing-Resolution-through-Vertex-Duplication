@@ -23,9 +23,17 @@ if __name__ == '__main__':
     positions = embed_graph(graph=graph, embedding=embedding)
     draw_graph(graph=graph, positions=positions)
 
-    locate_edge_crossings(graph, positions)
-
     # Save Drawing
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed)
     save_drawn_graph(output_path)
 
+    # Check Edge Crossings
+    edge_crossings, vertex_crossings = locate_edge_crossings(graph, positions)
+    vertex_sum = sum(vertex_crossings)
+    edge_sum = 0
+    for edge_crossing in edge_crossings:
+        if edge_crossing is None: continue
+        edge_sum += len(edge_crossing)
+
+    print(vertex_sum) #  is four times larger than edge sum because 4 nodes map to one crossing
+    print(edge_sum)

@@ -11,11 +11,10 @@ def locate_edge_crossings(graph, positions):
     # Initialize vector and edge crossing containers
     edges = list(graph.edges)
     vertex_crossings = np.zeros(shape=len(graph.nodes), dtype=int)
-    edge_crossings = np.empty(shape=(len(edges), len(edges)), dtype='f,f')
+    edge_crossings = np.empty(shape=len(edges), dtype=object)
 
     # ALl to all comparison of edges
     for edge_index_a in range(0, len(edges)):
-
         for edge_index_b in range(edge_index_a+1, len(edges)):
 
             # Extract edges from edge list
@@ -30,13 +29,15 @@ def locate_edge_crossings(graph, positions):
             if intersection is None: continue
 
             # Append edge crossing position for edges
-            edge_crossings[edge_index_a, edge_index_b] = intersection
+            if edge_crossings[edge_index_a] is None:
+                edge_crossings[edge_index_a] = [intersection]
+            else:
+                edge_crossings[edge_index_a].append(intersection)
 
             # Increment edge crossing count for all vertices involves in crossing
             crossing_vertices = np.append(np.asarray(edge_a), np.asarray(edge_b))
-            for vertex_index in crossing_vertices:
-                vertex_crossings[vertex_index] += 1
-    
+            for vertex_index in crossing_vertices: vertex_crossings[vertex_index] += 1
+
     #  return two dicts, one for vertices and one for edge
     return edge_crossings, vertex_crossings
 
