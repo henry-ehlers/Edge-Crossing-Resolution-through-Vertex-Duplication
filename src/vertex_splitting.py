@@ -11,29 +11,34 @@ def locate_edge_crossings(graph, positions):
     # Initialize vector and edge crossing containers
     edges = list(graph.edges)
     vertex_crossings = np.zeros(shape=len(graph.nodes), dtype=int)
+    edge_crossings = np.empty(shape=(len(edges), len(edges)), dtype='f,f')
 
     # ALl to all comparison of edges
-    for edge_index_a in range(len(edges)):
+    for edge_index_a in range(0, len(edges)):
+
         for edge_index_b in range(edge_index_a+1, len(edges)):
-            print("{} - {}".format(edge_index_a, edge_index_b))
-            # Skip if the two edges are identical
-            if edge_index_a == edge_index_b: continue
 
             # Extract edges from edge list
             edge_a = edges[edge_index_a]
             edge_b = edges[edge_index_b]
 
+            # Check if the two edges share a common vertex (causes numerical issues)
+            if (edge_a[0] in edge_b) or (edge_a[1] in edge_b): continue
+
             # Check whether edges intersect and (if so) where
             intersection = edge_intersection(edge_a, edge_b, positions)
             if intersection is None: continue
 
-            # Append edge crossing information
-            for vertex_index in np.append(np.asarray(edge_a), np.asarray(edge_b)):
-                vertex_crossings[vertex_index] += 1
+            # Append edge crossing position for edges
+            edge_crossings[edge_index_a, edge_index_b] = intersection
 
-    print(vertex_crossings)
+            # Increment edge crossing count for all vertices involves in crossing
+            crossing_vertices = np.append(np.asarray(edge_a), np.asarray(edge_b))
+            for vertex_index in crossing_vertices:
+                vertex_crossings[vertex_index] += 1
+    
     #  return two dicts, one for vertices and one for edge
-    return None
+    return edge_crossings, vertex_crossings
 
 
 def edge_intersection(edge_a, edge_b, vertex_positions):
