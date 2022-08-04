@@ -1,5 +1,5 @@
-from src.create_random_graphs import *
-from src.draw_graph import *
+from src.graph_simulation import *
+from src.graph_drawing import *
 import matplotlib.pyplot as plt
 import networkx as nx
 from pathlib import Path
