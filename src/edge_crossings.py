@@ -1,9 +1,44 @@
-from collections import defaultdict
 import numpy as np
 import copy
 
-def sort_vertices(vertices):
 
+def project_point_onto_line(point, start_point, end_point):
+    normalized = (end_point-start_point) / np.linalg.norm(x=end_point-start_point)
+    return np.dot(point - start_point, normalized)
+
+
+def sort_vertices_along_edge(edge, vertex_set, positions):
+
+    # Extract the 2D coordinates of the edge line
+    start_vertex, end_vertex = edge[0], edge[1]
+    start_point, end_point = positions[start_vertex], positions[end_vertex]
+
+    # Initialize container for magnitudes from edge start-point
+    projections = np.empty(len(vertex_set)+2)
+
+    # Iterate over all vertices, including start and end points of the edge
+    vertices_to_sort = list(vertex_set) + [start_vertex, end_vertex]
+    for index, vertex in enumerate(vertices_to_sort):
+        projections[index] = project_point_onto_line(positions[vertex], start_point, end_point)
+
+    # Sort indices of projections and sort vertex indices
+    sorted_indices = np.argsort(projections)
+    sorted_vertices = [vertices_to_sort[i] for i in sorted_indices]
+
+    # Ensure Start and End-Points sorted correctly (i.e first and last)
+    assert sorted_indices[0] == (len(vertices_to_sort)-2) and sorted_indices[-1] == (len(vertices_to_sort)-1), \
+        "Start and End Points of vector did not sort as expected"
+
+    # Return sorted vertex indices
+    return sorted_vertices
+
+
+def remove_edges(graph, edges_to_be_removed):
+    return None
+
+
+def add_virtual_edges(graph, edge_to_virtual_vertex):
+    
     return None
 
 
@@ -36,9 +71,11 @@ def planarize_graph(graph, positions, edge_crossings):
             # Update index
             n_vertices += 1
 
-    # Remove Original Edges that were involved in one or more crossing
-    for edge in edges_to_be_removed:
-        planar_graph.remove_edge(u=edge[0], v=edge[1])
+    test = sort_vertices_along_edge((0, 9), edge_to_virtual_vertex[(0, 9)], planar_positions)
+    print(test)
+    # Remove original edge set and add virtual edge set
+    # remove_edges(planar_graph, edges_to_be_removed)
+    # add_virtual_edges(planar_graph, edge_to_virtual_vertex)
 
     #  return some new graph and new vertex positions
     return planar_graph, planar_positions
