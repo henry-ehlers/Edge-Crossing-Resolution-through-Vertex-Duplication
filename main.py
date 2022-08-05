@@ -1,9 +1,8 @@
 from src.graph_simulation import *
 from src.graph_drawing import *
 from src.edge_crossings import *
-import matplotlib.pyplot as plt
-import networkx as nx
-from pathlib import Path
+from src.faces import *
+import copy
 
 
 # Press the green button in the gutter to run the script.
@@ -20,19 +19,28 @@ if __name__ == '__main__':
 
     # Embed Graph
     positions = embed_graph(graph=graph, embedding=embedding)
+    print(positions)
 
-    # Check Edge Crossings
+    # Collect and Check Edge Crossings
     edge_crossings, vertex_crossings = locate_edge_crossings(graph, positions)
+    debug_edge_crossings(graph=graph, edge_crossings=edge_crossings)
+    print(vertex_crossings)
     assert vertex_edge_crossing_equality(vertex_crossings, edge_crossings), \
         "Vertex and Edge Crossing Numbers not equivalent. Sum(Cr(Vi)) / 4 = Sum(Cr(Ej))"
 
     # Find vertex involved in the largest number of edge crossings
     target_vertex_index = get_target_vertex_index(vertex_crossings, graph)
-    graph.nodes[target_vertex_index]["target"] = 1
+    print("Split Target Vertex = Vertex #{}".format(target_vertex_index))
 
-    # Draw Graph
+    # Planarize Graph
+    planar_graph, planar_positions = planarize_graph(graph, positions, edge_crossings)
+
+    # Draw and Save Non-Planar rGraph
     draw_graph(graph=graph, positions=positions)
+    output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=0)
+    save_drawn_graph(output_path)
 
-    # Save Drawing
-    output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed)
+    # Draw and Save Planar rGraph
+    draw_graph(graph=planar_graph, positions=planar_positions)
+    output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=1)
     save_drawn_graph(output_path)

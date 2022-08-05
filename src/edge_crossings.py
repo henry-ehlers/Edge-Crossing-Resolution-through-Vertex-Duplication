@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 
 def planarize_graph(graph, positions, edge_crossings):
@@ -6,8 +7,39 @@ def planarize_graph(graph, positions, edge_crossings):
     # TODO: add new vertices to drawing where edge crossings are located
     # TODO: add new edges between old and new vertices
 
+    # Initialize new, planar graph
+    planar_graph = copy.deepcopy(graph)
+    planar_positions = copy.deepcopy(positions)
+    n_vertices = planar_graph.number_of_nodes()
+
+    # Iterate over all found edge crossings
+    for edge_index_a in edge_crossings.keys():
+        for edge_index_b in edge_crossings[edge_index_a].keys():
+
+            # Add new vertex to graph and drawing's locations, and update vertex indices
+            planar_graph.add_node(node_for_adding=n_vertices, split=0, target=1)
+            planar_positions[n_vertices] = np.asarray(edge_crossings[edge_index_a][edge_index_b])
+            n_vertices += 1
+
     #  return some new graph and new vertex positions
-    return None
+    return planar_graph, planar_positions
+
+
+def debug_edge_crossings(graph, edge_crossings):
+
+    # Extract Edges for easier indexing
+    edges = list(graph.edges)
+
+    # ALl to all comparison of edges
+    for edge_index_a in edge_crossings.keys():
+        for edge_index_b in edge_crossings[edge_index_a].keys():
+
+            # Extract edges from edge list
+            edge_a = edges[edge_index_a]
+            edge_b = edges[edge_index_b]
+
+            # Print Crossings:
+            print("{} and {} - {}".format(edge_a, edge_b, edge_crossings[edge_index_a][edge_index_b]))
 
 
 def locate_edge_crossings(graph, positions):

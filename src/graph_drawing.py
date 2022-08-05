@@ -54,7 +54,7 @@ def draw_graph(graph, positions):
     # Color Map for both edges and vertices
     node_color_map = color_split_vertices(graph)
     edge_color_map = color_edges(graph)
-    node_shape_map = shape_split_vertices(graph)  # CAN ONLY BE IMPLEMEMENTED USING MULTIPLE PASSES
+    # node_shape_map = shape_split_vertices(graph)  # CAN ONLY BE IMPLEMEMENTED USING MULTIPLE PASSES
 
     # Draw Graph Embedding
     nx.draw(G=graph, pos=positions, node_color=node_color_map, edge_color=edge_color_map, node_shape='o')
