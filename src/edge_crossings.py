@@ -1,17 +1,23 @@
+from collections import defaultdict
 import numpy as np
 import copy
+
+def sort_vertices(vertices):
+
+    return None
 
 
 def planarize_graph(graph, positions, edge_crossings):
 
+    # Extract basic properties of graph
+    n_vertices = graph.number_of_nodes()
+    edges = list(graph.edges)  # create list for easier indexing
+
     # Initialize new, planar graph
     planar_graph = copy.deepcopy(graph)
     planar_positions = copy.deepcopy(positions)
+    edge_to_virtual_vertex = {edge: set() for edge in edges}  # have to ensure
     edges_to_be_removed = set()  # could be initialized using size of dictionary 'edge_crossings'
-
-    # Extract basic properties of graph
-    n_vertices = planar_graph.number_of_nodes()
-    edges = list(planar_graph.edges)  # create list for easier indexing
 
     # Iterate over all found edge crossings
     for edge_index_a in edge_crossings.keys():
@@ -23,14 +29,11 @@ def planarize_graph(graph, positions, edge_crossings):
             planar_graph.add_node(node_for_adding=n_vertices, split=0, target=0, virtual=1)
             planar_positions[n_vertices] = np.asarray(edge_crossings[edge_index_a][edge_index_b])
 
-            # Connect new vertex to crossing partners
-            edge_ends = np.append(np.asarray(edge_a), np.asarray(edge_b))
-            for vertex in edge_ends: planar_graph.add_edge(n_vertices, vertex, virtual=1)
+            # Log connections to new virtual vertex to be added and original (real) edges to be removed
+            [edge_to_virtual_vertex[edge].add(n_vertices) for edge in [edge_a, edge_b]]
+            [edges_to_be_removed.add(edge) for edge in [edge_a, edge_b]]
 
-            # TODO: Connect virtual vertices that
-            # Log edges to be removed and Update index
-            edges_to_be_removed.add(edge_a)
-            edges_to_be_removed.add(edge_b)
+            # Update index
             n_vertices += 1
 
     # Remove Original Edges that were involved in one or more crossing
@@ -59,6 +62,7 @@ def debug_edge_crossings(graph, edge_crossings):
 
 
 def locate_edge_crossings(graph, positions):
+
     # Create object of edges for easier use
     edges = list(graph.edges)
 

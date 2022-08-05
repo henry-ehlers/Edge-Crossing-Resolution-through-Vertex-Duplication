@@ -23,7 +23,6 @@ def color_split_vertices(graph):
 
 def color_edges(graph):
     edge_attributes = nx.get_edge_attributes(graph, "virtual")
-    print(edge_attributes)
     edge_color_map = []
     for edge in graph.edges:
         if edge_attributes[edge] == 0:
