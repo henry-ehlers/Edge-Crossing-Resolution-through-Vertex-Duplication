@@ -23,7 +23,8 @@ if __name__ == '__main__':
 
     # Check Edge Crossings
     edge_crossings, vertex_crossings = locate_edge_crossings(graph, positions)
-    assert vertex_edge_crossing_equality(vertex_crossings, edge_crossings)
+    assert vertex_edge_crossing_equality(vertex_crossings, edge_crossings), \
+        "Vertex and Edge Crossing Numbers not equivalent. Sum(Cr(Vi)) / 4 = Sum(Cr(Ej))"
 
     # Find vertex involved in the largest number of edge crossings
     target_vertex_index = get_target_vertex_index(vertex_crossings, graph)

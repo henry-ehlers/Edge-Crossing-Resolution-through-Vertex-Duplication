@@ -2,7 +2,6 @@ import numpy as np
 
 
 def planarize_graph(graph, positions, edge_crossings):
-
     # TODO: remove edges involved in edge crossing
     # TODO: add new vertices to drawing where edge crossings are located
     # TODO: add new edges between old and new vertices
@@ -12,17 +11,16 @@ def planarize_graph(graph, positions, edge_crossings):
 
 
 def locate_edge_crossings(graph, positions):
-
     # Create object of edges for easier use
     edges = list(graph.edges)
 
     # Initialize vector and edge crossing containers
     vertex_crossings = np.zeros(shape=len(graph.nodes), dtype=int)
-    edge_crossings = np.empty(shape=len(edges), dtype=object)
+    edge_crossings = dict()
 
     # ALl to all comparison of edges
     for edge_index_a in range(0, len(edges)):
-        for edge_index_b in range(edge_index_a+1, len(edges)):
+        for edge_index_b in range(edge_index_a + 1, len(edges)):
 
             # Extract edges from edge list
             edge_a = edges[edge_index_a]
@@ -36,10 +34,9 @@ def locate_edge_crossings(graph, positions):
             if intersection is None: continue
 
             # Append edge crossing position for edges
-            if edge_crossings[edge_index_a] is None:
-                edge_crossings[edge_index_a] = [intersection]
-            else:
-                edge_crossings[edge_index_a].append(intersection)
+            if edge_index_a not in edge_crossings:
+                edge_crossings[edge_index_a] = dict()
+            edge_crossings[edge_index_a][edge_index_b] = intersection
 
             # Increment edge crossing count for all vertices involves in crossing
             crossing_vertices = np.append(np.asarray(edge_a), np.asarray(edge_b))
@@ -77,7 +74,6 @@ def line_intersection(p1, p2, p3, p4):
 
 
 def get_target_vertex_index(vertex_crossings, graph):
-
     # TODO: maybe also account for the number of edge crossings a vertex has already undergone?
 
     # Find all vertices which are involved in the maximal number of edge crossings
@@ -97,15 +93,12 @@ def get_target_vertex_index(vertex_crossings, graph):
 
 
 def vertex_edge_crossing_equality(vertex_crossings, edge_crossings):
-
     # Calculate all vertices' total edge crossing number
     vertex_sum = sum(vertex_crossings)
 
     # Calculate all recording unique edge crossings (for non None entries)
     edge_sum = 0
-    for edge_crossing in edge_crossings:
-        if not edge_crossing is None:
-            edge_sum += len(edge_crossing)
+    for edge_index in edge_crossings.keys():
+        edge_sum += len(edge_crossings[edge_index])
 
     return edge_sum == (vertex_sum / 4)
-
