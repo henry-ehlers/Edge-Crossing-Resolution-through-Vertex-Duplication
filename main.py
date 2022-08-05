@@ -43,12 +43,17 @@ if __name__ == '__main__':
 
     # Add bullshit to graph
     for edge_a in planar_edge_crossings.keys():
+        edge_index_a = list(planar_graph.edges)[edge_a]
         for edge_b in planar_edge_crossings[edge_a].keys():
+            edge_index_b = list(planar_graph.edges)[edge_b]
+            print("{} / {}-------------------------------".format(edge_index_a, edge_index_b))
             index = planar_graph.number_of_nodes()
             planar_graph.add_node(node_for_adding=index, split=0, target=1, virtual=0)
             print(np.asarray(planar_edge_crossings[edge_a][edge_b]))
             planar_positions[index] = np.asarray(planar_edge_crossings[edge_a][edge_b])
             print(index)
+            coord = line_intersection(planar_positions[edge_index_a[0]], planar_positions[edge_index_a[1]],
+                                      planar_positions[edge_index_b[0]], planar_positions[edge_index_b[1]] )
 
     # Draw and Save Planar rGraph
     draw_graph(graph=planar_graph, positions=planar_positions)
