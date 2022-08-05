@@ -14,9 +14,9 @@ def color_split_vertices(graph):
     node_color_map = []
     for vertex in graph:
         if graph.nodes[vertex]["virtual"] == 0:
-            color = "grey"
+            color = "black"
         else:
-            color = "white"
+            color = "lightgrey"
         node_color_map.append(color)
     return node_color_map
 
@@ -26,9 +26,9 @@ def color_edges(graph):
     edge_color_map = []
     for edge in graph.edges:
         if edge_attributes[edge] == 0:
-            color = "grey"
+            color = "black"
         else:
-            color = "green"
+            color = "lightgrey"
         edge_color_map.append(color)
     return edge_color_map
 
@@ -63,6 +63,6 @@ def draw_graph(graph, positions):
     # node_shape_map = shape_split_vertices(graph)  # CAN ONLY BE IMPLEMEMENTED USING MULTIPLE PASSES
 
     # Draw Graph Embedding
-    plt.figure(3, figsize=(12, 12))
+    plt.figure(3, figsize=(20, 20))
     nx.draw(G=graph, pos=positions, node_color=node_color_map, edge_color=edge_color_map, node_shape='o', node_size=3)
     nx.draw_networkx_labels(G=graph, pos=positions, font_size=10)

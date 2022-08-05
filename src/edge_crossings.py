@@ -34,7 +34,9 @@ def sort_vertices_along_edge(edge, vertex_set, positions):
 
 
 def remove_edges(graph, edges_to_be_removed):
-    return None
+    for edge in edges_to_be_removed:
+        print("removing {}".format(edge))
+        graph.remove_edge(u=edge[0], v=edge[1])
 
 
 def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
@@ -48,14 +50,12 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
         # Extract all the virtual vertices and (together with real edge points) sort them
         virtual_vertices = list(edge_to_virtual_vertex[edge])
         sorted_vertex_targets = sort_vertices_along_edge(edge, virtual_vertices, positions)
-        print("{} - {}".format(edge, sorted_vertex_targets))
+        print("sorted {}: {}".format(edge, sorted_vertex_targets))
 
         # Connect vertices in sort order (undirected edges so order doesn't matter)
         for index in range(1, len(sorted_vertex_targets)):
             vertex_a, vertex_b = sorted_vertex_targets[index-1], sorted_vertex_targets[index]
             graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, virtual=1)
-
-    return None
 
 
 def planarize_graph(graph, positions, edge_crossings):
@@ -89,7 +89,7 @@ def planarize_graph(graph, positions, edge_crossings):
 
     # Remove original edge set and add virtual edge set
     add_virtual_edges(planar_graph, planar_positions, edge_to_virtual_vertex)
-    # remove_edges(planar_graph, edges_to_be_removed)
+    remove_edges(planar_graph, list(edges_to_be_removed))
 
     #  return some new graph and new vertex positions
     return planar_graph, planar_positions
@@ -109,7 +109,7 @@ def debug_edge_crossings(graph, edge_crossings):
             edge_b = edges[edge_index_b]
 
             # Print Crossings:
-            print("{} and {} - {}".format(edge_a, edge_b, edge_crossings[edge_index_a][edge_index_b]))
+            print("Crossing of {} and {} at {}".format(edge_a, edge_b, edge_crossings[edge_index_a][edge_index_b]))
 
 
 def locate_edge_crossings(graph, positions):

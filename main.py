@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # Planarize Graph
     planar_graph, planar_positions = planarize_graph(graph, positions, edge_crossings)
     planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(planar_graph, planar_positions)
-    # debug_edge_crossings(planar_graph, planar_edge_crossings)
+    debug_edge_crossings(planar_graph, planar_edge_crossings)
     # assert is_without_edge_crossings(planar_graph, planar_positions), \
     #     "Graph is not edge-crossing free."
 
