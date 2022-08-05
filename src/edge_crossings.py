@@ -95,7 +95,7 @@ def planarize_graph(graph, positions, edge_crossings):
     return planar_graph, planar_positions
 
 
-def debug_edge_crossings(graph, edge_crossings):
+def debug_edge_crossings(graph, edge_crossings, positions):
 
     # Extract Edges for easier indexing
     edges = list(graph.edges)
@@ -110,6 +110,8 @@ def debug_edge_crossings(graph, edge_crossings):
 
             # Print Crossings:
             print("Crossing of {} and {} at {}".format(edge_a, edge_b, edge_crossings[edge_index_a][edge_index_b]))
+            for vertex in edge_a+edge_b:
+                print("Vertex {} at {}".format(vertex, positions[vertex]))
 
 
 def locate_edge_crossings(graph, positions):
@@ -180,6 +182,22 @@ def line_intersection(p1, p2, p3, p4):
     x = x1 + ua * (x2 - x1)
     y = y1 + ua * (y2 - y1)
     return x, y
+
+# def line_intersection(line1, line2):
+#     xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
+#     ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
+#
+#     def det(a, b):
+#         return a[0] * b[1] - a[1] * b[0]
+#
+#     div = det(xdiff, ydiff)
+#     if div == 0:
+#         return None
+#
+#     d = (det(*line1), det(*line2))
+#     x = det(d, xdiff) / div
+#     y = det(d, ydiff) / div
+#     return x, y
 
 
 def get_target_vertex_index(vertex_crossings, graph):
