@@ -3,23 +3,38 @@ import copy
 
 
 def planarize_graph(graph, positions, edge_crossings):
-    # TODO: remove edges involved in edge crossing
-    # TODO: add new vertices to drawing where edge crossings are located
-    # TODO: add new edges between old and new vertices
 
     # Initialize new, planar graph
     planar_graph = copy.deepcopy(graph)
     planar_positions = copy.deepcopy(positions)
+    edges_to_be_removed = set()  # could be initialized using size of dictionary 'edge_crossings'
+
+    # Extract basic properties of graph
     n_vertices = planar_graph.number_of_nodes()
+    edges = list(planar_graph.edges)  # create list for easier indexing
 
     # Iterate over all found edge crossings
     for edge_index_a in edge_crossings.keys():
+        edge_a = edges[edge_index_a]
         for edge_index_b in edge_crossings[edge_index_a].keys():
+            edge_b = edges[edge_index_b]
 
-            # Add new vertex to graph and drawing's locations, and update vertex indices
+            # Add new vertex to graph and drawing's locations
             planar_graph.add_node(node_for_adding=n_vertices, split=0, target=1)
             planar_positions[n_vertices] = np.asarray(edge_crossings[edge_index_a][edge_index_b])
+
+            # Connect new vertex to crossing partners
+            edge_ends = np.append(np.asarray(edge_a), np.asarray(edge_b))
+            for vertex in edge_ends: planar_graph.add_edge(n_vertices, vertex)
+
+            # Log edges to be removed and Update index
+            edges_to_be_removed.add(edge_a)
+            edges_to_be_removed.add(edge_b)
             n_vertices += 1
+
+    # Remove Original Edges that were involved in one or more crossing
+    for edge in edges_to_be_removed:
+        planar_graph.remove_edge(u=edge[0], v=edge[1])
 
     #  return some new graph and new vertex positions
     return planar_graph, planar_positions
@@ -76,6 +91,12 @@ def locate_edge_crossings(graph, positions):
 
     #  return two dicts, one for vertices and one for edge
     return edge_crossings, vertex_crossings
+
+
+def is_without_edge_crossings(graph, positions):
+    edge_crossings, vertex_crossings = locate_edge_crossings(graph, positions)
+    assert vertex_edge_crossing_equality(vertex_crossings, edge_crossings)
+    return sum(vertex_crossings) == 0
 
 
 def edge_intersection(edge_a, edge_b, vertex_positions):

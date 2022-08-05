@@ -1,8 +1,7 @@
 from src.graph_simulation import *
 from src.graph_drawing import *
 from src.edge_crossings import *
-from src.faces import *
-import copy
+import networkx as nx
 
 
 # Press the green button in the gutter to run the script.
@@ -23,7 +22,7 @@ if __name__ == '__main__':
 
     # Collect and Check Edge Crossings
     edge_crossings, vertex_crossings = locate_edge_crossings(graph, positions)
-    debug_edge_crossings(graph=graph, edge_crossings=edge_crossings)
+    # debug_edge_crossings(graph=graph, edge_crossings=edge_crossings)
     print(vertex_crossings)
     assert vertex_edge_crossing_equality(vertex_crossings, edge_crossings), \
         "Vertex and Edge Crossing Numbers not equivalent. Sum(Cr(Vi)) / 4 = Sum(Cr(Ej))"
@@ -34,6 +33,11 @@ if __name__ == '__main__':
 
     # Planarize Graph
     planar_graph, planar_positions = planarize_graph(graph, positions, edge_crossings)
+    planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(planar_graph, planar_positions)
+    print(planar_vertex_crossings)
+    debug_edge_crossings(planar_graph, planar_edge_crossings)
+    assert is_without_edge_crossings(planar_graph, planar_positions), \
+        "Graph is not edge-crossing free."
 
     # Draw and Save Non-Planar rGraph
     draw_graph(graph=graph, positions=positions)
