@@ -33,31 +33,33 @@ def find_face_vertex_incidence(faces, target_vertices):
     # Initialize an empty dictionary (using sets as keys) to store vertex incidence sets
     face_incidences = dict()  # face_incidences = {face: dict() for face in faces}
 
+    # Initialize set of vertex set as list, and target vertices as set
     faces = list([list(face) for face in faces])
     target_vertex_set = set(target_vertices)
-    print(len(faces))
 
+    # Iterate over all faces
     for face_index_a in range(0, len(faces) - 1):
-        face_a = faces[face_index_a]
-        face_incidences[frozenset(face_a)] = dict()
-        print("\n>{} - {}".format(face_index_a, range(face_index_a+1, len(faces))))
-        incidence_a = set(face_a) & target_vertex_set
+
+        # Extract current face, transform back into set
+        face_a = frozenset(faces[face_index_a])
+        face_incidences[face_a] = dict()
+
+        # Determine how many target vertices are incident and left over
+        incidence_a = face_a & target_vertex_set
         remaining_targets = target_vertex_set - incidence_a
-        # print("-------------------------------------------")
-        # print("face a:      {}".format(face_a))
-        # print("target:      {}".format(target_vertex_set))
-        # print("incidence_a: {}".format(incidence_a))
-        # print("remaining:   {}".format(remaining_targets))
+
+        # Iterate over remaining faces
         for face_index_b in range(face_index_a + 1, len(faces)):
-            face_b = faces[face_index_b]
-            incidence_b = set(face_b) & remaining_targets
-            # print("face b:      {}".format(face_b))
-            # print("target       {}".format(remaining_targets))
-            # print("incidence_b: {}".format(incidence_b))
-            # print("remaining:   {}".format(remaining_targets - incidence_b))
+
+            # Extract current face, transform back into set
+            face_b = frozenset(faces[face_index_b])
+
+            # Determine how many remaining target faces are incident
+            incidence_b = face_b & remaining_targets
             incident_vertices = incidence_a.union(incidence_b)
-            if incident_vertices:
-                face_incidences[frozenset(face_a)][frozenset(face_a)] = incident_vertices
-                print("final:       {}".format(face_incidences[frozenset(face_a)][frozenset(face_a)]))
-        print(len(faces))
+
+            # Store results only if non-empty
+            if incident_vertices: face_incidences[face_a][face_a] = incident_vertices
+
+    # Return Dictionary of face vertex incidence
     return face_incidences
