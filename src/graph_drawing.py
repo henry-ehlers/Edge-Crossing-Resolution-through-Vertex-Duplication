@@ -3,10 +3,11 @@ from pathlib import Path
 import networkx as nx
 
 
-def find_faces(plane_graph, plane_positions):
+def find_all_faces(graph):
 
-    # Ensure the provided graph is planar
-    assert nx.is_planar(plane_graph), \
+    # Ensure the provided graph is plana
+    is_planar, plane_graph = nx.check_planarity(graph)
+    assert is_planar, \
         "Provided Graph is not planar."
 
     # Initialize set of all faces (sets of vertices)
