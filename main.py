@@ -1,6 +1,7 @@
 from src.graph_simulation import *
 from src.graph_drawing import *
 from src.edge_crossings import *
+import networkx as nx
 import numpy as np
 
 
@@ -43,8 +44,8 @@ if __name__ == '__main__':
     plane_graph, plane_positions = planarize_graph(graph, positions, edge_crossings)
     planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(plane_graph, plane_positions)
     debug_edge_crossings(plane_graph, planar_edge_crossings, plane_positions)
-    assert is_without_edge_crossings(plane_graph, plane_positions), \
-        "Graph is not edge-crossing free."
+    is_planar, plane_graph = nx.check_planarity(plane_graph)
+    find_faces(plane_graph, plane_positions)
 
     # Check rectangular bounds of drawing
     min_coord, max_coord = find_embedding_rectangle(plane_graph, plane_positions)
