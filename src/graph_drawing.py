@@ -3,8 +3,29 @@ from pathlib import Path
 import networkx as nx
 
 
-def find_embedding_rectangle():
-    return None
+def find_embedding_rectangle(graph, positions):
+
+    # Initialize minimum and maximum coordinates using first (arbitrary) selected vertex
+    min_coordinates, max_coordinates = [positions[0][0], positions[0][1]], [positions[0][0], positions[0][1]]
+    print("Number of Nodes: {}".format(len(graph.nodes)))
+
+    # Iterate over all vertices to find maximum and minimum x/y values
+    for vertex_index in range(1, len(graph.nodes)):
+
+        # Check minimum and maximum x-coordinate values
+        if positions[vertex_index][0] < min_coordinates[0]:
+            min_coordinates[0] = positions[vertex_index][0]
+        elif positions[vertex_index][0] > max_coordinates[0]:
+            max_coordinates[0] = positions[vertex_index][0]
+
+        # Check minimum and maximum y-coordinate values
+        if positions[vertex_index][1] < min_coordinates[1]:
+            min_coordinates[1] = positions[vertex_index][1]
+        elif positions[vertex_index][1] > max_coordinates[1]:
+            max_coordinates[1] = positions[vertex_index][1]
+
+    # Return maximum and minimum
+    return min_coordinates, max_coordinates
 
 
 def embed_graph(graph, embedding, n_iter=None, seed=None):

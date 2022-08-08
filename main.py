@@ -25,6 +25,11 @@ if __name__ == '__main__':
     assert vertex_edge_crossing_equality(vertex_crossings, edge_crossings), \
         "Vertex and Edge Crossing Numbers not equivalent. Sum(Cr(Vi)) / 4 = Sum(Cr(Ej))"
 
+    # Check rectangular bounds of drawing
+    min_coord, max_coord = find_embedding_rectangle(graph, positions)
+    print("Minimum Coordinates: {}".format(min_coord))
+    print("Maximum Coordinates: {}".format(max_coord))
+
     # Draw and Save Non-Planar rGraph
     draw_graph(graph=graph, positions=positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=0)
@@ -40,6 +45,11 @@ if __name__ == '__main__':
     debug_edge_crossings(plane_graph, planar_edge_crossings, plane_positions)
     assert is_without_edge_crossings(plane_graph, plane_positions), \
         "Graph is not edge-crossing free."
+
+    # Check rectangular bounds of drawing
+    min_coord, max_coord = find_embedding_rectangle(plane_graph, plane_positions)
+    print("Minimum Coordinates: {}".format(min_coord))
+    print("Maximum Coordinates: {}".format(max_coord))
 
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
