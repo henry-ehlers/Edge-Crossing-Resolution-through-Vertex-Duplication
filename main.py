@@ -91,15 +91,25 @@ if __name__ == '__main__':
     # Locate faces and best two for target face
     faces = frozenset(find_all_faces(plane_graph))
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
-    print(face_edge_map)
+    # TODO: FIX THE MAPPING TO NOT INCLUDE SELF-LOOPS (SEE Picture 4)
+
     face_incidences = find_face_vertex_incidence(faces, target_vertex_adjacency)
     max_incidence, selected_faces = get_maximally_incident_faces(face_incidences)
+    print("#Face Target Sets Found: {}".format(len(selected_faces)))
+    print("Selected Faces: {}".format(selected_faces[1]))
+    # TODO: RE-EVALUATE HOW LEGAL THE CREATED AND SELECTED FACES ARE
+
+    for face in selected_faces[1]:
+        print("Face: {}".format(face))
+        for edge in face_edge_map[frozenset(face)]:
+            print("Edge: {}".format(edge))
+            plane_graph.edges[edge]["target"] = 1
     print(face_incidences[selected_faces[0][0]][selected_faces[0][1]])
     print(selected_faces)
 
-    # Check rectangular bounds of drawing
-    min_coord, max_coord = find_embedding_rectangle(plane_graph, plane_positions)
-    print("Minimum Coordinates: {}".format(min_coord))
-    print("Maximum Coordinates: {}".format(max_coord))
+    # Draw and Save Planar rGraph
+    draw_graph(graph=plane_graph, positions=plane_positions)
+    output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=4)
+    save_drawn_graph(output_path)
 
 

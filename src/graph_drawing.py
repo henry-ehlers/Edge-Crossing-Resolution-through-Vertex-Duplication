@@ -49,11 +49,14 @@ def color_split_vertices(graph):
 
 
 def color_edges(graph):
-    virtual = nx.get_edge_attributes(graph, "virtual")
     edge_color_map = []
     for edge in graph.edges:
-        if virtual[edge] == 0:
+        if graph.edges[edge]["target"] == 1:
+            color = "green"
+        elif graph.edges[edge]["virtual"] == 0:
             color = "black"
+        elif graph.edges[edge]["virtual"] == 1:
+            color = "lightgrey"
         else:
             color = "lightgrey"
         edge_color_map.append(color)
