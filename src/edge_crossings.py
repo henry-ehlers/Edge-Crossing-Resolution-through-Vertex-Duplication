@@ -18,19 +18,55 @@ def sort_vertices_along_edge(edge, vertex_set, positions):
 
     # Iterate over all vertices, including start and end points of the edge
     vertices_to_sort = list(vertex_set) + [start_vertex, end_vertex]
+    print("vertices_to_sort: {}".format(vertices_to_sort))
     for index, vertex in enumerate(vertices_to_sort):
         projections[index] = project_point_onto_line(positions[vertex], start_point, end_point)
+    print(projections)
 
     # Sort indices of projections and sort vertex indices
     sorted_indices = np.argsort(projections)
     sorted_vertices = [vertices_to_sort[i] for i in sorted_indices]
-
+    print("sorted: {}".format(sorted_vertices))
     # Ensure Start and End-Points sorted correctly (i.e first and last)
     assert sorted_indices[0] == (len(vertices_to_sort)-2) and sorted_indices[-1] == (len(vertices_to_sort)-1), \
         "Start and End Points of vector did not sort as expected"
 
     # Return sorted vertex indices
     return sorted_vertices
+
+
+def remove_target_vertex(graph, positions, target_vertex):
+
+    # Remove Embedded Location of Target from position dictionary
+    remaining_positions = copy.deepcopy(positions)
+    del remaining_positions[target_vertex]
+
+    # Copy Graph and remove target node from it
+    remaining_graph = copy.deepcopy(graph)
+    remaining_graph.remove_node(target_vertex)
+
+    # Return copies of graph and positions without target
+    return remaining_graph, remaining_positions
+
+
+def get_remaining_edge_crossings(graph, edge_crossings, target_vertex):
+    remaining_edge_crossings = copy.deepcopy(edge_crossings)
+    edges_to_be_removed = graph.edges(nbunch=target_vertex)
+    print(edges_to_be_removed)
+    print("To be deleted: {}".format(len(edges_to_be_removed)))
+    edges_removed = 0
+    for edge_a in edge_crossings.keys():
+        if edge_a in edges_to_be_removed:
+            edges_removed += len(edge_crossings[edge_a])
+            del remaining_edge_crossings[edge_a]
+            continue
+        for edge_b in edge_crossings[edge_a].keys():
+            if edge_b in edges_to_be_removed:
+                edges_removed += 1
+                del remaining_edge_crossings[edge_a][edge_b]
+
+    print("Crossings Removed: {}".format(edges_removed))
+    return remaining_edge_crossings
 
 
 def remove_edges(graph, edges_to_be_removed):
@@ -42,9 +78,11 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
 
     # Iterate over all edges in the graph
     for edge in edge_to_virtual_vertex.keys():
+        print("\nEdge: {}".format(edge))
 
         # Skip edge if it does not have any edge crossings
-        if len(edge_to_virtual_vertex[edge]) == 0: continue
+        if len(edge_to_virtual_vertex[edge]) == 0:
+            continue
 
         # Extract all the virtual vertices and (together with real edge points) sort them
         virtual_vertices = list(edge_to_virtual_vertex[edge])
@@ -56,34 +94,35 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
             graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, virtual=1)
 
 
-def planarize_graph(graph, positions, edge_crossings):
+def planarize_graph(graph, positions, edge_crossings, starting_index):
 
     # Extract basic properties of graph
-    n_vertices = graph.number_of_nodes()
+    index = starting_index
     edges = list(graph.edges)  # create list for easier indexing
 
     # Initialize new, planar graph
     planar_graph = copy.deepcopy(graph)
     planar_positions = copy.deepcopy(positions)
+    print("Length Planar Positions: {}".format(len(planar_positions)))
+
     edge_to_virtual_vertex = {edge: set() for edge in edges}  # have to ensure
     edges_to_be_removed = set()  # could be initialized using size of dictionary 'edge_crossings'
 
     # Iterate over all found edge crossings
-    for edge_index_a in edge_crossings.keys():
-        edge_a = edges[edge_index_a]
-        for edge_index_b in edge_crossings[edge_index_a].keys():
-            edge_b = edges[edge_index_b]
+    for edge_a in edge_crossings.keys():
+        for edge_b in edge_crossings[edge_a].keys():
+            print("{} - {} : {}".format(edge_a, edge_b, index))
 
             # Add new vertex to graph and drawing's locations
-            planar_graph.add_node(node_for_adding=n_vertices, split=0, target=0, virtual=1)
-            planar_positions[n_vertices] = np.asarray(edge_crossings[edge_index_a][edge_index_b])
+            planar_graph.add_node(node_for_adding=index, split=0, target=0, virtual=1)
+            planar_positions[index] = np.asarray(edge_crossings[edge_a][edge_b])
 
             # Log connections to new virtual vertex to be added and original (real) edges to be removed
-            [edge_to_virtual_vertex[edge].add(n_vertices) for edge in [edge_a, edge_b]]
+            [edge_to_virtual_vertex[edge].add(index) for edge in [edge_a, edge_b]]
             [edges_to_be_removed.add(edge) for edge in [edge_a, edge_b]]
 
             # Update index
-            n_vertices += 1
+            index += 1
 
     # Remove original edge set and add virtual edge set
     add_virtual_edges(planar_graph, planar_positions, edge_to_virtual_vertex)
@@ -91,20 +130,6 @@ def planarize_graph(graph, positions, edge_crossings):
 
     #  return some new graph and new vertex positions
     return planar_graph, planar_positions
-
-
-def debug_edge_crossings(graph, edge_crossings, positions):
-
-    # Extract Edges for easier indexing
-    edges = list(graph.edges)
-
-    # ALl to all comparison of edges
-    for edge_index_a in edge_crossings.keys():
-        for edge_index_b in edge_crossings[edge_index_a].keys():
-
-            # Extract edges from edge list
-            edge_a = edges[edge_index_a]
-            edge_b = edges[edge_index_b]
 
 
 def locate_edge_crossings(graph, positions):
@@ -125,20 +150,23 @@ def locate_edge_crossings(graph, positions):
             edge_b = edges[edge_index_b]
 
             # Check if the two edges share a common vertex (causes numerical issues)
-            if (edge_a[0] in edge_b) or (edge_a[1] in edge_b): continue
+            if (edge_a[0] in edge_b) or (edge_a[1] in edge_b):
+                continue
 
             # Check whether edges intersect and (if so) where
             intersection = edge_intersection(edge_a, edge_b, positions)
-            if intersection is None: continue
+            if intersection is None:
+                continue
 
             # Append edge crossing position for edges
-            if edge_index_a not in edge_crossings:
-                edge_crossings[edge_index_a] = dict()
-            edge_crossings[edge_index_a][edge_index_b] = intersection
+            if edge_a not in edge_crossings:
+                edge_crossings[edge_a] = dict()
+            edge_crossings[edge_a][edge_b] = intersection
 
             # Increment edge crossing count for all vertices involves in crossing
             crossing_vertices = np.append(np.asarray(edge_a), np.asarray(edge_b))
-            for vertex_index in crossing_vertices: vertex_crossings[vertex_index] += 1
+            for vertex_index in crossing_vertices:
+                vertex_crossings[vertex_index] += 1
 
     #  return two dicts, one for vertices and one for edge
     return edge_crossings, vertex_crossings
@@ -179,22 +207,6 @@ def line_intersection(p1, p2, p3, p4):
     x = x1 + ua * (x2 - x1)
     y = y1 + ua * (y2 - y1)
     return x, y
-
-# def line_intersection(line1, line2):
-#     xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
-#     ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
-#
-#     def det(a, b):
-#         return a[0] * b[1] - a[1] * b[0]
-#
-#     div = det(xdiff, ydiff)
-#     if div == 0:
-#         return None
-#
-#     d = (det(*line1), det(*line2))
-#     x = det(d, xdiff) / div
-#     y = det(d, ydiff) / div
-#     return x, y
 
 
 def get_target_vertex_index(vertex_crossings, graph):

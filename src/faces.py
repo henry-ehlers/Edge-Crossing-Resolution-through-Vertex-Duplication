@@ -59,7 +59,23 @@ def find_face_vertex_incidence(faces, target_vertices):
             incident_vertices = incidence_a.union(incidence_b)
 
             # Store results only if non-empty
-            if incident_vertices: face_incidences[face_a][face_a] = incident_vertices
+            if incident_vertices:
+                face_incidences[face_a][face_b] = incident_vertices
 
     # Return Dictionary of face vertex incidence
     return face_incidences
+
+
+def get_maximally_incident_faces(face_incidences):
+    max_incidence = float("-inf")
+    selected_faces = []
+    for face_a in face_incidences.keys():
+        for face_b in face_incidences[face_a].keys():
+            vertex_incidence = len(face_incidences[face_a][face_b])
+            if vertex_incidence > max_incidence:
+                max_incidence = vertex_incidence
+                selected_faces = [[face_a, face_b]]
+            elif vertex_incidence == max_incidence:
+                selected_faces.append([face_a, face_b])
+
+    return max_incidence, selected_faces
