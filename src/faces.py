@@ -1,4 +1,5 @@
 import networkx as nx
+import itertools as it
 import numpy as np
 import copy
 
@@ -10,12 +11,11 @@ def find_all_faces(graph):
     assert is_planar, \
         "Provided Graph is not planar."
 
-    # Initialize set of all faces (sets of vertices)
+    # Initialize set of all faces (sets of vertices) and face-edge map
     faces = set()
 
     # Iterate over each vertex in the drawing
     for origin_vertex in plane_graph.nodes():
-        print("origin vertex: {}".format(origin_vertex))
 
         # Collect the neighbors [w] of a vertex [v] in clock-wise order
         cw_neighbors = list(plane_graph.neighbors_cw_order(origin_vertex))
@@ -27,6 +27,26 @@ def find_all_faces(graph):
 
     # Return set of faces (frozen sets of vertices)
     return faces
+
+
+def build_face_to_edge_map(graph, faces):
+    face_edge_map = dict()
+    for face in faces:
+        face_edge_map[face] = list()
+        face_list = list(it.combinations(list(face), 2))
+        for vertex_combination in face_list:
+            vertex_a = vertex_combination[0]
+            vertex_b = vertex_combination[1]
+            found_edge = get_edge_connecting_vertices(graph, vertex_a, vertex_b)
+            if found_edge: face_edge_map[face].append(found_edge)
+
+    return face_edge_map
+
+
+def get_edge_connecting_vertices(graph, vertex_a, vertex_b):
+    for edge in graph.edges:
+        if (vertex_a == edge[0] and vertex_b == edge[1]) or (vertex_b == edge[0] and vertex_a == edge[1]):
+            return edge
 
 
 def find_face_vertex_incidence(faces, target_vertices):

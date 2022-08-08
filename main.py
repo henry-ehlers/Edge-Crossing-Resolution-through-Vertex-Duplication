@@ -90,6 +90,8 @@ if __name__ == '__main__':
 
     # Locate faces and best two for target face
     faces = frozenset(find_all_faces(plane_graph))
+    face_edge_map = build_face_to_edge_map(plane_graph, faces)
+    print(face_edge_map)
     face_incidences = find_face_vertex_incidence(faces, target_vertex_adjacency)
     max_incidence, selected_faces = get_maximally_incident_faces(face_incidences)
     print(face_incidences[selected_faces[0][0]][selected_faces[0][1]])
