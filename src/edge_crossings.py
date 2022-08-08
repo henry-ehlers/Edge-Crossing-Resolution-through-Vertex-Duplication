@@ -35,7 +35,6 @@ def sort_vertices_along_edge(edge, vertex_set, positions):
 
 def remove_edges(graph, edges_to_be_removed):
     for edge in edges_to_be_removed:
-        print("removing {}".format(edge))
         graph.remove_edge(u=edge[0], v=edge[1])
 
 
@@ -50,7 +49,6 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
         # Extract all the virtual vertices and (together with real edge points) sort them
         virtual_vertices = list(edge_to_virtual_vertex[edge])
         sorted_vertex_targets = sort_vertices_along_edge(edge, virtual_vertices, positions)
-        print("sorted {}: {}".format(edge, sorted_vertex_targets))
 
         # Connect vertices in sort order (undirected edges so order doesn't matter)
         for index in range(1, len(sorted_vertex_targets)):
@@ -107,11 +105,6 @@ def debug_edge_crossings(graph, edge_crossings, positions):
             # Extract edges from edge list
             edge_a = edges[edge_index_a]
             edge_b = edges[edge_index_b]
-
-            # Print Crossings:
-            print("Crossing of {} and {} at {}".format(edge_a, edge_b, edge_crossings[edge_index_a][edge_index_b]))
-            for vertex in edge_a+edge_b:
-                print("Vertex {} at {}".format(vertex, positions[vertex]))
 
 
 def locate_edge_crossings(graph, positions):
@@ -171,17 +164,14 @@ def line_intersection(p1, p2, p3, p4):
     x3, y3 = p3
     x4, y4 = p4
     denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-    print("denominator: {}".format(denominator))
     if denominator == 0:  # parallel
         return None
     ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
-    print("ua: {}".format(ua))
 
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
     if ua < 0 or ua >= 1:
         return None
     ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
-    print("ub: {}".format(ub))
 
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
     if ub < 0 or ub >= 1:

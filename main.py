@@ -35,27 +35,13 @@ if __name__ == '__main__':
     print("Split Target Vertex = Vertex #{}".format(target_vertex_index))
 
     # Planarize Graph
-    planar_graph, planar_positions = planarize_graph(graph, positions, edge_crossings)
-    planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(planar_graph, planar_positions)
-    debug_edge_crossings(planar_graph, planar_edge_crossings, planar_positions)
-    # assert is_without_edge_crossings(planar_graph, planar_positions), \
-    #     "Graph is not edge-crossing free."
-
-    # Add bullshit to graph
-    for edge_a in planar_edge_crossings.keys():
-        edge_index_a = list(planar_graph.edges)[edge_a]
-        for edge_b in planar_edge_crossings[edge_a].keys():
-            edge_index_b = list(planar_graph.edges)[edge_b]
-            print("{} / {}-------------------------------".format(edge_index_a, edge_index_b))
-            index = planar_graph.number_of_nodes()
-            planar_graph.add_node(node_for_adding=index, split=0, target=1, virtual=0)
-            print(np.asarray(planar_edge_crossings[edge_a][edge_b]))
-            planar_positions[index] = np.asarray(planar_edge_crossings[edge_a][edge_b])
-            print(index)
-            coord = line_intersection(planar_positions[edge_index_a[0]], planar_positions[edge_index_a[1]],
-                                      planar_positions[edge_index_b[0]], planar_positions[edge_index_b[1]] )
+    plane_graph, plane_positions = planarize_graph(graph, positions, edge_crossings)
+    planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(plane_graph, plane_positions)
+    debug_edge_crossings(plane_graph, planar_edge_crossings, plane_positions)
+    assert is_without_edge_crossings(plane_graph, plane_positions), \
+        "Graph is not edge-crossing free."
 
     # Draw and Save Planar rGraph
-    draw_graph(graph=planar_graph, positions=planar_positions)
+    draw_graph(graph=plane_graph, positions=plane_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=1)
     save_drawn_graph(output_path)

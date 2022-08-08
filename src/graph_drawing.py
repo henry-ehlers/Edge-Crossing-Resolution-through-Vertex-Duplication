@@ -3,6 +3,10 @@ from pathlib import Path
 import networkx as nx
 
 
+def find_embedding_rectangle():
+    return None
+
+
 def embed_graph(graph, embedding, n_iter=None, seed=None):
     if embedding == "kamada_kawai":
         return nx.kamada_kawai_layout(G=graph)
@@ -16,7 +20,6 @@ def color_split_vertices(graph):
         if graph.nodes[vertex]["virtual"] == 0 and graph.nodes[vertex]["target"] == 0:
             color = "black"
         elif graph.nodes[vertex]["target"] == 1:
-            print("RED")
             color = "red"
         else:
             color = "lightgrey"
