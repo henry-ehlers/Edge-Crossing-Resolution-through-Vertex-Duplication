@@ -1,8 +1,7 @@
 from src.graph_simulation import *
 from src.graph_drawing import *
 from src.edge_crossings import *
-import networkx as nx
-import numpy as np
+from src.faces import *
 
 
 # Press the green button in the gutter to run the script.
@@ -38,13 +37,19 @@ if __name__ == '__main__':
 
     # Find vertex involved in the largest number of edge crossings
     target_vertex_index = get_target_vertex_index(vertex_crossings, graph)
+    target_vertex_adjacency = list(graph.neighbors(target_vertex_index))
     print("Split Target Vertex = Vertex #{}".format(target_vertex_index))
+    print("Target Adjacency    = {}".format(target_vertex_adjacency))
 
     # Planarize Graph
     plane_graph, plane_positions = planarize_graph(graph, positions, edge_crossings)
     planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(plane_graph, plane_positions)
     debug_edge_crossings(plane_graph, planar_edge_crossings, plane_positions)
-    find_all_faces(plane_graph)
+
+    # Locate faces and best two for target face
+    faces = frozenset(find_all_faces(plane_graph))
+    face_incidences = find_face_vertex_incidence(faces, target_vertex_adjacency)
+    print(face_incidences)
 
     # Check rectangular bounds of drawing
     min_coord, max_coord = find_embedding_rectangle(plane_graph, plane_positions)

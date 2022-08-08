@@ -3,31 +3,6 @@ from pathlib import Path
 import networkx as nx
 
 
-def find_all_faces(graph):
-
-    # Ensure the provided graph is plana
-    is_planar, plane_graph = nx.check_planarity(graph)
-    assert is_planar, \
-        "Provided Graph is not planar."
-
-    # Initialize set of all faces (sets of vertices)
-    faces = set()
-
-    # Iterate over each vertex in the drawing
-    for origin_vertex in range(0, plane_graph.number_of_nodes()):
-
-        # Collect the neighbors [w] of a vertex [v] in clock-wise order
-        cw_neighbors = list(plane_graph.neighbors_cw_order(origin_vertex))
-
-        # For each clockwise-sorted neighbor w, find the face to the right of the half-edge (v,w)
-        for adjacent_vertex in cw_neighbors:
-            face = frozenset(plane_graph.traverse_face(origin_vertex, adjacent_vertex))
-            faces.add(face)
-
-    # Return set of faces (frozen sets of vertices)
-    return faces
-
-
 def find_embedding_rectangle(graph, positions):
 
     # Initialize minimum and maximum coordinates using first (arbitrary) selected vertex
