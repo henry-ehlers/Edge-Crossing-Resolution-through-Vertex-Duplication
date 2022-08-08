@@ -14,7 +14,8 @@ def find_all_faces(graph):
     faces = set()
 
     # Iterate over each vertex in the drawing
-    for origin_vertex in range(0, plane_graph.number_of_nodes()):
+    for origin_vertex in plane_graph.nodes():
+        print("origin vertex: {}".format(origin_vertex))
 
         # Collect the neighbors [w] of a vertex [v] in clock-wise order
         cw_neighbors = list(plane_graph.neighbors_cw_order(origin_vertex))

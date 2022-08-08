@@ -75,7 +75,10 @@ if __name__ == '__main__':
     # PLANARIZATION ----------------------------------------------------------------------------------------------------
 
     # Planarize Graph
-    plane_graph, plane_positions = planarize_graph(remaining_graph, remaining_positions, remaining_edge_crossings, virtual_index_start)
+    plane_graph, plane_positions = planarize_graph(graph=remaining_graph,
+                                                   positions=remaining_positions,
+                                                   edge_crossings=remaining_edge_crossings,
+                                                   starting_index=virtual_index_start)
     planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(plane_graph, plane_positions)
 
     # Draw and Save Planar rGraph

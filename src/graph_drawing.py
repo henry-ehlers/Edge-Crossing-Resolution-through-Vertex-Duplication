@@ -10,7 +10,7 @@ def find_embedding_rectangle(graph, positions):
     print("Number of Nodes: {}".format(len(graph.nodes)))
 
     # Iterate over all vertices to find maximum and minimum x/y values
-    for vertex_index in range(1, len(graph.nodes)):
+    for vertex_index in graph.nodes:
 
         # Check minimum and maximum x-coordinate values
         if positions[vertex_index][0] < min_coordinates[0]:
