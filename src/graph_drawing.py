@@ -7,7 +7,6 @@ def find_embedding_rectangle(graph, positions):
 
     # Initialize minimum and maximum coordinates using first (arbitrary) selected vertex
     min_coordinates, max_coordinates = [positions[0][0], positions[0][1]], [positions[0][0], positions[0][1]]
-    print("Number of Nodes: {}".format(len(graph.nodes)))
 
     # Iterate over all vertices to find maximum and minimum x/y values
     for vertex_index in graph.nodes:

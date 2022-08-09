@@ -18,15 +18,13 @@ def sort_vertices_along_edge(edge, vertex_set, positions):
 
     # Iterate over all vertices, including start and end points of the edge
     vertices_to_sort = list(vertex_set) + [start_vertex, end_vertex]
-    print("vertices_to_sort: {}".format(vertices_to_sort))
     for index, vertex in enumerate(vertices_to_sort):
         projections[index] = project_point_onto_line(positions[vertex], start_point, end_point)
-    print(projections)
 
     # Sort indices of projections and sort vertex indices
     sorted_indices = np.argsort(projections)
     sorted_vertices = [vertices_to_sort[i] for i in sorted_indices]
-    print("sorted: {}".format(sorted_vertices))
+
     # Ensure Start and End-Points sorted correctly (i.e first and last)
     assert sorted_indices[0] == (len(vertices_to_sort)-2) and sorted_indices[-1] == (len(vertices_to_sort)-1), \
         "Start and End Points of vector did not sort as expected"
@@ -52,8 +50,7 @@ def remove_target_vertex(graph, positions, target_vertex):
 def get_remaining_edge_crossings(graph, edge_crossings, target_vertex):
     remaining_edge_crossings = copy.deepcopy(edge_crossings)
     edges_to_be_removed = graph.edges(nbunch=target_vertex)
-    print(edges_to_be_removed)
-    print("To be deleted: {}".format(len(edges_to_be_removed)))
+
     edges_removed = 0
     for edge_a in edge_crossings.keys():
         if edge_a in edges_to_be_removed:
@@ -65,7 +62,6 @@ def get_remaining_edge_crossings(graph, edge_crossings, target_vertex):
                 edges_removed += 1
                 del remaining_edge_crossings[edge_a][edge_b]
 
-    print("Crossings Removed: {}".format(edges_removed))
     return remaining_edge_crossings
 
 
@@ -78,7 +74,7 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
 
     # Iterate over all edges in the graph
     for edge in edge_to_virtual_vertex.keys():
-        print("\nEdge: {}".format(edge))
+        # print("\nEdge: {}".format(edge))
 
         # Skip edge if it does not have any edge crossings
         if len(edge_to_virtual_vertex[edge]) == 0:
@@ -103,7 +99,6 @@ def planarize_graph(graph, positions, edge_crossings, starting_index):
     # Initialize new, planar graph
     planar_graph = copy.deepcopy(graph)
     planar_positions = copy.deepcopy(positions)
-    print("Length Planar Positions: {}".format(len(planar_positions)))
 
     edge_to_virtual_vertex = {edge: set() for edge in edges}  # have to ensure
     edges_to_be_removed = set()  # could be initialized using size of dictionary 'edge_crossings'
@@ -111,7 +106,7 @@ def planarize_graph(graph, positions, edge_crossings, starting_index):
     # Iterate over all found edge crossings
     for edge_a in edge_crossings.keys():
         for edge_b in edge_crossings[edge_a].keys():
-            print("{} - {} : {}".format(edge_a, edge_b, index))
+            # print("{} - {} : {}".format(edge_a, edge_b, index))
 
             # Add new vertex to graph and drawing's locations
             planar_graph.add_node(node_for_adding=index, split=0, target=0, virtual=1)
@@ -209,23 +204,23 @@ def line_intersection(p1, p2, p3, p4):
     return x, y
 
 
-def get_target_vertex_index(vertex_crossings, graph):
+def get_target_vertex(vertex_crossings, graph):
     # TODO: maybe also account for the number of edge crossings a vertex has already undergone?
 
     # Find all vertices which are involved in the maximal number of edge crossings
-    potential_targets = np.argwhere(vertex_crossings == np.amax(vertex_crossings)).flatten().tolist()
-
+    potential_target_indices = np.argwhere(vertex_crossings == np.amax(vertex_crossings)).flatten().tolist()
+    vertex_list = list(graph.nodes)
     # If only one vertex fulfills the maximum criterion, return said vertex's index
-    if len(potential_targets) == 1:
-        target = potential_targets[0]
+    if len(potential_target_indices) == 1:
+        target_index = potential_target_indices[0]
 
     # If multiple vertices fulfill the criterion, return the one with the lowest degree
     else:
-        adjacency = [len(graph[target_index]) for target_index in potential_targets]
-        target = potential_targets[np.argmin(adjacency)]
+        adjacency = [len(graph[target_index]) for target_index in potential_target_indices]
+        target_index = potential_target_indices[np.argmin(adjacency)]
 
     # Return the target vertex's index
-    return target
+    return vertex_list[target_index]
 
 
 def vertex_edge_crossing_equality(vertex_crossings, edge_crossings):

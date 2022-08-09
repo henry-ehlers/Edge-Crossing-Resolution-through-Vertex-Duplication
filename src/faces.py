@@ -6,27 +6,16 @@ import copy
 
 def find_all_faces(graph):
 
-    # Ensure the provided graph is plana
-    is_planar, plane_graph = nx.check_planarity(graph)
-    assert is_planar, \
-        "Provided Graph is not planar."
+    # Identify the minimum cycle basis of the graph
+    # TODO: this does not identify outer faces (i.e. the outer cycle)
+    cycles = nx.minimum_cycle_basis(G=graph)
 
-    # Initialize set of all faces (sets of vertices) and face-edge map
-    faces = set()
-
-    # Iterate over each vertex in the drawing
-    for origin_vertex in plane_graph.nodes():
-
-        # Collect the neighbors [w] of a vertex [v] in clock-wise order
-        cw_neighbors = list(plane_graph.neighbors_cw_order(origin_vertex))
-
-        # For each clockwise-sorted neighbor w, find the face to the right of the half-edge (v,w)
-        for adjacent_vertex in cw_neighbors:
-            face = frozenset(plane_graph.traverse_face(origin_vertex, adjacent_vertex))
-            faces.add(face)
+    # Convert the minimum cycle basis into face sets
+    # TODO: check that cycles are indeed legal faces
+    faces = set([frozenset(cycle) for cycle in cycles])
 
     # Return set of faces (frozen sets of vertices)
-    return faces
+    return frozenset(faces)
 
 
 def build_face_to_edge_map(graph, faces):

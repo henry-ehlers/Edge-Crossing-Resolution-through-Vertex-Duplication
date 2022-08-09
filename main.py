@@ -3,6 +3,7 @@ from src.graph_drawing import *
 from src.edge_crossings import *
 from src.faces import *
 
+import networkx as nx
 import numpy as np
 
 # Press the green button in the gutter to run the script.
@@ -31,29 +32,22 @@ if __name__ == '__main__':
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=0)
     save_drawn_graph(output_path)
 
-    for vertex in positions.keys():
-        print("{} - {} : {}".format(vertex, graph.nodes[vertex], positions[vertex]))
-
     # LOCATE AND REMOVE TARGET VERTEX ----------------------------------------------------------------------------------
 
     # Find vertex involved in the largest number of edge crossings
-    target_vertex_index = get_target_vertex_index(vertex_crossings, graph)
-    target_vertex_adjacency = list(graph.neighbors(target_vertex_index))
-    print("Split Target Vertex = Vertex #{}".format(target_vertex_index))
+    target_vertex = get_target_vertex(vertex_crossings, graph)
+    target_vertex_adjacency = list(graph.neighbors(target_vertex))
+    print("Split Target Vertex = Vertex #{}".format(target_vertex))
     print("Target Adjacency    = {}".format(target_vertex_adjacency))
 
     # Delete Target Vertex from Graph
-    print(edge_crossings)
-    remaining_edge_crossings = get_remaining_edge_crossings(graph, edge_crossings, target_vertex_index)
-    remaining_graph, remaining_positions = remove_target_vertex(graph, positions, target_vertex_index)
+    remaining_edge_crossings = get_remaining_edge_crossings(graph, edge_crossings, target_vertex)
+    remaining_graph, remaining_positions = remove_target_vertex(graph, positions, target_vertex)
 
     # Draw and Save Graph with target removed
     draw_graph(graph=remaining_graph, positions=remaining_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=1)
     save_drawn_graph(output_path)
-
-    for vertex in remaining_positions.keys():
-        print("{} - {} : {}".format(vertex, remaining_graph.nodes[vertex], remaining_positions[vertex]))
 
     # DEBUG ------------------------------------------------------------------------------------------------------------
 
@@ -88,13 +82,26 @@ if __name__ == '__main__':
 
     # FACE IDENTIFICATION ----------------------------------------------------------------------------------------------
 
-    # Locate faces and best two for target face
-    faces = frozenset(find_all_faces(plane_graph))
+    # # Locate faces and best two for target face
+    faces = find_all_faces(graph=plane_graph)
+    for vertex in list(plane_graph.nodes):
+        print("VERTEX {} -------------------------------".format(vertex))
+        for face in faces:
+            if vertex in face:
+                print(face)
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
-    # TODO: FIX THE MAPPING TO NOT INCLUDE SELF-LOOPS (SEE Picture 4)
+    # TODO: FACES FOUND DO NOT MATCH EMBEDDING BECAUSE PLANAR_GRAPH CHANGES EMBEDDING
 
+    # Find Best Face
     face_incidences = find_face_vertex_incidence(faces, target_vertex_adjacency)
     max_incidence, selected_faces = get_maximally_incident_faces(face_incidences)
+    print("----------------------------------------------------")
+    print("Targets: {}".format(target_vertex_adjacency))
+    for face_pair in selected_faces:
+        print("\n")
+        for index, face in enumerate(face_pair):
+            print("face {}: {}".format(index, face))
+
     print("#Face Target Sets Found: {}".format(len(selected_faces)))
     print("Selected Faces: {}".format(selected_faces[1]))
     # TODO: RE-EVALUATE HOW LEGAL THE CREATED AND SELECTED FACES ARE
