@@ -37,10 +37,12 @@ def embed_graph(graph, embedding, n_iter=None, seed=None):
 def color_split_vertices(graph):
     node_color_map = []
     for vertex in graph:
-        if graph.nodes[vertex]["virtual"] == 0 and graph.nodes[vertex]["target"] == 0:
-            color = "black"
-        elif graph.nodes[vertex]["target"] == 1:
+        if graph.nodes[vertex]["target"] == 1:
+            color = "blue"
+        elif graph.nodes[vertex]["boundary"] == 1:
             color = "red"
+        elif graph.nodes[vertex]["virtual"] == 0 and graph.nodes[vertex]["target"] == 0:
+            color = "black"
         else:
             color = "lightgrey"
         node_color_map.append(color)
@@ -51,7 +53,7 @@ def color_edges(graph):
     edge_color_map = []
     for edge in graph.edges:
         if graph.edges[edge]["target"] == 1:
-            color = "green"
+            color = "blue"
         elif graph.edges[edge]["virtual"] == 0:
             color = "black"
         elif graph.edges[edge]["virtual"] == 1:
@@ -93,5 +95,5 @@ def draw_graph(graph, positions):
 
     # Draw Graph Embedding
     plt.figure(3, figsize=(20, 20))
-    nx.draw(G=graph, pos=positions, node_color=node_color_map, edge_color=edge_color_map, node_shape='o', node_size=7)
+    nx.draw(G=graph, pos=positions, node_color=node_color_map, edge_color=edge_color_map, node_shape='o', node_size=14)
     nx.draw_networkx_labels(G=graph, pos=positions, font_size=10)

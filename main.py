@@ -1,6 +1,7 @@
 from src.graph_simulation import *
 from src.graph_drawing import *
 from src.edge_crossings import *
+from src.line_segments import *
 from src.faces import *
 
 import networkx as nx
@@ -106,4 +107,29 @@ if __name__ == '__main__':
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=4)
     save_drawn_graph(output_path)
 
+    for vertex in list(plane_graph.nodes()):
+        print("Vertex {}: {}".format(vertex, plane_positions[vertex]))
+    # All Line Segments ------------------------------------------------------------------------------------------------
+    # TODO: only connect REAL (NOT VIRTUAL) and non-edge-connected nodes to avoid overlapping lines/edges?
+    # TODO: figure out how to best know which point connects to which new points below
+    drawing_bounds = [-1, -1, 1, 1]
+    position_1 = plane_positions[16]
+    position_2 = plane_positions[17]
+    print("points {} and {}".format(position_1, position_2))
+    test = extend_line_to_bounds(position_1, position_2)
+    print(test)
+    test2 = extend_line(-1, -1, 1, 1, position_1[0], position_1[1], position_2[0], position_2[1])
+    print(test2)
+    start_index = plane_graph.number_of_nodes() + 1
+    for index, vertex_index in enumerate(range(start_index, start_index+2)):
+        print("Index {} for New Vertex {}".format(index, vertex_index))
+        plane_graph.add_node(node_for_adding=vertex_index, split=0, target=0, virtual=0, boundary=1)
+        if index == 0:
+            plane_positions[vertex_index] = np.asarray((test[0], test[1]))
+        elif index == 1:
+            plane_positions[vertex_index] = np.asarray((test[2], test[3]))
+
+    draw_graph(graph=plane_graph, positions=plane_positions)
+    output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=5)
+    save_drawn_graph(output_path)
 

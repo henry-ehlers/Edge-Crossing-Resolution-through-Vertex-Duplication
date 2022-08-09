@@ -31,6 +31,7 @@ def create_barabasi_albert_graph(n, m, seed, root_dir="data/simulated"):
         graph.nodes[vertex]["split"] = 0
         graph.nodes[vertex]["target"] = 0
         graph.nodes[vertex]["virtual"] = 0
+        graph.nodes[vertex]["boundary"] = 0
 
     # Return graph object
     return graph
