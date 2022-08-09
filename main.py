@@ -84,35 +84,22 @@ if __name__ == '__main__':
 
     # # Locate faces and best two for target face
     faces = find_all_faces(graph=plane_graph)
-    for vertex in list(plane_graph.nodes):
-        print("VERTEX {} -------------------------------".format(vertex))
-        for face in faces:
-            if vertex in face:
-                print(face)
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
-    # TODO: FACES FOUND DO NOT MATCH EMBEDDING BECAUSE PLANAR_GRAPH CHANGES EMBEDDING
 
     # Find Best Face
     face_incidences = find_face_vertex_incidence(faces, target_vertex_adjacency)
     max_incidence, selected_faces = get_maximally_incident_faces(face_incidences)
-    print("----------------------------------------------------")
-    print("Targets: {}".format(target_vertex_adjacency))
-    for face_pair in selected_faces:
-        print("\n")
-        for index, face in enumerate(face_pair):
-            print("face {}: {}".format(index, face))
-
     print("#Face Target Sets Found: {}".format(len(selected_faces)))
-    print("Selected Faces: {}".format(selected_faces[1]))
-    # TODO: RE-EVALUATE HOW LEGAL THE CREATED AND SELECTED FACES ARE
+    print("Maximum Target Incidence: {}".format(max_incidence))
 
-    for face in selected_faces[1]:
-        print("Face: {}".format(face))
-        for edge in face_edge_map[frozenset(face)]:
-            print("Edge: {}".format(edge))
-            plane_graph.edges[edge]["target"] = 1
-    print(face_incidences[selected_faces[0][0]][selected_faces[0][1]])
-    print(selected_faces)
+    # Arbitrary Selection of target face-set
+    # TODO: either select a single such face-set or try all that are tied
+    selected_face_set_index = 0
+    selected_face_set = selected_faces[selected_face_set_index]
+    color_selected_faces(plane_graph, selected_face_set, face_edge_map)
+    found_targets = list((selected_face_set[0].union(selected_face_set[1])).intersection(set(target_vertex_adjacency)))
+    print("Selected Faces: {}".format(selected_faces[selected_face_set_index]))
+    print("Incident Target Vertices: {}".format(found_targets))
 
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)

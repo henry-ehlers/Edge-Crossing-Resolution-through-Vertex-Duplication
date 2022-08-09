@@ -18,7 +18,17 @@ def find_all_faces(graph):
     return frozenset(faces)
 
 
+def color_selected_faces(graph, face_set, face_edge_map):
+    for face in face_set:
+        for edge in face_edge_map[frozenset(face)]:
+            graph.edges[edge]["target"] = 1
+    return graph
+
+
 def build_face_to_edge_map(graph, faces):
+
+    # TODO: the face set now consists of shortest cycles, so this basic look-up should be acceptable for now
+    # TODO: however, for outer faces, there may be cycles within the the defined cycle that should not be included
     face_edge_map = dict()
     for face in faces:
         face_edge_map[face] = list()
