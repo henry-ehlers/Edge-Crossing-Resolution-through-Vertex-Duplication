@@ -6,6 +6,7 @@ from src.faces import *
 
 import networkx as nx
 import numpy as np
+import sys
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -70,10 +71,11 @@ if __name__ == '__main__':
     # PLANARIZATION ----------------------------------------------------------------------------------------------------
 
     # Planarize Graph
-    plane_graph, plane_positions = planarize_graph(graph=remaining_graph,
-                                                   positions=remaining_positions,
-                                                   edge_crossings=remaining_edge_crossings,
-                                                   starting_index=virtual_index_start)
+    plane_graph, plane_positions, virtual_edge_set = planarize_graph(graph=remaining_graph,
+                                                                     positions=remaining_positions,
+                                                                     edge_crossings=remaining_edge_crossings,
+                                                                     starting_index=virtual_index_start)
+    [print(edge_set) for edge_set in virtual_edge_set]
     planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(plane_graph, plane_positions)
 
     # Draw and Save Planar rGraph
@@ -111,25 +113,33 @@ if __name__ == '__main__':
         print("Vertex {}: {}".format(vertex, plane_positions[vertex]))
 
     # All Line Segments ------------------------------------------------------------------------------------------------
-    # TODO: only connect REAL (NOT VIRTUAL) and non-edge-connected nodes to avoid overlapping lines/edges?
+    # TODO: CHECK IF EDGE BETWEEN NODES ALREADY EXISTS. IF SO, CONNECT ONLY ENDPOINTS TO BOUNDARY VERTICES
     # TODO: figure out how to best know which point connects to which new points below
-    drawing_bounds = [-1, -1, 1, 1]
-    position_1 = plane_positions[16]
-    position_2 = plane_positions[17]
-    print("points {} and {}".format(position_1, position_2))
-    test = extend_line(position_1, position_2)
-    print("found intersections: {}".format(test))
-    start_index = plane_graph.number_of_nodes() + 1
-    plane_graph.add_edge(u_of_edge=start_index, v_of_edge=start_index+1, virtual=0, target=0, segment=1)
-    for index, vertex_index in enumerate(range(start_index, start_index+2)):
-        print("Index {} for New Vertex {}".format(index, vertex_index))
-        plane_graph.add_node(node_for_adding=vertex_index, split=0, target=0, virtual=0, boundary=1)
-        if index == 0:
-            plane_positions[vertex_index] = np.asarray(test[0])
-        elif index == 1:
-            plane_positions[vertex_index] = np.asarray(test[1])
 
-    draw_graph(graph=plane_graph, positions=plane_positions)
+    # Create copy of plane graph
+
+
+
+    # drawing_bounds = [-1, -1, 1, 1]
+    # position_1 = plane_positions[16]
+    # position_2 = plane_positions[17]
+    # print("points {} and {}".format(position_1, position_2))
+    # test = extend_line(position_1, position_2)
+    # print("found intersections: {}".format(test))
+    # start_index = plane_graph.number_of_nodes() + 1
+    # for index, vertex_index in enumerate(range(start_index, start_index+2)):
+    #     print("Index {} for New Vertex {}".format(index, vertex_index))
+    #     plane_graph.add_node(node_for_adding=vertex_index, split=0, target=0, virtual=0, boundary=1)
+    #     if index == 0:
+    #         plane_graph.add_edge(u_of_edge=16, v_of_edge=vertex_index, virtual=0, target=0, segment=1)
+    #         plane_positions[vertex_index] = np.asarray(test[0])
+    #     elif index == 1:
+    #         plane_graph.add_edge(u_of_edge=17, v_of_edge=vertex_index, virtual=0, target=0, segment=1)
+    #         plane_positions[vertex_index] = np.asarray(test[1])
+
+    segment_graph, segment_positions = draw_all_line_segments(plane_graph, plane_positions, virtual_edge_set)
+
+    draw_graph(graph=segment_graph, positions=segment_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=5)
     save_drawn_graph(output_path)
 

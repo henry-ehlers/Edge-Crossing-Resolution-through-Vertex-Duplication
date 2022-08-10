@@ -72,6 +72,9 @@ def remove_edges(graph, edges_to_be_removed):
 
 def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
 
+    # A Map of virtual edges which describe the same edge
+    virtual_edge_set = set()
+
     # Iterate over all edges in the graph
     for edge in edge_to_virtual_vertex.keys():
         # print("\nEdge: {}".format(edge))
@@ -83,11 +86,14 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
         # Extract all the virtual vertices and (together with real edge points) sort them
         virtual_vertices = list(edge_to_virtual_vertex[edge])
         sorted_vertex_targets = sort_vertices_along_edge(edge, virtual_vertices, positions)
+        virtual_edge_set.add(frozenset(sorted_vertex_targets))
 
         # Connect vertices in sort order (undirected edges so order doesn't matter)
         for index in range(1, len(sorted_vertex_targets)):
             vertex_a, vertex_b = sorted_vertex_targets[index-1], sorted_vertex_targets[index]
             graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, virtual=1, target=0, segment=0)
+
+    return virtual_edge_set
 
 
 def planarize_graph(graph, positions, edge_crossings, starting_index):
@@ -120,11 +126,11 @@ def planarize_graph(graph, positions, edge_crossings, starting_index):
             index += 1
 
     # Remove original edge set and add virtual edge set
-    add_virtual_edges(planar_graph, planar_positions, edge_to_virtual_vertex)
+    virtual_edge_set = add_virtual_edges(planar_graph, planar_positions, edge_to_virtual_vertex)
     remove_edges(planar_graph, list(edges_to_be_removed))
 
     #  return some new graph and new vertex positions
-    return planar_graph, planar_positions
+    return planar_graph, planar_positions, virtual_edge_set
 
 
 def locate_edge_crossings(graph, positions):
