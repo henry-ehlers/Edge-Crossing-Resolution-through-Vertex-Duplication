@@ -188,10 +188,11 @@ def edge_intersection(edge_a, edge_b, vertex_positions):
 
 
 def line_intersection(p1, p2, p3, p4):
-    x1, y1 = p1
-    x2, y2 = p2
-    x3, y3 = p3
-    x4, y4 = p4
+    x1, y1 = float(p1[0]), float(p1[1])
+    x2, y2 = float(p2[0]), float(p2[1])
+    x3, y3 = float(p3[0]), float(p3[1])
+    x4, y4 = float(p4[0]), float(p4[1])
+
     denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
     if denominator == 0:  # parallel
         return None

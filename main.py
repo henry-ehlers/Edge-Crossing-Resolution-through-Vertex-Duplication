@@ -75,7 +75,7 @@ if __name__ == '__main__':
                                                                      positions=remaining_positions,
                                                                      edge_crossings=remaining_edge_crossings,
                                                                      starting_index=virtual_index_start)
-    [print(edge_set) for edge_set in virtual_edge_set]
+    # [print(edge_set) for edge_set in virtual_edge_set]
     planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(plane_graph, plane_positions)
 
     # Draw and Save Planar rGraph
@@ -122,4 +122,10 @@ if __name__ == '__main__':
     save_drawn_graph(output_path)
 
     # Limited Line Segments --------------------------------------------------------------------------------------------
-
+    culled_segment_graph, culled_segment_positions = cull_all_line_segment_graph(all_segment_graph,
+                                                                                 all_segment_positions,
+                                                                                 selected_face_set,
+                                                                                 face_edge_map)
+    draw_graph(graph=culled_segment_graph, positions=culled_segment_positions)
+    output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=6)
+    save_drawn_graph(output_path)

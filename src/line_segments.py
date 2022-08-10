@@ -1,5 +1,7 @@
+from src.edge_crossings import *
 import numpy as np
 import copy
+
 
 def unbounded_line_intersection(p1, p2, p3, p4):
 
@@ -44,7 +46,7 @@ def extend_line(point_1, point_2, bounds=((-2, -2), (-2, 2), (2, 2), (2, -2))):
     return intersections
 
 
-def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-2, -2), (-2, 2), (2, 2), (2, -2))):
+def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
 
     # Create new graph and positions objects
     segment_graph = copy.deepcopy(graph)
@@ -58,6 +60,8 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-2, -2),
     vertex_index = max(node_list)
     number_of_nodes = len(node_list)
 
+    [print(edge_set) for edge_set in virtual_edge_set]
+
     # Iterate over all pairwise vertex combinations
     for index_a in range(0, number_of_nodes):
         vertex_a = node_list[index_a]
@@ -66,10 +70,12 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-2, -2),
 
             # Check if this particular combination of vertices maps to a virtual edge set
             if any([{vertex_a, vertex_b} <= v_edge_set for v_edge_set in virtual_edge_set]):
+                # Ensure that both vertices are real
                 if any(graph.nodes[vertex]["virtual"] == 1 for vertex in [vertex_a, vertex_b]):
-                    continue
-                else:
                     already_connected = 1
+                else:
+                    print(f"SKIPPING {vertex_a} and {vertex_b}")
+                    continue
             else:
                 # Check whether an edge already exists between vertices a and b
                 if {node_list[index_a], node_list[index_b]} in edges:
@@ -98,3 +104,44 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-2, -2),
 
     # Return new graph and positions objects
     return segment_graph, segment_positions
+
+
+def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map):
+    culled_graph = copy.deepcopy(graph)
+    culled_positions = copy.deepcopy(positions)
+    target_face_edges = [face_edge_map[target_face] for target_face in target_faces]
+
+    print(target_face_edges)
+    edges_to_be_removed = set()
+    nodes_to_be_removed = set()
+
+    for edge in culled_graph.edges:
+        vertex_a, vertex_b = edge[0], edge[1]
+
+        if culled_graph.edges[edge]["segment"]:
+            intersections = []
+
+            for face_edges in target_face_edges:
+
+                for edge_face in face_edges:
+                    edge_point_a, edge_point_b = culled_positions[vertex_a], culled_positions[vertex_b]
+                    face_point_a, face_point_b = culled_positions[edge_face[0]], culled_positions[edge_face[1]]
+
+                    # TODO: keep track of intersections and add new virtual vertices
+                    # TODO: store intersections as dictionary of lists (frozenset as key)
+                    # TODO: don't check edges that are in the the face edge set
+
+                    intersection = line_intersection(edge_point_a, edge_point_b, face_point_a, face_point_b)
+                    intersections.append(intersection)
+
+            if all([intersection is None for intersection in intersections]):
+                edges_to_be_removed.add(edge)
+                if any([culled_graph.nodes[vertex]["boundary"] == 1 for vertex in [vertex_a, vertex_b]]):
+                    nodes_to_be_removed.add(vertex_a if culled_graph.nodes[vertex_a]["boundary"] == 1 else vertex_b)
+
+    for edge in edges_to_be_removed:
+        culled_graph.remove_edge(u=edge[0], v=edge[1])
+    for node in nodes_to_be_removed:
+        culled_graph.remove_node(node)
+
+    return culled_graph, culled_positions
