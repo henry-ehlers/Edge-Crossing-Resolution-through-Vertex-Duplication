@@ -25,6 +25,7 @@ def create_barabasi_albert_graph(n, m, seed, root_dir="data/simulated"):
     # Set Edge Attributes
     nx.set_edge_attributes(graph, 0, "virtual")
     nx.set_edge_attributes(graph, 0, "target")
+    nx.set_edge_attributes(graph, 0, "segment")
 
     # Append the 'split' field to the graph object
     for vertex in graph:

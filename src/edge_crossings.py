@@ -87,7 +87,7 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
         # Connect vertices in sort order (undirected edges so order doesn't matter)
         for index in range(1, len(sorted_vertex_targets)):
             vertex_a, vertex_b = sorted_vertex_targets[index-1], sorted_vertex_targets[index]
-            graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, virtual=1, target=0)
+            graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, virtual=1, target=0, segment=0)
 
 
 def planarize_graph(graph, positions, edge_crossings, starting_index):

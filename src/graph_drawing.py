@@ -52,7 +52,9 @@ def color_split_vertices(graph):
 def color_edges(graph):
     edge_color_map = []
     for edge in graph.edges:
-        if graph.edges[edge]["target"] == 1:
+        if graph.edges[edge]["segment"] == 1:
+            color = "green"
+        elif graph.edges[edge]["target"] == 1:
             color = "blue"
         elif graph.edges[edge]["virtual"] == 0:
             color = "black"
