@@ -130,13 +130,24 @@ if __name__ == '__main__':
     face_graph, face_positions, face_virtual_edge_associations = create_subface_graph(
         culled_segment_graph, culled_segment_positions, selected_face_set, face_intersection_map)
 
-    # Planarize the subfaces
-    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(face_graph, face_positions)
-    print(face_edge_crossings)
-    face_graph, face_positions, face_virtual_edge_set = planarize_graph(graph=face_graph,
-                                                                        positions=face_positions,
-                                                                        edge_crossings=face_edge_crossings)
-
     draw_graph(graph=face_graph, positions=face_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=7)
     save_drawn_graph(output_path)
+
+    # Planarize the subfaces
+    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(face_graph, face_positions)
+    print(face_edge_crossings)
+    plane_face_graph, plane_face_positions, plane_face_virtual_edge_set = planarize_graph(
+        graph=face_graph, positions=face_positions, edge_crossings=face_edge_crossings)
+
+    draw_graph(graph=plane_face_graph, positions=plane_face_positions)
+    output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=8)
+    save_drawn_graph(output_path)
+
+    # Split Vertex Placement -------------------------------------------------------------------------------------------
+
+    # TODO: CALCULCATE CENTROIDS FOR EACH FACE
+
+    # TODO: FOR ALL NON-INCIDENT VERTEX NEIGHBORS, CALCULATE INDUCED EDGE CROSSINGS
+
+    # TODO: SELECT BEST PAIR OF VERTEX SPLIT PLACEMENTS AND CONNECTIONS, ONE FROM EACH FACE
