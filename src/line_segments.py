@@ -54,6 +54,8 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
 
     print("EDGE SETS:")
     [print(edge_set) for edge_set in virtual_edge_set]
+    new_virtual_edge_sets = set()
+
     print("---------------------------")
 
     # Store nodes and edges for easier look-up
@@ -73,7 +75,8 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
             vertex_b = node_list[index_b]
 
             # Check if this particular combination of vertices maps to a virtual edge set
-            if any([{vertex_a, vertex_b} <= v_edge_set for v_edge_set in virtual_edge_set]):
+            found_set = [v_edge_set for v_edge_set in virtual_edge_set if {vertex_a, vertex_b} <= v_edge_set]
+            if found_set:
                 # Ensure that both vertices are real
                 if any(graph.nodes[vertex]["virtual"] == 1 for vertex in [vertex_a, vertex_b]):
                     continue
@@ -101,15 +104,19 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
             else:
                 connections = [(vertex_index-1, vertex_a), (vertex_a, vertex_b), (vertex_b, vertex_index)]
 
+            if found_set:
+                new_set = frozenset(list(found_set[0])+[vertex_index - 1, vertex_index])
+                new_virtual_edge_sets.add(frozenset(new_set))
+
             # Add new edges (line segments) to graph
             for connection in connections:
                 segment_graph.add_edge(u_of_edge=connection[0], v_of_edge=connection[1], virtual=0, target=0, segment=1)
 
     # Return new graph and positions objects
-    return segment_graph, segment_positions
+    return segment_graph, segment_positions, new_virtual_edge_sets
 
 
-def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map):
+def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map, virtual_edge_set):
     culled_graph = copy.deepcopy(graph)
     culled_positions = copy.deepcopy(positions)
     # target_face_edges = [face_edge_map[target_face] for target_face in target_faces]
@@ -120,8 +127,6 @@ def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map):
 
     # Initialize empty nested dictionary
     face_intersection_map = {target_face: dict() for target_face in target_faces}
-    print(f"face intersection map: {face_intersection_map}")
-    print(f"target faces: {target_faces}")
 
     for edge in culled_graph.edges:
         vertex_a, vertex_b = edge[0], edge[1]
@@ -130,19 +135,21 @@ def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map):
             intersection_found = False
 
             for target_face in target_faces:
-                print(f"target face: {target_face}")
+
                 for face_edge in face_edge_map[target_face]:
-                    #print(f"face edge: {face_edge}")
+
+                    # Check if the line segment being tested is an extension of the current face-edge
+                    if any([{vertex_a, vertex_b} <= v_edge_set and {face_edge[0], face_edge[1]} <= v_edge_set
+                            for v_edge_set in virtual_edge_set]):
+                        print(f"SKIPPING: {vertex_a, vertex_b} and {face_edge[0], face_edge[1]}")
+                        continue
 
                     # Define Points and calculate intersection between them
                     edge_point_a, edge_point_b = culled_positions[vertex_a], culled_positions[vertex_b]
                     face_point_a, face_point_b = culled_positions[face_edge[0]], culled_positions[face_edge[1]]
                     intersection = line_intersection(edge_point_a, edge_point_b, face_point_a, face_point_b)
-                    print(f"Intersection: {intersection}")
 
-                    # TODO: keep track of intersections and add new virtual vertices
-                    # TODO: store intersections as dictionary of lists (frozenset as key)
-                    # TODO: don't check edges that are in the the face edge set
+                    # TODO: CHECK WHETHER THE INTERSECTION IS JUST WITH THE FACE'S VERTEX
 
                     # Store intersection if one exists
                     if intersection is not None:
@@ -170,7 +177,7 @@ def create_subface_graph(graph, positions, target_faces, face_intersection_map):
     for target_face in target_faces:
         for intersecting_edge in face_intersection_map[target_face].keys():
             print(f"Intersecting Edge: {intersecting_edge}")
-            if len(intersecting_edge.keys()) > 2:
-                print("whoops!")
+            if len(face_intersection_map[target_face][intersecting_edge].keys()) > 2:
+                print(face_intersection_map[target_face][intersecting_edge])
 
     return None

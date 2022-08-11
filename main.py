@@ -112,7 +112,8 @@ if __name__ == '__main__':
     # All Line Segments ------------------------------------------------------------------------------------------------
 
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
-    all_segment_graph, all_segment_positions = draw_all_line_segments(plane_graph, plane_positions, virtual_edge_set)
+    all_segment_graph, all_segment_positions, new_virtual_edge_sets = draw_all_line_segments(
+        plane_graph, plane_positions, virtual_edge_set)
 
     draw_graph(graph=all_segment_graph, positions=all_segment_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=5)
@@ -120,7 +121,7 @@ if __name__ == '__main__':
 
     # Limited Line Segments --------------------------------------------------------------------------------------------
     culled_segment_graph, culled_segment_positions, face_intersection_map = cull_all_line_segment_graph(
-        all_segment_graph, all_segment_positions, selected_face_set, face_edge_map)
+        all_segment_graph, all_segment_positions, selected_face_set, face_edge_map, new_virtual_edge_sets)
 
     [print(f"target face map: {face_intersection_map[target_face]}\n") for target_face in selected_face_set]
 
@@ -130,4 +131,4 @@ if __name__ == '__main__':
 
     # Create Subfaces --------------------------------------------------------------------------------------------------
     create_subface_graph(culled_segment_graph, culled_segment_positions, selected_face_set, face_intersection_map)
-    
+
