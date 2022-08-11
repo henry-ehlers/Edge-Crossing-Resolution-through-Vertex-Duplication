@@ -52,6 +52,10 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
     segment_graph = copy.deepcopy(graph)
     segment_positions = copy.deepcopy(positions)
 
+    print("EDGE SETS:")
+    [print(edge_set) for edge_set in virtual_edge_set]
+    print("---------------------------")
+
     # Store nodes and edges for easier look-up
     node_list = list(segment_graph.nodes())
     edges = frozenset([frozenset(edge) for edge in list(segment_graph.edges())])
@@ -72,10 +76,9 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
             if any([{vertex_a, vertex_b} <= v_edge_set for v_edge_set in virtual_edge_set]):
                 # Ensure that both vertices are real
                 if any(graph.nodes[vertex]["virtual"] == 1 for vertex in [vertex_a, vertex_b]):
-                    already_connected = 1
-                else:
-                    print(f"SKIPPING {vertex_a} and {vertex_b}")
                     continue
+                else:
+                    already_connected = 1
             else:
                 # Check whether an edge already exists between vertices a and b
                 if {node_list[index_a], node_list[index_b]} in edges:
@@ -109,32 +112,46 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
 def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map):
     culled_graph = copy.deepcopy(graph)
     culled_positions = copy.deepcopy(positions)
-    target_face_edges = [face_edge_map[target_face] for target_face in target_faces]
+    # target_face_edges = [face_edge_map[target_face] for target_face in target_faces]
 
-    print(target_face_edges)
+    # Keep track of non-intersecting segments
     edges_to_be_removed = set()
     nodes_to_be_removed = set()
+
+    # Initialize empty nested dictionary
+    face_intersection_map = {target_face: dict() for target_face in target_faces}
+    print(f"face intersection map: {face_intersection_map}")
+    print(f"target faces: {target_faces}")
 
     for edge in culled_graph.edges:
         vertex_a, vertex_b = edge[0], edge[1]
 
         if culled_graph.edges[edge]["segment"]:
-            intersections = []
+            intersection_found = False
 
-            for face_edges in target_face_edges:
+            for target_face in target_faces:
+                print(f"target face: {target_face}")
+                for face_edge in face_edge_map[target_face]:
+                    #print(f"face edge: {face_edge}")
 
-                for edge_face in face_edges:
+                    # Define Points and calculate intersection between them
                     edge_point_a, edge_point_b = culled_positions[vertex_a], culled_positions[vertex_b]
-                    face_point_a, face_point_b = culled_positions[edge_face[0]], culled_positions[edge_face[1]]
+                    face_point_a, face_point_b = culled_positions[face_edge[0]], culled_positions[face_edge[1]]
+                    intersection = line_intersection(edge_point_a, edge_point_b, face_point_a, face_point_b)
+                    print(f"Intersection: {intersection}")
 
                     # TODO: keep track of intersections and add new virtual vertices
                     # TODO: store intersections as dictionary of lists (frozenset as key)
                     # TODO: don't check edges that are in the the face edge set
 
-                    intersection = line_intersection(edge_point_a, edge_point_b, face_point_a, face_point_b)
-                    intersections.append(intersection)
+                    # Store intersection if one exists
+                    if intersection is not None:
+                        intersection_found = True
+                        if (vertex_a, vertex_b) not in face_intersection_map[target_face].keys():
+                            face_intersection_map[target_face][(vertex_a, vertex_b)] = dict()
+                        face_intersection_map[target_face][(vertex_a, vertex_b)][face_edge] = intersection
 
-            if all([intersection is None for intersection in intersections]):
+            if not intersection_found:
                 edges_to_be_removed.add(edge)
                 if any([culled_graph.nodes[vertex]["boundary"] == 1 for vertex in [vertex_a, vertex_b]]):
                     nodes_to_be_removed.add(vertex_a if culled_graph.nodes[vertex_a]["boundary"] == 1 else vertex_b)
@@ -144,4 +161,16 @@ def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map):
     for node in nodes_to_be_removed:
         culled_graph.remove_node(node)
 
-    return culled_graph, culled_positions
+    return culled_graph, culled_positions, face_intersection_map
+
+
+def create_subface_graph(graph, positions, target_faces, face_intersection_map):
+
+    # Iterate over all (hopefully 2) target faces
+    for target_face in target_faces:
+        for intersecting_edge in face_intersection_map[target_face].keys():
+            print(f"Intersecting Edge: {intersecting_edge}")
+            if len(intersecting_edge.keys()) > 2:
+                print("whoops!")
+
+    return None

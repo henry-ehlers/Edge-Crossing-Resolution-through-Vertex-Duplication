@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # Define Input Parameters
     embedding = "kamada_kawai"
-    n_vertices = 20
+    n_vertices = 10
     m_edges = 3
     seed = 1
 
@@ -109,9 +109,6 @@ if __name__ == '__main__':
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=4)
     save_drawn_graph(output_path)
 
-    for vertex in list(plane_graph.nodes()):
-        print("Vertex {}: {}".format(vertex, plane_positions[vertex]))
-
     # All Line Segments ------------------------------------------------------------------------------------------------
 
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
@@ -122,10 +119,15 @@ if __name__ == '__main__':
     save_drawn_graph(output_path)
 
     # Limited Line Segments --------------------------------------------------------------------------------------------
-    culled_segment_graph, culled_segment_positions = cull_all_line_segment_graph(all_segment_graph,
-                                                                                 all_segment_positions,
-                                                                                 selected_face_set,
-                                                                                 face_edge_map)
+    culled_segment_graph, culled_segment_positions, face_intersection_map = cull_all_line_segment_graph(
+        all_segment_graph, all_segment_positions, selected_face_set, face_edge_map)
+
+    [print(f"target face map: {face_intersection_map[target_face]}\n") for target_face in selected_face_set]
+
     draw_graph(graph=culled_segment_graph, positions=culled_segment_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=6)
     save_drawn_graph(output_path)
+
+    # Create Subfaces --------------------------------------------------------------------------------------------------
+    create_subface_graph(culled_segment_graph, culled_segment_positions, selected_face_set, face_intersection_map)
+    
