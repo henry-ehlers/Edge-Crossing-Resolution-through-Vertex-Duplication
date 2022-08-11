@@ -180,24 +180,34 @@ def create_subface_graph(graph, positions, target_faces, face_intersection_map):
 
     edges_to_be_removed = set()
     nodes_to_be_removed = [vertex for vertex in graph if graph.nodes[vertex]["boundary"] == 1]
+    edge_to_virtual_vertex = dict()
+
     for target_face in target_faces:
         for intersecting_edge in face_intersection_map[target_face].keys():
             edges_to_be_removed.add(frozenset(intersecting_edge))
             edge_targets = []
             for face_edge in face_intersection_map[target_face][intersecting_edge].keys():
                 if type(face_edge) is tuple:
+                    if face_edge not in edge_to_virtual_vertex:
+                        edge_to_virtual_vertex[face_edge] = set()
+                    edges_to_be_removed.add(frozenset(face_edge))
                     intersection = face_intersection_map[target_face][intersecting_edge][face_edge]
                     vertex_index += 1
                     edge_targets.append(vertex_index)
                     graph.add_node(node_for_adding=vertex_index, split=0, target=0, virtual=0, boundary=0, segment=1)
                     positions[vertex_index] = np.asarray(intersection)
+                    edge_to_virtual_vertex[face_edge].add(vertex_index)
                 else:
                     edge_targets.append(face_edge)
             graph.add_edge(u_of_edge=edge_targets[0], v_of_edge=edge_targets[1], virtual=0, target=0, segment=1)
+
+    # Add virtual edge connections
+    [print(f"{index} - {edge_to_virtual_vertex[index]}") for index in edge_to_virtual_vertex.keys()]
+    virtual_edge_set = add_virtual_edges(graph, positions, edge_to_virtual_vertex)
 
     # Remove
     [graph.remove_edge(u=list(edge)[0], v=list(edge)[1]) for edge in edges_to_be_removed]
     [graph.remove_node(vertex) for vertex in nodes_to_be_removed]
 
-    return graph, positions
+    return graph, positions, virtual_edge_set
 

@@ -127,15 +127,16 @@ if __name__ == '__main__':
     save_drawn_graph(output_path)
 
     # Create Subfaces --------------------------------------------------------------------------------------------------
-    face_graph, face_positions = create_subface_graph(
+    face_graph, face_positions, face_virtual_edge_associations = create_subface_graph(
         culled_segment_graph, culled_segment_positions, selected_face_set, face_intersection_map)
 
-    # # Planarize the subfaces
-    # face_edge_crossings, face_vertex_crossings = locate_edge_crossings(face_graph, face_positions)
-    # print(face_edge_crossings)
-    # face_graph, face_positions, face_virtual_edge_set = planarize_graph(graph=face_graph,
-    #                                                                     positions=face_positions,
-    #                                                                     edge_crossings=face_edge_crossings)
-    draw_graph(graph=culled_segment_graph, positions=culled_segment_positions)
+    # Planarize the subfaces
+    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(face_graph, face_positions)
+    print(face_edge_crossings)
+    face_graph, face_positions, face_virtual_edge_set = planarize_graph(graph=face_graph,
+                                                                        positions=face_positions,
+                                                                        edge_crossings=face_edge_crossings)
+
+    draw_graph(graph=face_graph, positions=face_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=7)
     save_drawn_graph(output_path)
