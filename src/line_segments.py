@@ -52,11 +52,7 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
     segment_graph = copy.deepcopy(graph)
     segment_positions = copy.deepcopy(positions)
 
-    print("EDGE SETS:")
-    [print(edge_set) for edge_set in virtual_edge_set]
     new_virtual_edge_sets = set()
-
-    print("---------------------------")
 
     # Store nodes and edges for easier look-up
     node_list = list(segment_graph.nodes())
@@ -65,8 +61,6 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
     # Store the number of nodes and largest index
     vertex_index = max(node_list)
     number_of_nodes = len(node_list)
-
-    [print(edge_set) for edge_set in virtual_edge_set]
 
     # Iterate over all pairwise vertex combinations
     for index_a in range(0, number_of_nodes):

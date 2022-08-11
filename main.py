@@ -73,8 +73,7 @@ if __name__ == '__main__':
     # Planarize Graph
     plane_graph, plane_positions, virtual_edge_set = planarize_graph(graph=remaining_graph,
                                                                      positions=remaining_positions,
-                                                                     edge_crossings=remaining_edge_crossings,
-                                                                     starting_index=virtual_index_start)
+                                                                     edge_crossings=remaining_edge_crossings)
     # [print(edge_set) for edge_set in virtual_edge_set]
     planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(plane_graph, plane_positions)
 
@@ -131,6 +130,12 @@ if __name__ == '__main__':
     face_graph, face_positions = create_subface_graph(
         culled_segment_graph, culled_segment_positions, selected_face_set, face_intersection_map)
 
+    # # Planarize the subfaces
+    # face_edge_crossings, face_vertex_crossings = locate_edge_crossings(face_graph, face_positions)
+    # print(face_edge_crossings)
+    # face_graph, face_positions, face_virtual_edge_set = planarize_graph(graph=face_graph,
+    #                                                                     positions=face_positions,
+    #                                                                     edge_crossings=face_edge_crossings)
     draw_graph(graph=culled_segment_graph, positions=culled_segment_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=7)
     save_drawn_graph(output_path)
