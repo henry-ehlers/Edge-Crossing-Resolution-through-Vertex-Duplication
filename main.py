@@ -128,5 +128,9 @@ if __name__ == '__main__':
     save_drawn_graph(output_path)
 
     # Create Subfaces --------------------------------------------------------------------------------------------------
-    create_subface_graph(culled_segment_graph, culled_segment_positions, selected_face_set, face_intersection_map)
+    face_graph, face_positions = create_subface_graph(
+        culled_segment_graph, culled_segment_positions, selected_face_set, face_intersection_map)
 
+    draw_graph(graph=culled_segment_graph, positions=culled_segment_positions)
+    output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=7)
+    save_drawn_graph(output_path)

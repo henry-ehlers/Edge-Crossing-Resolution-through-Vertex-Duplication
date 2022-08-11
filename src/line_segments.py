@@ -89,7 +89,7 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
             # Add new boundary vertices to the graph
             for added_vertex in range(0, len(intersections)):
                 vertex_index += 1
-                segment_graph.add_node(node_for_adding=vertex_index, split=0, target=0, virtual=0, boundary=1)
+                segment_graph.add_node(node_for_adding=vertex_index, split=0, target=0, virtual=0, boundary=1, segment=0)
                 segment_positions[vertex_index] = np.asarray(intersections[added_vertex])
 
             if found_set:
@@ -133,11 +133,6 @@ def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map, v
 
             for face_edge in face_edge_map[target_face]:
 
-                # Check if the line segment being tested is an extension of the current face-edge
-                if any([{vertex_a, vertex_b} <= v_edge_set and {face_edge[0], face_edge[1]} <= v_edge_set
-                        for v_edge_set in virtual_edge_set]):
-                    continue
-
                 # Determine if line actually passes through one of the vertices which define the face
                 if {vertex_a, vertex_b} & {face_edge[0], face_edge[1]}:
                     intersection_key = face_edge[0] if face_edge[0] in {vertex_a, vertex_b} else face_edge[1]
@@ -156,9 +151,12 @@ def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map, v
                         intersections_found += 1
                         face_intersection_map[target_face][edge][intersection_key] = intersection
 
+            # If only one intersection was found, remove the edge
             if intersections_found == 1:
                 intersections_found = 0
                 face_intersection_map[target_face].pop(edge)
+
+            # If the edge did intersect (at least) a face, unmark it for deletion
             if intersections_found > 0:
                 delete_edge = False
 
@@ -170,23 +168,42 @@ def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map, v
         if delete_edge and any([culled_graph.nodes[vertex]["boundary"] == 1 for vertex in [vertex_a, vertex_b]]):
             nodes_to_be_removed.add(vertex_a if culled_graph.nodes[vertex_a]["boundary"] == 1 else vertex_b)
 
+    # Remove Edges and Vertices which did not intersect any face
     for edge in edges_to_be_removed:
         culled_graph.remove_edge(u=edge[0], v=edge[1])
     for node in nodes_to_be_removed:
         culled_graph.remove_node(node)
 
+    # Return new graph, positions, and intersection map
     return culled_graph, culled_positions, face_intersection_map
 
 
 def create_subface_graph(graph, positions, target_faces, face_intersection_map):
 
     # Iterate over all (hopefully 2) target faces
+    node_list = list(graph.nodes())
+    vertex_index = max(node_list)
+
+    edges_to_be_removed = set()
+    nodes_to_be_removed = [vertex for vertex in graph if graph.nodes[vertex]["boundary"] == 1]
     for target_face in target_faces:
-        print(f"\nTARGET FACE: {target_face}")
         for intersecting_edge in face_intersection_map[target_face].keys():
-            print(f"Intersecting Edge: {intersecting_edge}")
-            if len(face_intersection_map[target_face][intersecting_edge].keys()) != 2:
-                print(face_intersection_map[target_face][intersecting_edge])
+            edges_to_be_removed.add(frozenset(intersecting_edge))
+            edge_targets = []
+            for face_edge in face_intersection_map[target_face][intersecting_edge].keys():
+                if type(face_edge) is tuple:
+                    intersection = face_intersection_map[target_face][intersecting_edge][face_edge]
+                    vertex_index += 1
+                    edge_targets.append(vertex_index)
+                    graph.add_node(node_for_adding=vertex_index, split=0, target=0, virtual=0, boundary=0, segment=1)
+                    positions[vertex_index] = np.asarray(intersection)
+                else:
+                    edge_targets.append(face_edge)
+            graph.add_edge(u_of_edge=edge_targets[0], v_of_edge=edge_targets[1], virtual=0, target=0, segment=1)
 
+    # Remove
+    [graph.remove_edge(u=list(edge)[0], v=list(edge)[1]) for edge in edges_to_be_removed]
+    [graph.remove_node(vertex) for vertex in nodes_to_be_removed]
 
-    return None
+    return graph, positions
+
