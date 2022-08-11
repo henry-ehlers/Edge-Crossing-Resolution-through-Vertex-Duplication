@@ -123,8 +123,6 @@ if __name__ == '__main__':
     culled_segment_graph, culled_segment_positions, face_intersection_map = cull_all_line_segment_graph(
         all_segment_graph, all_segment_positions, selected_face_set, face_edge_map, new_virtual_edge_sets)
 
-    [print(f"target face map: {face_intersection_map[target_face]}\n") for target_face in selected_face_set]
-
     draw_graph(graph=culled_segment_graph, positions=culled_segment_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=6)
     save_drawn_graph(output_path)
