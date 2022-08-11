@@ -28,6 +28,7 @@ def sort_vertices_along_edge(edge, vertex_set, positions):
     # Ensure Start and End-Points sorted correctly (i.e first and last)
     # TODO: NUMERICAL ERROR FOR LARGE GRAPHS (WITH SMALL DIFFERENCES BETWEEN POINTS)
     # TODO: EITHER FORCE POSITIONS OR MERGE VERY CLOSELY LOCATED NODES (SEGMENT-INDUCED ONES)
+    # TODO: BUILD A WHILE LOOP WHICH ITERATIVELY MERGES THE TWO CLOSEST VERTICES (PRESERVING TERMINI) UNTIL ORDER IS OK
     assert sorted_indices[0] == (len(vertices_to_sort)-2) and sorted_indices[-1] == (len(vertices_to_sort)-1), \
         "Start and End Points of vector did not sort as expected"
 

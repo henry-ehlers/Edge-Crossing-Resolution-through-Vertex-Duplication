@@ -101,4 +101,4 @@ def draw_graph(graph, positions):
     # Draw Graph Embedding
     plt.figure(3, figsize=(20, 20))
     nx.draw(G=graph, pos=positions, node_color=node_color_map, edge_color=edge_color_map, node_shape='o', node_size=14)
-    nx.draw_networkx_labels(G=graph, pos=positions, font_size=25)
+    nx.draw_networkx_labels(G=graph, pos=positions, font_size=5)

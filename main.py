@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # Define Input Parameters
     embedding = "kamada_kawai"
-    n_vertices = 20
+    n_vertices = 10
     m_edges = 3
     seed = 1
 
