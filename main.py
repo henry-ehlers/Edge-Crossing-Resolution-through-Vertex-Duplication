@@ -2,6 +2,7 @@ from src.graph_simulation import *
 from src.graph_drawing import *
 from src.edge_crossings import *
 from src.line_segments import *
+from src.vertex_splitting import *
 from src.faces import *
 
 import networkx as nx
@@ -71,10 +72,8 @@ if __name__ == '__main__':
     # PLANARIZATION ----------------------------------------------------------------------------------------------------
 
     # Planarize Graph
-    plane_graph, plane_positions, virtual_edge_set = planarize_graph(graph=remaining_graph,
-                                                                     positions=remaining_positions,
-                                                                     edge_crossings=remaining_edge_crossings)
-    # [print(edge_set) for edge_set in virtual_edge_set]
+    plane_graph, plane_positions, virtual_edge_set = planarize_graph(
+        graph=remaining_graph, positions=remaining_positions, edge_crossings=remaining_edge_crossings)
     planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(plane_graph, plane_positions)
 
     # Draw and Save Planar rGraph
@@ -96,7 +95,8 @@ if __name__ == '__main__':
     print("#Face Target Sets Found: {}".format(len(selected_faces)))
     print("Maximum Target Incidence: {}".format(max_incidence))
 
-    # Arbitrary Selection of target face-set
+    # FACE SELECTION ---------------------------------------------------------------------------------------------------
+
     # TODO: either select a single such face-set or try all that are tied
     selected_face_set_index = 0
     selected_face_set = selected_faces[selected_face_set_index]
@@ -125,6 +125,8 @@ if __name__ == '__main__':
     save_drawn_graph(output_path)
 
     # Limited Line Segments --------------------------------------------------------------------------------------------
+
+    # Keep only segments that pass through faces of interest
     culled_segment_graph, culled_segment_positions, face_intersection_map = cull_all_line_segment_graph(
         all_segment_graph, all_segment_positions, selected_face_set, face_edge_map)
 
@@ -133,6 +135,8 @@ if __name__ == '__main__':
     save_drawn_graph(output_path)
 
     # Create Subfaces --------------------------------------------------------------------------------------------------
+
+    #
     face_graph, face_graph_positions, face_graph_virtual_edge_associations, face_vertex_map = create_subface_graph(
         culled_segment_graph, culled_segment_positions, selected_face_set, face_intersection_map)
 
@@ -157,8 +161,10 @@ if __name__ == '__main__':
     [print(f"{key} - {plane_graph_sub_faces[key]}") for key in plane_graph_sub_faces.keys()]
 
     # Obtain all remaining vertices to be connected
+    subface_centroids = get_split_vertex_locations(plane_face_graph_positions, plane_graph_sub_faces)
+    print(subface_centroids)
 
-    # TODO: CALCULCATE CENTROIDS FOR EACH FACE
+    # Calculcate
 
     # TODO: FOR ALL NON-INCIDENT VERTEX NEIGHBORS, CALCULATE INDUCED EDGE CROSSINGS
 
