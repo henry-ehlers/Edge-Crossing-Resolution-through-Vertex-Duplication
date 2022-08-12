@@ -75,11 +75,9 @@ def get_split_vertex_pairs(induced_edge_crossings):
         # Iterate over each target face's subfaces and extract their induced edge crossings numbers
         for subface_a in induced_edge_crossings[face_a].keys():
             crossings_a = induced_edge_crossings[face_a][subface_a]
-            print(f"Subface-A: {subface_a}")
 
             for subface_b in induced_edge_crossings[face_b].keys():
                 crossings_b = induced_edge_crossings[face_b][subface_b]
-                print(f"Subface-B: {subface_b}")
 
                 # Select the best arrangement of edge crossings
                 best_crossings = [None] * len(crossings_a)
@@ -95,3 +93,25 @@ def get_split_vertex_pairs(induced_edge_crossings):
                 neighbor_assignment[subface_a][subface_b] = assignment
 
     return pair_induced_crossings, neighbor_assignment
+
+
+def select_vertex_splits(pair_induced_crossings):
+    minimum_induced_crossings = float("inf")
+    number_of_ties = 0
+    target_subfaces = ()
+    considerations = 0
+    for subface_a in pair_induced_crossings.keys():
+        for subface_b in pair_induced_crossings[subface_a].keys():
+            considerations += 1
+
+            if pair_induced_crossings[subface_a][subface_b] < minimum_induced_crossings:
+                minimum_induced_crossings = pair_induced_crossings[subface_a][subface_b]
+                target_subfaces = (subface_a, subface_b)
+                number_of_ties = 0
+            elif pair_induced_crossings[subface_a][subface_b] == minimum_induced_crossings:
+                number_of_ties += 1
+            else:
+                continue
+
+    print(f"Considered {considerations} possible subface combinations.")
+    return minimum_induced_crossings, target_subfaces, number_of_ties

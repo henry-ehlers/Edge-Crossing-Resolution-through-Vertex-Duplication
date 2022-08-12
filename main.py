@@ -154,7 +154,7 @@ if __name__ == '__main__':
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=8)
     save_drawn_graph(output_path)
 
-    # Split Vertex Placement -------------------------------------------------------------------------------------------
+    # Determine Split Vertex Placement ---------------------------------------------------------------------------------
 
     # Get all subfaces of all target faces
     plane_graph_sub_faces = find_all_subfaces(plane_face_graph, plane_face_virtual_edge_set, face_vertex_map)
@@ -168,4 +168,12 @@ if __name__ == '__main__':
         remaining_graph, remaining_positions, subface_centroids, remaining_vertex_connections)
     pair_induced_crossings, neighbor_assignment = get_split_vertex_pairs(induced_edge_crossings)
 
-    # Find best vertex pair
+    # Find vertex pair which minimizes joint induced edge crossings
+    min_induced_crossings, target_subfaces, ties = select_vertex_splits(pair_induced_crossings)
+    print(f"Minimum Induced Crossings: {min_induced_crossings}")
+    print(f"target Subfaces: {target_subfaces}")
+    print(f"Number of ties: {ties}")
+
+    # Place Split Vertices ---------------------------------------------------------------------------------------------
+
+    
