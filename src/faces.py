@@ -4,6 +4,33 @@ import numpy as np
 import copy
 
 
+def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
+
+    # Prepare dictionary of sets within which to store all found faces per face
+    subfaces = {target_face: set() for target_face in target_face_to_vertex_map.keys()}
+
+    # Limit search of cycle basis to subfaces
+    for target_face in target_face_to_vertex_map.keys():
+        vertices_to_keep = set()
+
+        # Mark vertices based on their inclusion in virtual edge sets pertaining to the current set
+        for edge_set in virtual_edge_set_map:
+            intersection = target_face_to_vertex_map[target_face] & edge_set
+            if len(intersection) >= 2:
+                [vertices_to_keep.add(vertex) for vertex in list(edge_set)]
+            elif len(intersection) == 1:
+                vertices_to_keep.add(intersection)
+            else:
+                continue
+
+        # Keep only vertices pertaining to current subgraph and search for cycle basis within
+        subgraph = copy.deepcopy(graph).subgraph(list(vertices_to_keep))
+        subfaces[target_face] = find_all_faces(subgraph)
+
+    # Return all subfaces for each target face
+    return subfaces
+
+
 def find_all_faces(graph):
 
     # Identify the minimum cycle basis of the graph

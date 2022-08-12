@@ -52,8 +52,6 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
     segment_graph = copy.deepcopy(graph)
     segment_positions = copy.deepcopy(positions)
 
-    new_virtual_edge_sets = set()
-
     # Store nodes and edges for easier look-up
     node_list = list(segment_graph.nodes())
     edges = frozenset([frozenset(edge) for edge in list(segment_graph.edges())])
@@ -86,10 +84,6 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
                 segment_graph.add_node(node_for_adding=vertex_index, split=0, target=0, virtual=0, boundary=1, segment=0)
                 segment_positions[vertex_index] = np.asarray(intersections[added_vertex])
 
-            if found_set:
-                new_set = frozenset(list(found_set[0])+[vertex_index - 1, vertex_index])
-                new_virtual_edge_sets.add(frozenset(new_set))
-
             # Add new edges (line segments) to graph
             connections = [(vertex_index - 1, vertex_a), (vertex_b, vertex_index)] if already_connected \
                 else [(vertex_index - 1, vertex_a), (vertex_a, vertex_b), (vertex_b, vertex_index)]
@@ -97,10 +91,10 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
                 segment_graph.add_edge(u_of_edge=connection[0], v_of_edge=connection[1], virtual=0, target=0, segment=1)
 
     # Return new graph and positions objects
-    return segment_graph, segment_positions, new_virtual_edge_sets
+    return segment_graph, segment_positions
 
 
-def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map, virtual_edge_set):
+def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map):
 
     # Create new graph objects
     culled_graph = copy.deepcopy(graph)
@@ -181,20 +175,30 @@ def create_subface_graph(graph, positions, target_faces, face_intersection_map):
     edges_to_be_removed = set()
     nodes_to_be_removed = [vertex for vertex in graph if graph.nodes[vertex]["boundary"] == 1]
     edge_to_virtual_vertex = dict()
+    face_vertex_map = {face: set() for face in target_faces}
 
     for target_face in target_faces:
+        [face_vertex_map[target_face].add(face_vertex) for face_vertex in list(target_face)]
+
         for intersecting_edge in face_intersection_map[target_face].keys():
             edges_to_be_removed.add(frozenset(intersecting_edge))
             edge_targets = []
             for face_edge in face_intersection_map[target_face][intersecting_edge].keys():
+
+                # Ensure the intersection is with a line, not a face vertex
                 if type(face_edge) is tuple:
+
+                    # Add currently considered face edge to the dictionary
                     if face_edge not in edge_to_virtual_vertex:
                         edge_to_virtual_vertex[face_edge] = set()
                     edges_to_be_removed.add(frozenset(face_edge))
                     intersection = face_intersection_map[target_face][intersecting_edge][face_edge]
+
+                    # Create new Vertex
                     vertex_index += 1
                     edge_targets.append(vertex_index)
                     graph.add_node(node_for_adding=vertex_index, split=0, target=0, virtual=0, boundary=0, segment=1)
+                    face_vertex_map[target_face].add(vertex_index)
                     positions[vertex_index] = np.asarray(intersection)
                     edge_to_virtual_vertex[face_edge].add(vertex_index)
                 else:
@@ -202,12 +206,12 @@ def create_subface_graph(graph, positions, target_faces, face_intersection_map):
             graph.add_edge(u_of_edge=edge_targets[0], v_of_edge=edge_targets[1], virtual=0, target=0, segment=1)
 
     # Add virtual edge connections
-    [print(f"{index} - {edge_to_virtual_vertex[index]}") for index in edge_to_virtual_vertex.keys()]
+    # [print(f"{index} - {edge_to_virtual_vertex[index]}") for index in edge_to_virtual_vertex.keys()]
     virtual_edge_set = add_virtual_edges(graph, positions, edge_to_virtual_vertex)
 
     # Remove
     [graph.remove_edge(u=list(edge)[0], v=list(edge)[1]) for edge in edges_to_be_removed]
     [graph.remove_node(vertex) for vertex in nodes_to_be_removed]
 
-    return graph, positions, virtual_edge_set
+    return graph, positions, virtual_edge_set, face_vertex_map
 

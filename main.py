@@ -85,8 +85,10 @@ if __name__ == '__main__':
     # FACE IDENTIFICATION ----------------------------------------------------------------------------------------------
 
     # # Locate faces and best two for target face
+    # TODO: list of nones in found faces
     faces = find_all_faces(graph=plane_graph)
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
+    [print(face) for face in faces]
 
     # Find Best Face
     face_incidences = find_face_vertex_incidence(faces, target_vertex_adjacency)
@@ -111,7 +113,7 @@ if __name__ == '__main__':
     # All Line Segments ------------------------------------------------------------------------------------------------
 
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
-    all_segment_graph, all_segment_positions, new_virtual_edge_sets = draw_all_line_segments(
+    all_segment_graph, all_segment_positions = draw_all_line_segments(
         plane_graph, plane_positions, virtual_edge_set)
 
     draw_graph(graph=all_segment_graph, positions=all_segment_positions)
@@ -120,31 +122,39 @@ if __name__ == '__main__':
 
     # Limited Line Segments --------------------------------------------------------------------------------------------
     culled_segment_graph, culled_segment_positions, face_intersection_map = cull_all_line_segment_graph(
-        all_segment_graph, all_segment_positions, selected_face_set, face_edge_map, new_virtual_edge_sets)
+        all_segment_graph, all_segment_positions, selected_face_set, face_edge_map)
 
     draw_graph(graph=culled_segment_graph, positions=culled_segment_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=6)
     save_drawn_graph(output_path)
 
     # Create Subfaces --------------------------------------------------------------------------------------------------
-    face_graph, face_positions, face_virtual_edge_associations = create_subface_graph(
+    face_graph, face_graph_positions, face_graph_virtual_edge_associations, face_vertex_map = create_subface_graph(
         culled_segment_graph, culled_segment_positions, selected_face_set, face_intersection_map)
 
-    draw_graph(graph=face_graph, positions=face_positions)
+    draw_graph(graph=face_graph, positions=face_graph_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=7)
     save_drawn_graph(output_path)
 
     # Planarize the subfaces
-    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(face_graph, face_positions)
-    print(face_edge_crossings)
-    plane_face_graph, plane_face_positions, plane_face_virtual_edge_set = planarize_graph(
-        graph=face_graph, positions=face_positions, edge_crossings=face_edge_crossings)
+    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(face_graph, face_graph_positions)
+    # TODO: list of NONE's in the plane_face_virtual_edge_set
+    plane_face_graph, plane_face_graph_positions, plane_face_virtual_edge_set = planarize_graph(
+        graph=face_graph, positions=face_graph_positions, edge_crossings=face_edge_crossings)
 
-    draw_graph(graph=plane_face_graph, positions=plane_face_positions)
+    draw_graph(graph=plane_face_graph, positions=plane_face_graph_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=8)
     save_drawn_graph(output_path)
 
     # Split Vertex Placement -------------------------------------------------------------------------------------------
+    print("-------------------------------------------------------------------")
+    print(plane_face_virtual_edge_set)
+    print("-------------------------------------------------------------------")
+    print(face_vertex_map)
+    print("-------------------------------------------------------------------")
+    plane_graph_sub_faces = find_all_subfaces(plane_face_graph, plane_face_virtual_edge_set, face_vertex_map)
+    [print(f"{key} - {plane_graph_sub_faces[key]}") for key in plane_graph_sub_faces.keys()]
+    print("-------------------------------------------------------------------")
 
     # TODO: CALCULCATE CENTROIDS FOR EACH FACE
 
