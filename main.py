@@ -1,3 +1,5 @@
+import copy
+
 from src.graph_simulation import *
 from src.graph_drawing import *
 from src.edge_crossings import *
@@ -176,4 +178,12 @@ if __name__ == '__main__':
 
     # Place Split Vertices ---------------------------------------------------------------------------------------------
 
-    
+    # TODO: add function "melt_frozen_set" to add stuff to it
+
+    split_graph, splot_positions, connected_vertices = place_split_vertices(
+        remaining_graph, remaining_positions, target_vertex, target_vertex_adjacency, remaining_vertex_connections,
+        neighbor_assignment, subface_centroids, target_subfaces, plane_graph_sub_faces)
+
+    draw_graph(graph=split_graph, positions=splot_positions)
+    output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=9)
+    save_drawn_graph(output_path)
