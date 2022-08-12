@@ -105,6 +105,10 @@ if __name__ == '__main__':
     print("Selected Faces: {}".format(selected_faces[selected_face_set_index]))
     print("Incident Target Vertices: {}".format(found_targets))
 
+    # How many neighbors have we already reached
+    remaining_vertex_connections = set(target_vertex_adjacency) - set(found_targets)
+    print(f"remaining vertices: {remaining_vertex_connections}")
+
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=4)
@@ -147,14 +151,12 @@ if __name__ == '__main__':
     save_drawn_graph(output_path)
 
     # Split Vertex Placement -------------------------------------------------------------------------------------------
-    print("-------------------------------------------------------------------")
-    print(plane_face_virtual_edge_set)
-    print("-------------------------------------------------------------------")
-    print(face_vertex_map)
-    print("-------------------------------------------------------------------")
+
+    # Get all subfaces of all target faces
     plane_graph_sub_faces = find_all_subfaces(plane_face_graph, plane_face_virtual_edge_set, face_vertex_map)
     [print(f"{key} - {plane_graph_sub_faces[key]}") for key in plane_graph_sub_faces.keys()]
-    print("-------------------------------------------------------------------")
+
+    # Obtain all remaining vertices to be connected
 
     # TODO: CALCULCATE CENTROIDS FOR EACH FACE
 
