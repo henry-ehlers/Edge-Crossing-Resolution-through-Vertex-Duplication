@@ -162,13 +162,10 @@ if __name__ == '__main__':
 
     # Obtain all remaining vertices to be connected
     subface_centroids = get_split_vertex_locations(plane_face_graph_positions, plane_graph_sub_faces)
-    print(subface_centroids)
 
     # Calculate induced edge crossings using the graph with the deleted vertex
     induced_edge_crossings = calculate_induced_edge_crossings(
         remaining_graph, remaining_positions, subface_centroids, remaining_vertex_connections)
-    [print(f"{key} - {induced_edge_crossings[key]}") for key in induced_edge_crossings.keys()]
+    pair_induced_crossings, neighbor_assignment = get_split_vertex_pairs(induced_edge_crossings)
 
-    # TODO: FOR ALL NON-INCIDENT VERTEX NEIGHBORS, CALCULATE INDUCED EDGE CROSSINGS
-
-    # TODO: SELECT BEST PAIR OF VERTEX SPLIT PLACEMENTS AND CONNECTIONS, ONE FROM EACH FACE
+    # Find best vertex pair

@@ -1,5 +1,6 @@
 from src.edge_crossings import *
 import pandas as pd
+import itertools
 
 
 def calculate_face_centroid(face_vertex_positions):
@@ -56,11 +57,41 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
     return induced_edge_crossings
 
 
-def select_best_vertex_split_pair(induced_edge_crossings):
+def get_split_vertex_pairs(induced_edge_crossings):
 
-    
-    for target_face_a in induced_edge_crossings.keys():
-        for target_face_b in induced_edge_crossings.keys():
-            if target_face_a == target_face_b:
-                continue
-    return None
+    # Initialize dictionaries to store results
+    pair_induced_crossings = dict()
+    neighbor_assignment = dict()
+
+    # Define all possible combinations of target faces and iterate over them
+    target_face_pairs = itertools.combinations(induced_edge_crossings.keys(), 2)
+    for face_pair in target_face_pairs:
+        face_a, face_b = face_pair
+        print(f"Faces {face_a} and {face_b}")
+
+        pair_induced_crossings.update({subface: dict() for subface in induced_edge_crossings[face_a].keys()})
+        neighbor_assignment.update({subface: dict() for subface in induced_edge_crossings[face_a].keys()})
+
+        # Iterate over each target face's subfaces and extract their induced edge crossings numbers
+        for subface_a in induced_edge_crossings[face_a].keys():
+            crossings_a = induced_edge_crossings[face_a][subface_a]
+            print(f"Subface-A: {subface_a}")
+
+            for subface_b in induced_edge_crossings[face_b].keys():
+                crossings_b = induced_edge_crossings[face_b][subface_b]
+                print(f"Subface-B: {subface_b}")
+
+                # Select the best arrangement of edge crossings
+                best_crossings = [None] * len(crossings_a)
+                assignment = [None] * len(crossings_a)
+                for neighbor in range(0, len(crossings_a)):
+                    # TODO: Resolve ties, maybe using edge length or distance from target face's centroid (FUNCTION)
+                    neighbor_a_better = crossings_a[neighbor] <= crossings_b[neighbor]
+                    best_crossings[neighbor] = crossings_a[neighbor] if neighbor_a_better else crossings_a[neighbor]
+                    assignment[neighbor] = subface_a if neighbor_a_better else subface_b
+
+                # Store results
+                pair_induced_crossings[subface_a][subface_b] = sum(best_crossings)
+                neighbor_assignment[subface_a][subface_b] = assignment
+
+    return pair_induced_crossings, neighbor_assignment
