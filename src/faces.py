@@ -19,7 +19,7 @@ def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
             if len(intersection) >= 2:
                 [vertices_to_keep.add(vertex) for vertex in list(edge_set)]
             elif len(intersection) == 1:
-                vertices_to_keep.add(intersection)
+                vertices_to_keep.add(intersection.pop())
             else:
                 continue
 

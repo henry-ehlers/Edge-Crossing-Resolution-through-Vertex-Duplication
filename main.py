@@ -14,11 +14,14 @@ from src.faces import *
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
+    # Command Line Arguments
+    cmd_args = sys.argv
+
     # Define Input Parameters
     embedding = "kamada_kawai"
-    n_vertices = 10
-    m_edges = 3
-    seed = 1
+    n_vertices = int(sys.argv[1])
+    m_edges = int(sys.argv[2])
+    seed = int(sys.argv[3])
 
     # Diagnostics Files
     diagnostics_directory = "./output/diagnostics"
