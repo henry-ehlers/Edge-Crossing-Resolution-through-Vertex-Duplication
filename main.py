@@ -2,6 +2,7 @@ import numpy as np
 import timeit
 import sys
 
+from py2d.Math import Polygon, Vector
 from src.graph_simulation import *
 from src.graph_drawing import *
 from src.edge_crossings import *
@@ -26,6 +27,10 @@ if __name__ == '__main__':
     # Diagnostics Files
     diagnostics_directory = "./output/diagnostics"
     diagnostics_file=f"barabasi_albert_{n_vertices}_{m_edges}_{seed}"
+
+    P = Polygon.from_tuples([(2.00, 3.00), (3.00, 3.00), (3.00, 2.00), (4.00, 2.00), (4.00, 4.00), (2.00, 4.00)])
+    P = Polygon.convex_decompose(P)
+    print(P)
 
     # EMBED INPUT GRAPH ------------------------------------------------------------------------------------------------
 
@@ -97,6 +102,9 @@ if __name__ == '__main__':
         graph=remaining_graph, positions=remaining_positions, edge_crossings=remaining_edge_crossings)
     planar_edge_crossings, planar_vertex_crossings = locate_edge_crossings(plane_graph, plane_positions)
     planarization_time = timeit.default_timer() - planarization_start_time
+    # TODO: find outer plane by finding edges that are involved in only 1 triangle -> those form the outer face bound
+    # TODO: art gallery problem: split outer face into subfaces using virtual vertices
+    # TODO: figure out how to deal with disconnected vertices -> do they mess up the art gallery problem?
 
     # Draw and Save Planar rGraph
     planar_drawing_start_time = timeit.default_timer()
@@ -116,9 +124,18 @@ if __name__ == '__main__':
 
     # # Locate faces and best two for target face
     # TODO: list of nones in found faces
+    # TODO: art gallery problem: make sure face allows for all incident vertices to be 'seen', else split up
     faces = find_all_faces(graph=plane_graph)
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
     face_detection_start_time = timeit.default_timer() - face_detection_start_time
+    ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
+    [print(f"{key} - {ordered_face_edges[key]}") for key in ordered_face_edges.keys()]
+    for face in faces:
+        print(f"Current {face}: {ordered_face_edges[face]}")
+        decomposition = is_face_convex(face, ordered_face_edges[face], plane_positions)
+        if not decomposition[0]:
+            [print(decomp) for decomp in decomposition[1]]
+    sys.exit()
 
     # Find Best Face
     face_selection_start_time = timeit.default_timer()
@@ -196,7 +213,7 @@ if __name__ == '__main__':
     culled_graph_time = timeit.default_timer() - culled_graph_start_time
 
     # Save time taken
-    save_time(times=[culled_graph_start_time, culled_graph_time],
+    save_time(times=[culling_time, culled_graph_time],
               labels=["culling_line_segments", "drawing_culled_line_segments"],
               file_name=diagnostics_file,
               directory=diagnostics_directory)
@@ -257,7 +274,6 @@ if __name__ == '__main__':
     print(f"Minimum Induced Crossings: {min_induced_crossings}")
     print(f"target Subfaces: {target_subfaces}")
     print(f"Number of ties: {ties}")
-
 
     # Save time taken
     save_time(times=[face_subface_time, subface_centroid_time, induced_crossings_time, vertex_selection_time],

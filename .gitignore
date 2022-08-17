@@ -1,3 +1,7 @@
+py2d
+py2d/
+./py2d/
+./py2d
 ./data
 data
 ./data/
@@ -6,3 +10,7 @@ data/
 drawings
 ./drawings/
 drawings/
+./output/
+./output
+output/
+output

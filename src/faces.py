@@ -1,3 +1,5 @@
+from py2d.Math import Polygon, Vector
+from src.edges import *
 import networkx as nx
 import itertools as it
 import numpy as np
@@ -31,6 +33,13 @@ def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
     return subfaces
 
 
+def get_ordered_face_edges(faces, graph):
+    ordered_face_edges = dict.fromkeys(faces)
+    for face in faces:
+        ordered_face_edges[face] = get_face_vertex_sequence(face, graph)
+    return ordered_face_edges
+
+
 def find_all_faces(graph):
 
     # Identify the minimum cycle basis of the graph
@@ -50,6 +59,20 @@ def color_selected_faces(graph, face_set, face_edge_map):
         for edge in face_edge_map[frozenset(face)]:
             graph.edges[edge]["target"] = 1
     return graph
+
+
+def is_face_convex(face, ordered_face_edges, position):
+    if len(face) == 3:
+        return True, None
+    else:
+        position_list = [tuple(position[edge[0]]) for edge in ordered_face_edges]
+        face_polygon = Polygon.from_tuples(position_list)
+        if face_polygon.is_convex():
+            return True, None
+        else:
+            print(position_list)
+            return False, Polygon.convex_decompose(face_polygon)
+
 
 
 def build_face_to_edge_map(graph, faces):
