@@ -21,7 +21,6 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
 
     # Extract all real edges
     real_edges = [edge for edge in graph.edges if graph.edges[edge]["virtual"] == 0]
-    print(real_edges)
 
     # Store all edge crossings
     induced_edge_crossings = {target_face: dict() for target_face in centroids.keys()}
@@ -68,7 +67,6 @@ def get_split_vertex_pairs(induced_edge_crossings):
     target_face_pairs = itertools.combinations(induced_edge_crossings.keys(), 2)
     for face_pair in target_face_pairs:
         face_a, face_b = face_pair
-        print(f"Faces {face_a} and {face_b}")
 
         pair_induced_crossings.update({subface: dict() for subface in induced_edge_crossings[face_a].keys()})
         neighbor_assignment.update({subface: dict() for subface in induced_edge_crossings[face_a].keys()})
@@ -114,7 +112,7 @@ def select_vertex_splits(pair_induced_crossings):
             else:
                 continue
 
-    print(f"Considered {considerations} possible subface combinations.")
+    #print(f"Considered {considerations} possible subface combinations.")
     return minimum_induced_crossings, target_subfaces, number_of_ties
 
 
@@ -131,29 +129,27 @@ def place_split_vertices(graph, positions, target_vertex, all_targets, remaining
     neighbors_connected = []
 
     # Iterate over all selected subfaces
-    print("----------------------------------------------------------------------")
-    print(f"Target Subfaces: {target_subfaces}")
     for subface_index, target_subface in enumerate(target_subfaces):
-        print(f"Subface #{subface_index} - {target_subface}")
+        #print(f"Subface #{subface_index} - {target_subface}")
 
         # Determine which super face the subface falls within
         target_face = [face for face in face_subface_map.keys() if target_subface in face_subface_map[face]][0]
-        print(set(target_subfaces))
+        #print(set(target_subfaces))
         other_subface = target_subfaces[0] if target_subfaces[1] == target_subface else target_subfaces[1]
-        print(f"Target Face: {target_face}")
-        print(f"Other Subface: {other_subface}")
+        #print(f"Target Face: {target_face}")
+        #print(f"Other Subface: {other_subface}")
 
         # Neighborhood
         neighbors = get_neighbors(target_face, target_subface, other_subface, neighbor_assignment, remaining_targets, all_targets)
-        print(f"Neighbors: {neighbors}")
+        #print(f"Neighbors: {neighbors}")
 
         # Extract the location of the split vertex
         location = centroids[target_face][target_subface]
         vertex = split_vertex_indices[subface_index]
-        print(f"Vertex #{vertex} at location {location}")
+        #print(f"Vertex #{vertex} at location {location}")
 
         # Place Split vertex
-        print(f"Adding Vertex {vertex}")
+        #print(f"Adding Vertex {vertex}")
         split_graph.add_node(node_for_adding=vertex, split=1, target=0, virtual=0, boundary=0, segment=0)
         split_positions[vertex] = np.array(location)
 

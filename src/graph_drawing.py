@@ -36,10 +36,7 @@ def embed_graph(graph, embedding, n_iter=None, seed=None):
 
 def color_split_vertices(graph):
     node_color_map = []
-    list(graph.nodes())
     for vertex in graph:
-        if "target" not in graph.nodes[vertex].keys():
-            print(f"Problem Vertex: {vertex}")
         if graph.nodes[vertex]["target"] == 1:
             color = "blue"
         elif graph.nodes[vertex]["boundary"] == 1:
