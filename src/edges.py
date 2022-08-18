@@ -13,13 +13,17 @@ def get_face_vertex_sequence(face, graph):
 
 
 def sort_edges(edge_list):
+    print(edge_list)
     input_dict = {edge[0]: edge[1] for edge in edge_list}
     input_dict.update({edge[1]: edge[0] for edge in edge_list})
     elem = edge_list[0][0]  # start point in the new list
     new_list = []  # List of tuples for holding the values in required order
     for _ in range(len(edge_list)):
+        print(elem)
         possibility_1 = (elem, input_dict[elem])
+        print(f"possibility 1: {possibility_1}")
         possibility_2 = (input_dict[elem], elem)
+        print(f"possibility 1: {possibility_1}")
         new_list.append(possibility_1) if possibility_1 not in new_list else new_list.append(possibility_2)
         elem = input_dict[elem]
     return new_list

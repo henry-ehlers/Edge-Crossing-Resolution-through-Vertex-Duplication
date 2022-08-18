@@ -125,10 +125,10 @@ if __name__ == '__main__':
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
     face_detection_start_time = timeit.default_timer() - face_detection_start_time
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
-    print(ordered_face_edges)
     convex_faces, convex_ordered_face_edges = make_faces_convex(faces, ordered_face_edges, plane_graph, plane_positions)
-    #
-    find_outer_face(convex_faces, convex_ordered_face_edges, plane_graph)
+
+    outer_face = sort_edges(find_outer_face(convex_ordered_face_edges, plane_graph))
+    print(f"outer face: {outer_face}")
     sys.exit()
 
     [print(f"{key} - {ordered_face_edges[key]}") for key in ordered_face_edges.keys()]

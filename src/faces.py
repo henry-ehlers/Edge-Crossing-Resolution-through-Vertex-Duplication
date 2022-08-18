@@ -4,6 +4,7 @@ import networkx as nx
 import itertools as it
 import numpy as np
 import copy
+import sys
 
 
 def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
@@ -93,28 +94,35 @@ def make_faces_convex(faces, ordered_face_edges, graph, positions):
         # If face is not convex, decompose it into distinct convex polygonal faces
         else:
             coordinate_decompositions, index_decompositions = decompositions
+            print(f"index_decompositions: {index_decompositions}")
 
             # Iterate over all identified convex faces
             for index, index_decomposition in enumerate(index_decompositions):
 
                 # Get edges and vertices of current convex face
-                convex_face_edges = [edge_list[edge_index] for edge_index in index_decomposition]
-                vertex_decomposition = [face_edge[0] for face_edge in convex_face_edges]
-                print(f"vertex decomp: {vertex_decomposition}")
-                print(f"edges: {convex_face_edges}")
-
-                # Add vertices and edges to convex sets
-                convex_faces.add(frozenset(vertex_decomposition))
-                convex_ordered_face_edges[frozenset(vertex_decomposition)] = sort_edges(convex_face_edges)
+                old_sorted_edges = [edge_list[edge_index] for edge_index in index_decomposition]
+                vertex_decomposition = [face_edge[0] for face_edge in old_sorted_edges]
 
                 # Add virtual edges to close the created convex faces
-                close_closed_face(vertex_decomposition, graph)
+                convex_face_edges = close_closed_face(vertex_decomposition, graph)
+                print(f"edge: {convex_face_edges}")
+
+                # Sort edges and add to convex face sorted edge dictionary
+                sorted_convex_face_edges = sort_edges(convex_face_edges)
+                print(f"sorted convex vertices: {sorted_convex_face_edges}")
+
+                # Add vertices and edges to convex sets
+                convex_ordered_face_edges[frozenset(vertex_decomposition)] = sorted_convex_face_edges
+                convex_faces.add(frozenset(vertex_decomposition))
 
     # Return new containers of convex faces and their sorted edges
     return convex_faces, convex_ordered_face_edges
 
 
 def close_closed_face(convex_face_edge_list, graph):
+
+    # Note down the face's edges
+    face_edges = []
 
     # Iterate over all ORDERED vertices that make up the new convex face
     for index in range(0, len(convex_face_edge_list)):
@@ -131,13 +139,31 @@ def close_closed_face(convex_face_edge_list, graph):
 
         # If no edge exists, add one and update the convex face's ordered edge list
         if edge is None:
+            print(f"Added {vertex_a} and {vertex_b}")
             graph.add_edge(vertex_a, vertex_b, virtual=1, segment=0, target=0)
 
+        # Append (new) edge to this face's list of edges
+        face_edges.append((vertex_a, vertex_b))
 
-def find_outer_face(faces, ordered_face_edges, graph):
+    # Return update list of unsorted face edges
+    return face_edges
+
+def find_outer_face(ordered_face_edges, graph):
     faces_per_edge = dict.fromkeys(list(graph.edges()), 0)
-    print(list(graph.edges()))
+    for face in ordered_face_edges.keys():
+        for edge in ordered_face_edges[face]:
+            edge_a, edge_b = (edge[0], edge[1]), (edge[1], edge[0])
+            if edge_a in faces_per_edge.keys():
+                faces_per_edge[edge_a] += 1
+            elif edge_b in faces_per_edge.keys():
+                faces_per_edge[edge_b] += 1
+            else:
+                sys.exit("Shit's fucked")
 
+    min_face_count = min(faces_per_edge.values())
+    print(f"minimum face count: {min_face_count}")
+    outer_face = [edge for edge in faces_per_edge.keys() if faces_per_edge[edge] == min_face_count]
+    return outer_face
 
 def build_face_to_edge_map(graph, faces):
 
