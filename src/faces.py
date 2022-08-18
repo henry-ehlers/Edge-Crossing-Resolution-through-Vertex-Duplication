@@ -74,25 +74,44 @@ def is_face_convex(face, ordered_face_edges, position):
 
 
 def make_faces_convex(faces, ordered_face_edges, graph, positions):
-    convex_faces = set()
+
+    # Initialize new containers for convex faces and their sorted edges
+    convex_faces, convex_ordered_face_edges = set(), dict()
+
+    # Iterate over all faces to check whether they are convex
     for face in faces:
+
+        # Extract ordered edge list and (with vertex positions) check convexity
         edge_list = ordered_face_edges[face]
         is_convex, decompositions = is_face_convex(face, edge_list, positions)
+
+        # If the face is convex, copy content
         if is_convex:
+            convex_ordered_face_edges[face] = ordered_face_edges[face]
             convex_faces.add(face)
+
+        # If face is not convex, decompose it into distinct convex polygonal faces
         else:
             coordinate_decompositions, index_decompositions = decompositions
-            print(f"non_convex_face edge list: {edge_list}")
-            decomposition = [[]] * len(index_decompositions)
-            for index, index_decomposition in enumerate(index_decompositions):
-                vertex_decomposition = [edge_list[index][0] for index in index_decomposition]
-                convex_faces.add(frozenset(vertex_decomposition))
-                decomposition[index] = vertex_decomposition
-                close_closed_face(vertex_decomposition, graph)
-            [print(decomp) for decomp in decomposition]
 
-    # TODO: add edges where needed between decompositions
-    return convex_faces
+            # Iterate over all identified convex faces
+            for index, index_decomposition in enumerate(index_decompositions):
+
+                # Get edges and vertices of current convex face
+                convex_face_edges = [edge_list[edge_index] for edge_index in index_decomposition]
+                vertex_decomposition = [face_edge[0] for face_edge in convex_face_edges]
+                print(f"vertex decomp: {vertex_decomposition}")
+                print(f"edges: {convex_face_edges}")
+
+                # Add vertices and edges to convex sets
+                convex_faces.add(frozenset(vertex_decomposition))
+                convex_ordered_face_edges[frozenset(vertex_decomposition)] = sort_edges(convex_face_edges)
+
+                # Add virtual edges to close the created convex faces
+                close_closed_face(vertex_decomposition, graph)
+
+    # Return new containers of convex faces and their sorted edges
+    return convex_faces, convex_ordered_face_edges
 
 
 def close_closed_face(convex_face_edge_list, graph):
@@ -110,9 +129,14 @@ def close_closed_face(convex_face_edge_list, graph):
         except KeyError:
             edge = None
 
-        # If no edge exists, add one
+        # If no edge exists, add one and update the convex face's ordered edge list
         if edge is None:
             graph.add_edge(vertex_a, vertex_b, virtual=1, segment=0, target=0)
+
+
+def find_outer_face(faces, ordered_face_edges, graph):
+    faces_per_edge = dict.fromkeys(list(graph.edges()), 0)
+    print(list(graph.edges()))
 
 
 def build_face_to_edge_map(graph, faces):

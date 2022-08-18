@@ -125,6 +125,12 @@ if __name__ == '__main__':
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
     face_detection_start_time = timeit.default_timer() - face_detection_start_time
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
+    print(ordered_face_edges)
+    convex_faces, convex_ordered_face_edges = make_faces_convex(faces, ordered_face_edges, plane_graph, plane_positions)
+    #
+    find_outer_face(convex_faces, convex_ordered_face_edges, plane_graph)
+    sys.exit()
+
     [print(f"{key} - {ordered_face_edges[key]}") for key in ordered_face_edges.keys()]
     convex_faces = make_faces_convex(faces, ordered_face_edges, plane_graph, plane_positions)
 
@@ -135,7 +141,7 @@ if __name__ == '__main__':
     save_drawn_graph(output_path)
     planar_drawing_time = timeit.default_timer() - planar_drawing_start_time
 
-    sys.exit()
+
 
     # Find Best Face
     face_selection_start_time = timeit.default_timer()
