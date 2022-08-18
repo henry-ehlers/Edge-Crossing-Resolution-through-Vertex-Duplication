@@ -28,9 +28,10 @@ if __name__ == '__main__':
     diagnostics_directory = "./output/diagnostics"
     diagnostics_file=f"barabasi_albert_{n_vertices}_{m_edges}_{seed}"
 
-    P = Polygon.from_tuples([(2.00, 3.00), (3.00, 3.00), (3.00, 2.00), (4.00, 2.00), (4.00, 4.00), (2.00, 4.00)])
+    P = Polygon.from_tuples([(0, 0), (0, 2), (1, 2), (1, 1), (2, 1), (2, 2), (3, 2), (3, 0)])
     P = Polygon.convex_decompose(P)
-    print(P)
+    print(P[0])
+    print(P[1])
 
     # EMBED INPUT GRAPH ------------------------------------------------------------------------------------------------
 
