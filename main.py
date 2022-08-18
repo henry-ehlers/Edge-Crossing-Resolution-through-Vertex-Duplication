@@ -28,11 +28,6 @@ if __name__ == '__main__':
     diagnostics_directory = "./output/diagnostics"
     diagnostics_file=f"barabasi_albert_{n_vertices}_{m_edges}_{seed}"
 
-    P = Polygon.from_tuples([(0, 0), (0, 2), (1, 2), (1, 1), (2, 1), (2, 2), (3, 2), (3, 0)])
-    P = Polygon.convex_decompose(P)
-    print(P[0])
-    print(P[1])
-
     # EMBED INPUT GRAPH ------------------------------------------------------------------------------------------------
 
     # Create Simulated Graph
@@ -131,11 +126,15 @@ if __name__ == '__main__':
     face_detection_start_time = timeit.default_timer() - face_detection_start_time
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
     [print(f"{key} - {ordered_face_edges[key]}") for key in ordered_face_edges.keys()]
-    for face in faces:
-        print(f"Current {face}: {ordered_face_edges[face]}")
-        decomposition = is_face_convex(face, ordered_face_edges[face], plane_positions)
-        if not decomposition[0]:
-            [print(decomp) for decomp in decomposition[1]]
+    convex_faces = make_faces_convex(faces, ordered_face_edges, plane_graph, plane_positions)
+
+    # Draw and Save Planar, Convex-Face Graph
+    planar_drawing_start_time = timeit.default_timer()
+    draw_graph(graph=plane_graph, positions=plane_positions)
+    output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=3.5)
+    save_drawn_graph(output_path)
+    planar_drawing_time = timeit.default_timer() - planar_drawing_start_time
+
     sys.exit()
 
     # Find Best Face

@@ -51,7 +51,7 @@ def find_all_faces(graph):
     faces = set([frozenset(cycle) for cycle in cycles])
 
     # Return set of faces (frozen sets of vertices)
-    return frozenset(faces)
+    return faces
 
 
 def color_selected_faces(graph, face_set, face_edge_map):
@@ -70,9 +70,49 @@ def is_face_convex(face, ordered_face_edges, position):
         if face_polygon.is_convex():
             return True, None
         else:
-            print(position_list)
             return False, Polygon.convex_decompose(face_polygon)
 
+
+def make_faces_convex(faces, ordered_face_edges, graph, positions):
+    convex_faces = set()
+    for face in faces:
+        edge_list = ordered_face_edges[face]
+        is_convex, decompositions = is_face_convex(face, edge_list, positions)
+        if is_convex:
+            convex_faces.add(face)
+        else:
+            coordinate_decompositions, index_decompositions = decompositions
+            print(f"non_convex_face edge list: {edge_list}")
+            decomposition = [[]] * len(index_decompositions)
+            for index, index_decomposition in enumerate(index_decompositions):
+                vertex_decomposition = [edge_list[index][0] for index in index_decomposition]
+                convex_faces.add(frozenset(vertex_decomposition))
+                decomposition[index] = vertex_decomposition
+                close_closed_face(vertex_decomposition, graph)
+            [print(decomp) for decomp in decomposition]
+
+    # TODO: add edges where needed between decompositions
+    return convex_faces
+
+
+def close_closed_face(convex_face_edge_list, graph):
+
+    # Iterate over all ORDERED vertices that make up the new convex face
+    for index in range(0, len(convex_face_edge_list)):
+
+        # Extract two adjacent vertices from the face
+        vertex_a = convex_face_edge_list[index]
+        vertex_b = convex_face_edge_list[(index + 1) % len(convex_face_edge_list)]
+
+        # Check if an edge already exists between these vertices
+        try:
+            edge = graph.edges[vertex_a, vertex_b]
+        except KeyError:
+            edge = None
+
+        # If no edge exists, add one
+        if edge is None:
+            graph.add_edge(vertex_a, vertex_b, virtual=1, segment=0, target=0)
 
 
 def build_face_to_edge_map(graph, faces):
