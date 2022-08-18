@@ -13,6 +13,7 @@ def get_face_vertex_sequence(face, graph):
 
 
 def sort_face_edges(edge_list):
+    # TODO: reformulate search in terms of indeces that can be 'blacked' out because there were already included
 
     # Initialize new list of sorted edges in a cycle
     new_list = [(None, None)] * len(edge_list)
