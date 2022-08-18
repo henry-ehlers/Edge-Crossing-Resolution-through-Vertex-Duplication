@@ -127,7 +127,7 @@ if __name__ == '__main__':
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
     convex_faces, convex_ordered_face_edges = make_faces_convex(faces, ordered_face_edges, plane_graph, plane_positions)
 
-    outer_face = sort_edges(find_outer_face(convex_ordered_face_edges, plane_graph))
+    outer_face = sort_face_edges(find_outer_face(convex_ordered_face_edges, plane_graph))
     print(f"outer face: {outer_face}")
     sys.exit()
 

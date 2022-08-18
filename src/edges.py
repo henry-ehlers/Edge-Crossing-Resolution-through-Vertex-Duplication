@@ -8,23 +8,33 @@ def get_face_vertex_sequence(face, graph):
         if len(set(edge) & face) == 2:
             face_edges[current] = edge
             current += 1
-    sorted_face_edges = sort_edges(face_edges)
+    sorted_face_edges = sort_face_edges(face_edges)
     return sorted_face_edges
 
 
-def sort_edges(edge_list):
-    print(edge_list)
-    input_dict = {edge[0]: edge[1] for edge in edge_list}
-    input_dict.update({edge[1]: edge[0] for edge in edge_list})
-    elem = edge_list[0][0]  # start point in the new list
-    new_list = []  # List of tuples for holding the values in required order
-    for _ in range(len(edge_list)):
-        print(elem)
-        possibility_1 = (elem, input_dict[elem])
-        print(f"possibility 1: {possibility_1}")
-        possibility_2 = (input_dict[elem], elem)
-        print(f"possibility 1: {possibility_1}")
-        new_list.append(possibility_1) if possibility_1 not in new_list else new_list.append(possibility_2)
-        elem = input_dict[elem]
-    return new_list
+def sort_face_edges(edge_list):
 
+    # Initialize new list of sorted edges in a cycle
+    new_list = [(None, None)] * len(edge_list)
+    new_list[0] = edge_list[0]
+
+    # Iterate over all indices to be filled
+    for index in range(1, len(edge_list)):
+
+        # Specify the next target value as the last vertex of the first edge
+        target_value = new_list[index-1][1]
+
+        # Find the next possible edge which matches the last edge's second vertex and has not yet been included
+        next_element = [element for element in edge_list if (target_value in element) and
+                        (element not in new_list) and ((element[1], element[0]) not in new_list)][0]
+
+        # Store either the original edge or its reverse depending on which allows for the cycle to continue
+        reverse_edge = (next_element[1], next_element[0])
+        new_list[index] = reverse_edge if reverse_edge[0] == target_value else next_element
+
+    # Ensure that the found order is indeed cyclical
+    assert new_list[0][0] == new_list[-1][1], \
+        "Found sorted order of edges is not cyclical."
+
+    # Return the sorted cycle
+    return new_list

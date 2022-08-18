@@ -108,7 +108,7 @@ def make_faces_convex(faces, ordered_face_edges, graph, positions):
                 print(f"edge: {convex_face_edges}")
 
                 # Sort edges and add to convex face sorted edge dictionary
-                sorted_convex_face_edges = sort_edges(convex_face_edges)
+                sorted_convex_face_edges = sort_face_edges(convex_face_edges)
                 print(f"sorted convex vertices: {sorted_convex_face_edges}")
 
                 # Add vertices and edges to convex sets
