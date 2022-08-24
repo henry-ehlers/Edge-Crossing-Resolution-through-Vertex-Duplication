@@ -186,7 +186,8 @@ def get_maximally_incident_faces(face_incidences):
 
 
 def cross_product(vector_a, vector_b):
-    return vector_a[0] * vector_b[1] - vector_b[0] * vector_a[1]
+    cross_product = (vector_a[0] * vector_b[1]) - (vector_b[0] * vector_a[1])
+    return cross_product
 
 
 def vector_angle(vector_1, vector_2):
@@ -209,9 +210,17 @@ def signed_area(ordered_points_list):
     return sum(x[i] * (y[i + 1] - y[i - 1]) for i in range(-1, len(x) - 1)) / 2.0
 
 
+def calculate_face_signed_area(ordered_face_vertices, positions):
+    vertex_points = [positions[vertex] for vertex in ordered_face_vertices]
+    area = signed_area(vertex_points)
+    return area
+
+
 def calculate_inner_angle(point_a, point_b, point_c):
+
     # Assumed that point b connects to both a and c
     vector_1, vector_2 = point_a - point_b, point_c - point_b
+
     # Calculate Signed Angle between two Vectors
     signed_angle = vector_angle(vector_1, vector_2)
 
@@ -219,22 +228,41 @@ def calculate_inner_angle(point_a, point_b, point_c):
     return signed_angle if cross_product(vector_1, vector_2) > 0.0 else 360 - signed_angle
 
 
-def calculate_face_inner_angles(ordered_face_vertices, positions):
-    inner_angles = {vertex: None for vertex in ordered_face_vertices}
-    for vertex_index in range(0, len(ordered_face_vertices)):
+def calculate_face_inner_angles(counter_clockwise_face_vertices, positions):
+
+    # Initialize emtpy dictionary to store inner angles
+    inner_angles = {vertex: None for vertex in counter_clockwise_face_vertices}
+
+    # Iterate over all vertices, and calculate angle for each
+    for vertex_index in range(0, len(counter_clockwise_face_vertices)):
 
         # Get three vertices that form an angle (the ordered hereof is crucial)
-        vertex_a = ordered_face_vertices[vertex_index]
-        vertex_b = ordered_face_vertices[vertex_index - 1]
-        vertex_c = ordered_face_vertices[vertex_index - 2]
-
-        # Extract points of the three vertices in 2D embedding
-        point_a, point_b, point_c = positions[vertex_a], positions[vertex_b], positions[vertex_c]
+        vertex_a = counter_clockwise_face_vertices[vertex_index]
+        vertex_b = counter_clockwise_face_vertices[vertex_index - 1]
+        vertex_c = counter_clockwise_face_vertices[vertex_index - 2]
 
         # Calculate Inner angle and store as with center vertex as key
-        inner_angle = calculate_inner_angle(point_a, point_b, point_c)
-        print(f"Inner Angle between {vertex_a}, {vertex_b}, and {vertex_c} - {inner_angle}")
-        inner_angles[vertex_b] = inner_angle
+        point_a, point_b, point_c = positions[vertex_a], positions[vertex_b], positions[vertex_c]
+        inner_angles[vertex_b] = calculate_inner_angle(point_a, point_b, point_c)
 
     # Return all inner angles
     return inner_angles
+
+
+def get_sight_cells(faces, ordered_face_edges, graph, positions):
+    for face in faces:
+
+        # Get Vertices and ensure they are listed in counter-clockwise order
+        face_edges = ordered_face_edges[face]
+        face_vertices = get_sorted_face_vertices(face_edges, is_sorted=True)
+        if calculate_face_signed_area(face_vertices, positions) < 0:
+            face_vertices = list(reversed(face_vertices))
+
+        # Calculate Inner Angles
+        inner_angles = calculate_face_inner_angles(face_vertices, positions)
+        face_convexity = is_convex(inner_angles)
+        print(f"Face is convex? {face_convexity}")
+
+
+def is_convex(inner_angles):
+    return all(angle <= 180.0 for angle in inner_angles.values())

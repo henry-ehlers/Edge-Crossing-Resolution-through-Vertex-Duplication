@@ -126,13 +126,19 @@ if __name__ == '__main__':
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
     face_detection_start_time = timeit.default_timer() - face_detection_start_time
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
+    print(f"ordered: {ordered_face_edges}")
+    print(f"faces: {faces}")
 
     # Find the outer face(s)
     outer_face = find_outer_face(ordered_face_edges, plane_graph)
     ordered_outer_face_edges = sort_face_edges(outer_face)
-    ordered_outer_face_vertices = [edge[0] for edge in ordered_outer_face_edges]
-    print(ordered_outer_face_vertices)
-    print(calculate_face_inner_angles(ordered_outer_face_vertices, plane_positions))
+    ordered_outer_face_vertices = get_sorted_face_vertices(ordered_outer_face_edges, is_sorted=True)
+    print(f"ordered outer face edges: {ordered_outer_face_edges}")
+    print(f"ordered outer face vertices: {ordered_outer_face_vertices}")
+    outer_face_inner_angles = calculate_face_inner_angles(ordered_outer_face_vertices, plane_positions)
+
+    # Get Sight Cells
+    get_sight_cells(faces, ordered_face_edges, plane_graph, plane_positions)
 
     sys.exit()
     [print(f"{key} - {ordered_face_edges[key]}") for key in ordered_face_edges.keys()]

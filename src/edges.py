@@ -1,4 +1,3 @@
-import networkx as nx
 
 
 def get_face_vertex_sequence(face, graph):
@@ -39,3 +38,10 @@ def sort_face_edges(edge_list):
 
     # Return the sorted cycle
     return new_list
+
+
+def get_sorted_face_vertices(edges, is_sorted=False):
+    if not is_sorted:
+        if not all(edges[index][1] == edges[(index + 1) % len(edges)] for index in range(0, len(edges))):
+            edges = sort_face_edges(edges)
+    return [edge[0] for edge in edges]
