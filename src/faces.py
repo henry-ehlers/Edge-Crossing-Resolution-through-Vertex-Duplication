@@ -1,4 +1,5 @@
 from src.edges import *
+from src.line_segments import *
 from src.edge_crossings import *
 import networkx as nx
 import itertools as it
@@ -187,8 +188,7 @@ def get_maximally_incident_faces(face_incidences):
 
 
 def cross_product(vector_a, vector_b):
-    cross_product = (vector_a[0] * vector_b[1]) - (vector_b[0] * vector_a[1])
-    return cross_product
+    return (vector_a[0] * vector_b[1]) - (vector_b[0] * vector_a[1])
 
 
 def vector_angle(vector_1, vector_2):
@@ -250,7 +250,7 @@ def calculate_face_inner_angles(counter_clockwise_face_vertices, positions):
     return inner_angles
 
 
-def get_sight_cells(faces, ordered_face_edges, graph, positions):
+def get_sight_cells(faces, ordered_face_edges, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
 
     #
     sight_cells = {face: None for face in faces}
@@ -270,7 +270,8 @@ def get_sight_cells(faces, ordered_face_edges, graph, positions):
             sight_cells[face] = face_edges
         else:
             # split into sight cells
-            split_face_into_sight_cells(face_edges, face_vertices, face_inner_angles, graph, positions)
+            # TODO: can we recycle the calculated inner_angles somehow? we need to know the reference and both endpoints
+            split_face_into_sight_cells(face_edges, face_vertices, graph, positions)
 
     return sight_cells
 
@@ -279,47 +280,99 @@ def is_convex(inner_angles):
     return all(angle <= 180.0 for angle in inner_angles.values())
 
 
-def split_face_into_sight_cells(face_edges, face_vertices, inner_angles, graph, positions):
-    investigated = []
-    for origin in range(0, len(face_vertices)):
-        print(f"origin index: {origin}")
-        for target in range(2, len(face_vertices) - 1):
-            vertex_a, vertex_b = face_vertices[origin], face_vertices[(origin + target) % len(face_vertices)]
+def split_face_into_sight_cells(edges, vertices, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
+
+    print(vertices)
+    for origin_index in range(0, len(vertices)):
+
+        for target_index in range(0, len(vertices)):
+
+            vertex_a, vertex_b = vertices[origin_index], vertices[target_index]
             vertex_set = {vertex_a, vertex_b}
-            if vertex_set in investigated: continue
-            investigated.append(vertex_set)
-            is_visible = is_vertex_visible(vertex_a, vertex_b, face_edges, positions)
+
+            print(f"\nVertex Set: {vertex_set}")
+            if (vertex_a == vertex_b): continue
+
+            ind_diff = abs(origin_index - target_index)
+            adjacent = True if ((ind_diff == 1) or (ind_diff == len(vertices) - 1)) else False
+            is_visible = is_vertex_visible(vertex_a, vertex_b, edges, positions)
             print(f"Vertices {vertex_a} and {vertex_b} can see one-another: {is_visible}")
-            # if is visible, extend line beyond until it intersect another line
-            # Check using angle visibility in which direction to extend
-            # if multiple intersections, take closest one (the other is not visible)
+
+            # TODO: if is visible, extend line beyond until it intersect another line
+            # TODO: Check using angle visibility in which direction to extend
+            # TODO: if multiple intersections, take closest one (the other is not visible)
+
+            # TODO: MUST CONSIDER EXTENSIONS IN BOTH DIRECTIONS TO COVER EDGE_CASES, REGARDLESS OF WHETHER ADJACENT OR NOT
+            if is_visible:
+                extend_sight_line(vertex_a, vertex_b, edges, graph, positions, bounds)
+
+
+def squared_distance(point_a, point_b):
+    (x1, y1) = point_a
+    (x2, y2) = point_b
+    return (x2 - x1) ** 2 + (y2 - y1) ** 2
+
+
+def extend_sight_line(vertex_a, vertex_b, adjacent, edges, graph, positions, bounds):
+
+    # Calculate intersections of extended line with boundaries in both directions
+    bound_intersections = extend_line(positions[vertex_a], positions[vertex_b], bounds)
+    print(f"intersections: {bound_intersections}")
+
+    # If the vertices are not adjacent, check which one is legal based on
+    if not adjacent:
+        intersection_reference = bound_intersections[0] \
+            if check_vertex_visibility_by_angle(vertex_a, bound_intersections[0], edges, positions) \
+            else bound_intersections[1]
+    else:
+        distance_from_a = [squared_distance(vertex_a, intersection) for intersection in bound_intersections]
+        distance_from_b = [squared_distance(vertex_b, intersection) for intersection in bound_intersections]
+        intersection_reference = bound_intersections[0] \
+            if (distance_from_b[0] < distance_from_b[1]) and (distance_from_a[0] > distance_from_a[1]) \
+            else bound_intersections[1]
+    print(f"reference: {intersection_reference}")
+    possible_crossing_edges = [edge for edge in edges if (vertex_a not in edge) and (vertex_b not in edge)]
+    print(f"possible crossing edges: {possible_crossing_edges}")
+    point_a, point_b = positions[vertex_a], intersection_reference
+    print(f"Points A and B: {point_a} and {point_b}")
+    for edge in possible_crossing_edges:
+        point_c, point_d = positions[edge[0]], positions[edge[1]]
+        print(f"Points C and D: {point_c} and {point_d}")
+        edge_intersections = line_intersection(point_a, point_b, point_c, point_d)
+        if edge_intersections is not None:
+            print("INTERSECTION")
+    pass
 
 
 def is_vertex_visible(vertex_a, vertex_b, edges, positions):
 
     # Check Angle first, and only if the angle is legal, exclude possible intersection edges
     angle_visibility = check_vertex_visibility_by_angle(vertex_a, vertex_b, edges, positions)
-    if not angle_visibility: return angle_visibility
+    if not angle_visibility:
+        return angle_visibility
 
     # Check specific edge crossings between (Vertex A, Vertex B) and all non-incident edges
     possible_crossing_edges = [edge for edge in edges if (vertex_a not in edge) and (vertex_b not in edge)]
     crossing_visibility = check_vertex_visibility_by_crossing(vertex_a, vertex_b, possible_crossing_edges, positions)
-    if not crossing_visibility: return crossing_visibility
+    if not crossing_visibility:
+        return crossing_visibility
 
     # All Conditions met for Visibility
     return True
 
 
-def check_vertex_visibility_by_angle(vertex_a, vertex_b, edges, positions):
+def check_vertex_visibility_by_angle(vertex_a, vertex_or_position_b, edges, positions):
 
     # Calculate Angle of between Vertex A and its two neighbors relative to Vertex Edge_a[0]
-    edge_a = [edge for edge in edges if vertex_a == edge[1]][0]
-    edge_b = [edge for edge in edges if vertex_a == edge[0]][0]
+    edge_a = [edge for edge in edges if vertex_a == edge[1]][0]  # Order of vertices in edges important; here 2nd
+    edge_b = [edge for edge in edges if vertex_a == edge[0]][0]  # Order of vertices in edges important; here 1st
     point_a, point_b, point_c = positions[edge_a[0]], positions[edge_a[1]], positions[edge_b[1]]
     observed_angle = calculate_inner_angle(point_a, point_b, point_c)
+    # TODO: make sure the observed angle actually IS the inner angle; before we needed to use the signed area
 
     # Calculate angle between Vertex A and Vertex B relative to Vertex Edge_a[0]
-    point_a, point_b, point_c = positions[edge_a[0]], positions[edge_a[1]], positions[vertex_b]
+    point_a, point_b = positions[edge_a[0]], positions[edge_a[1]],
+    point_c = positions[vertex_or_position_b] if isinstance(vertex_or_position_b, int) else vertex_or_position_b
     hypothetical_angle = calculate_inner_angle(point_a, point_b, point_c)
 
     # If the angle between Vertex A and B is larger than between Vertex A and its neighbors, Vertex B is not visible
@@ -333,9 +386,9 @@ def check_vertex_visibility_by_crossing(vertex_a, vertex_b, candidate_edges, pos
 
     # For each candidate edge, check crossing between it and (Vertex A, Vertex B)
     for edge in candidate_edges:
-        point_c, point_d = positions[edge[0]], positions[edge[1]]
 
         # If Lines intersect, Vertices A and B cannot see one-another
+        point_c, point_d = positions[edge[0]], positions[edge[1]]
         if line_intersection(point_a, point_b, point_c, point_d) is not None:
             return False
 
