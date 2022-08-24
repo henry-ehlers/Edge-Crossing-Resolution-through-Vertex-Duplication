@@ -183,3 +183,39 @@ def get_maximally_incident_faces(face_incidences):
                 selected_faces.append([face_a, face_b])
 
     return max_incidence, selected_faces
+
+
+def cross_product(vector_a, vector_b):
+    return vector_a[0] * vector_b[1] - vector_b[0] * vector_a[1]
+
+
+def vector_angle(vector_1, vector_2):
+
+    # Calculate Unit Vectors of Input Vectors
+    unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
+    unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
+
+    # Calculate Dot Product and Signed Angle in Radians
+    dot_product = np.dot(unit_vector_1, unit_vector_2)
+    angle = np.arccos(dot_product)
+
+    # Return Angle in Degrees
+    return np.degrees(angle)
+
+
+# Calculate Signed Area of Polygon
+def signed_area(ordered_points_list):
+    x, y = [point[0] for point in ordered_points_list], [point[1] for point in ordered_points_list]
+    return sum(x[i] * (y[i + 1] - y[i - 1]) for i in range(-1, len(x) - 1)) / 2.0
+
+
+def calculate_inner_angle(point_a, point_b, point_c):
+
+    # Assumed that point b connects to both a and c
+    vector_1, vector_2 = point_a - point_b, point_c - point_b
+
+    # Calculate Signed Angle between two Vectors
+    signed_angle = vector_angle(vector_1, vector_2)
+
+    # Return inner angle
+    return signed_angle if cross_product(vector_1, vector_2) > 0.0 else 360 - signed_angle
