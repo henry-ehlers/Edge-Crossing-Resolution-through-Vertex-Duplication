@@ -138,7 +138,8 @@ if __name__ == '__main__':
     outer_face_inner_angles = calculate_face_inner_angles(ordered_outer_face_vertices, plane_positions)
 
     # Get Sight Cells
-    get_sight_cells(faces, ordered_face_edges, plane_graph, plane_positions)
+    sight_cells = get_sight_cells(faces, ordered_face_edges, plane_graph, plane_positions)
+    print(sight_cells)
 
     sys.exit()
     [print(f"{key} - {ordered_face_edges[key]}") for key in ordered_face_edges.keys()]
