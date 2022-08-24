@@ -127,6 +127,14 @@ if __name__ == '__main__':
     face_detection_start_time = timeit.default_timer() - face_detection_start_time
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
 
+    # Find the outer face(s)
+    outer_face = find_outer_face(ordered_face_edges, plane_graph)
+    ordered_outer_face_edges = sort_face_edges(outer_face)
+    ordered_outer_face_vertices = [edge[0] for edge in ordered_outer_face_edges]
+    print(ordered_outer_face_vertices)
+    print(calculate_face_inner_angles(ordered_outer_face_vertices, plane_positions))
+
+    sys.exit()
     [print(f"{key} - {ordered_face_edges[key]}") for key in ordered_face_edges.keys()]
 
     # Draw and Save Planar, Convex-Face Graph

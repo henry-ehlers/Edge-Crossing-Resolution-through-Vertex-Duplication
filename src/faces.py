@@ -210,12 +210,31 @@ def signed_area(ordered_points_list):
 
 
 def calculate_inner_angle(point_a, point_b, point_c):
-
     # Assumed that point b connects to both a and c
     vector_1, vector_2 = point_a - point_b, point_c - point_b
-
     # Calculate Signed Angle between two Vectors
     signed_angle = vector_angle(vector_1, vector_2)
 
     # Return inner angle
     return signed_angle if cross_product(vector_1, vector_2) > 0.0 else 360 - signed_angle
+
+
+def calculate_face_inner_angles(ordered_face_vertices, positions):
+    inner_angles = {vertex: None for vertex in ordered_face_vertices}
+    for vertex_index in range(0, len(ordered_face_vertices)):
+
+        # Get three vertices that form an angle (the ordered hereof is crucial)
+        vertex_a = ordered_face_vertices[vertex_index]
+        vertex_b = ordered_face_vertices[vertex_index - 1]
+        vertex_c = ordered_face_vertices[vertex_index - 2]
+
+        # Extract points of the three vertices in 2D embedding
+        point_a, point_b, point_c = positions[vertex_a], positions[vertex_b], positions[vertex_c]
+
+        # Calculate Inner angle and store as with center vertex as key
+        inner_angle = calculate_inner_angle(point_a, point_b, point_c)
+        print(f"Inner Angle between {vertex_a}, {vertex_b}, and {vertex_c} - {inner_angle}")
+        inner_angles[vertex_b] = inner_angle
+
+    # Return all inner angles
+    return inner_angles
