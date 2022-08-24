@@ -1,4 +1,3 @@
-from py2d.Math import Polygon, Vector
 from src.edges import *
 import networkx as nx
 import itertools as it
@@ -62,63 +61,6 @@ def color_selected_faces(graph, face_set, face_edge_map):
     return graph
 
 
-def is_face_convex(face, ordered_face_edges, position):
-    if len(face) == 3:
-        return True, None
-    else:
-        position_list = [tuple(position[edge[0]]) for edge in ordered_face_edges]
-        face_polygon = Polygon.from_tuples(position_list)
-        if face_polygon.is_convex():
-            return True, None
-        else:
-            return False, Polygon.convex_decompose(face_polygon)
-
-
-def make_faces_convex(faces, ordered_face_edges, graph, positions):
-
-    # Initialize new containers for convex faces and their sorted edges
-    convex_faces, convex_ordered_face_edges = set(), dict()
-
-    # Iterate over all faces to check whether they are convex
-    for face in faces:
-
-        # Extract ordered edge list and (with vertex positions) check convexity
-        edge_list = ordered_face_edges[face]
-        is_convex, decompositions = is_face_convex(face, edge_list, positions)
-
-        # If the face is convex, copy content
-        if is_convex:
-            convex_ordered_face_edges[face] = ordered_face_edges[face]
-            convex_faces.add(face)
-
-        # If face is not convex, decompose it into distinct convex polygonal faces
-        else:
-            coordinate_decompositions, index_decompositions = decompositions
-            print(f"index_decompositions: {index_decompositions}")
-
-            # Iterate over all identified convex faces
-            for index, index_decomposition in enumerate(index_decompositions):
-
-                # Get edges and vertices of current convex face
-                old_sorted_edges = [edge_list[edge_index] for edge_index in index_decomposition]
-                vertex_decomposition = [face_edge[0] for face_edge in old_sorted_edges]
-
-                # Add virtual edges to close the created convex faces
-                convex_face_edges = close_closed_face(vertex_decomposition, graph)
-                print(f"edge: {convex_face_edges}")
-
-                # Sort edges and add to convex face sorted edge dictionary
-                sorted_convex_face_edges = sort_face_edges(convex_face_edges)
-                print(f"sorted convex vertices: {sorted_convex_face_edges}")
-
-                # Add vertices and edges to convex sets
-                convex_ordered_face_edges[frozenset(vertex_decomposition)] = sorted_convex_face_edges
-                convex_faces.add(frozenset(vertex_decomposition))
-
-    # Return new containers of convex faces and their sorted edges
-    return convex_faces, convex_ordered_face_edges
-
-
 def close_closed_face(convex_face_edge_list, graph):
 
     # Note down the face's edges
@@ -148,6 +90,7 @@ def close_closed_face(convex_face_edge_list, graph):
     # Return update list of unsorted face edges
     return face_edges
 
+
 def find_outer_face(ordered_face_edges, graph):
     faces_per_edge = dict.fromkeys(list(graph.edges()), 0)
     for face in ordered_face_edges.keys():
@@ -164,6 +107,7 @@ def find_outer_face(ordered_face_edges, graph):
     print(f"minimum face count: {min_face_count}")
     outer_face = [edge for edge in faces_per_edge.keys() if faces_per_edge[edge] == min_face_count]
     return outer_face
+
 
 def build_face_to_edge_map(graph, faces):
 

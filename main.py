@@ -4,7 +4,6 @@ import numpy as np
 import timeit
 import sys
 
-from py2d.Math import Polygon, Vector
 from src.graph_simulation import *
 from src.graph_drawing import *
 from src.edge_crossings import *
@@ -29,59 +28,6 @@ if __name__ == '__main__':
     # Diagnostics Files
     diagnostics_directory = "./output/diagnostics"
     diagnostics_file=f"barabasi_albert_{n_vertices}_{m_edges}_{seed}"
-
-    # Testing the outer face decomposition -----------------------------------------------------------------------------
-    test_graph, positions = nx.Graph(), {}
-
-    canvas_bounds = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
-    test_graph.add_nodes_from(list(range(0, len(canvas_bounds))))
-    for boundary_index in range(0, len(canvas_bounds)):
-        print(f"boundary index: {boundary_index}")
-        test_graph.add_edge(boundary_index, (boundary_index + 1) % len(canvas_bounds))
-        positions[boundary_index] = np.array(canvas_bounds[boundary_index])
-
-    holes = [[(-0.5, -0.2), (-0.1, 0.0), (0.1, 0.0), (0.5, -0.2), (0.2, 0.2), (-0.2, 0.2)],
-             [(0.5, 0.5), (0.3, 0.3), (-0.5, 0.5)]]
-    for hole in holes:
-        start_index = max(test_graph.nodes) + 1
-        print(start_index)
-        test_graph.add_nodes_from([start_index, (start_index + len(hole) - 1)])
-        for node_index in range(0, len(hole)):
-            vertex_a = start_index + node_index
-            vertex_b = start_index + (start_index + node_index + 1) % len(hole)
-            print(f"connecting: {vertex_a} and {vertex_b}")
-            test_graph.add_edge(vertex_a, vertex_b)
-            positions[start_index + node_index] = np.array(hole[node_index])
-
-    plt.figure(3, figsize=(20, 20))
-    nx.draw(G=test_graph, pos=positions, node_shape='o', node_size=14)
-    nx.draw_networkx_labels(G=test_graph, pos=positions, font_size=25)
-    plt.savefig(fname="test_1.png", dpi=300)
-    plt.clf()
-
-    canvas_polygon = Polygon.from_tuples(canvas_bounds)
-    outer_face_coords = [Polygon.from_tuples(holes[0]), Polygon.from_tuples(holes[1])]
-    test = Polygon.convex_decompose(polygon=canvas_polygon, holes=outer_face_coords)
-    [print(polygon) for polygon in test[0]]
-
-    for convex_index in range(0, len(test[0])):
-        found = []
-        for convex_polygon_vertex in test[0][convex_index]:
-            for vertex in positions.keys():
-                if all([convex_polygon_vertex[index] == positions[vertex][index] for index in range(0, 2)]):
-                    print(f"Vertex {vertex}: {convex_polygon_vertex}")
-                    found.append(vertex)
-        print(found)
-        for index in range(0, len(found)):
-            print(f"adding edge from {found[index]} to {found[(index + 1) % len(found)]}")
-            test_graph.add_edge(found[index], found[(index + 1) % len(found)])
-
-    plt.figure(3, figsize=(20, 20))
-    nx.draw(G=test_graph, pos=positions, node_shape='o', node_size=14)
-    nx.draw_networkx_labels(G=test_graph, pos=positions, font_size=25)
-    plt.savefig(fname="test_2.png", dpi=300)
-    plt.clf()
-    sys.exit()
 
     # EMBED INPUT GRAPH ------------------------------------------------------------------------------------------------
 
@@ -180,15 +126,8 @@ if __name__ == '__main__':
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
     face_detection_start_time = timeit.default_timer() - face_detection_start_time
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
-    convex_faces, convex_ordered_face_edges = make_faces_convex(faces, ordered_face_edges, plane_graph, plane_positions)
-
-    outer_face_cycle = sort_face_edges(find_outer_face(convex_ordered_face_edges, plane_graph))
-    print(f"outer face: {outer_face_cycle}")
-
-    sys.exit()
 
     [print(f"{key} - {ordered_face_edges[key]}") for key in ordered_face_edges.keys()]
-    convex_faces = make_faces_convex(faces, ordered_face_edges, plane_graph, plane_positions)
 
     # Draw and Save Planar, Convex-Face Graph
     planar_drawing_start_time = timeit.default_timer()
@@ -196,8 +135,6 @@ if __name__ == '__main__':
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=3.5)
     save_drawn_graph(output_path)
     planar_drawing_time = timeit.default_timer() - planar_drawing_start_time
-
-
 
     # Find Best Face
     face_selection_start_time = timeit.default_timer()
