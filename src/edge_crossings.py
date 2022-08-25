@@ -222,20 +222,16 @@ def line_intersection(p1, p2, p3, p4):
     x4, y4 = float(p4[0]), float(p4[1])
 
     denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-    print(f"DENOM: {denominator}")
     if denominator == 0:  # parallel
         return None
     ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
-    print(f"UA: {ua}")
 
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
     if ua < 0 or ua >= 1:
         return None
     ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
-    print(f"UB: {ub}")
 
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
-    print(f"{ub < 0 or ub >= 1}")
     if ub < 0 or ub >= 1:
         return None
     x = x1 + ua * (x2 - x1)

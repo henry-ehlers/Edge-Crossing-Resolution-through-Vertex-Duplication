@@ -284,6 +284,7 @@ def is_convex(inner_angles):
 def split_face_into_sight_cells(edges, vertices, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
 
     print(vertices)
+    new_vertices = []
     for origin_index in range(0, len(vertices)):
 
         for target_index in range(0, len(vertices)):
@@ -305,28 +306,34 @@ def split_face_into_sight_cells(edges, vertices, graph, positions, bounds=((-1, 
 
             # TODO: MUST CONSIDER EXTENSIONS IN BOTH DIRECTIONS TO COVER EDGE_CASES, REGARDLESS OF WHETHER ADJACENT OR NOT
             if is_visible:
-                extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bounds)
+                print(f"Vertices: {vertices}")
+                new_vertices.append(extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bounds))
+                print(f"Vertices: {vertices}")
 
 
 def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bounds):
 
     # Calculate intersections of extended line with boundaries in both directions
     bound_intersections = extend_line(positions[vertex_a], positions[vertex_b], bounds)
-    already_connected = {vertex_a, vertex_b} in edges
-    print(f"intersections: {bound_intersections}")
-    print(f"Already Connected: {already_connected}")
+    try:
+        already_connected = True
+        existing_edge = graph.edges[vertex_a, vertex_b]
+    except KeyError:
+        already_connected = False
+
+
+    print(f"Vertices {vertex_a} and {vertex_b} are already connected -> {already_connected}")
     print(f"edges: {edges}")
+    added_vertices = []
 
     # Get Indices of selected vertices
     vertex_indices = ([index for index in range(0, len(vertices)) if vertices[index] == vertex_a][0],
                       [index for index in range(0, len(vertices)) if vertices[index] == vertex_b][0])
-    print(f"vertices: {vertices}")
-    print(f"vertices {vertex_a} and {vertex_b} @ {vertex_indices[0]} and {vertex_indices[1]}")
+    # print(f"vertices: {vertices}")
+    # print(f"vertices {vertex_a} and {vertex_b} @ {vertex_indices[0]} and {vertex_indices[1]}")
 
     # Iterate over the bound intersections and check whether the extended line segments falls out of the face
     for bound_index, bound_intersection in enumerate(bound_intersections):
-        print("|")
-        print(f"-> Bound Intersection: {bound_intersection}")
 
         # Calculate the face's inner triangle's angle
         inner_triangle_indices = [(vertex_indices[bound_index] + 1) % len(vertices),
@@ -334,25 +341,39 @@ def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bou
                                   vertex_indices[bound_index] - 1]
         point_a, point_b, point_c = [positions[vertices[index]] for index in inner_triangle_indices]
         inner_face_angle = calculate_inner_angle(point_a, point_b, point_c)
-        print(f"inner triangle indices: {inner_triangle_indices}")
-        print(f"inner triangle: {[vertices[index] for index in inner_triangle_indices]}")
+        # print(f"inner triangle indices: {inner_triangle_indices}")
+        # print(f"inner triangle: {[vertices[index] for index in inner_triangle_indices]}")
 
         # Calculate Angle between inner face edges and boundary point
-        hypothetical_angle_a = calculate_inner_angle(point_a, point_b, bound_intersection)
-        hypothetical_angle_c = calculate_inner_angle(bound_intersection, point_b, point_c)
-        hypothetical_angle = hypothetical_angle_a if not math.isnan(hypothetical_angle_a) else hypothetical_angle_c
+        angle_against_a = calculate_inner_angle(point_a, point_b, bound_intersection)
+        angle_against_c = calculate_inner_angle(bound_intersection, point_b, point_c)
+        hypothetical_angle = angle_against_a if not math.isnan(angle_against_a) else angle_against_c
 
-        # If
-        if inner_face_angle > hypothetical_angle:
-            print(f"Inner Angle {inner_face_angle} ACCEPTS hypothetical angle {hypothetical_angle}")
-            print(f"Check with Vertex {vertices[vertex_indices[bound_index]]} as origin!")
-            edge_points = (positions[vertex_indices[bound_index]], bound_intersection)
-            candidate_edges = [edge for edge in edges if not set(edge).intersection((vertex_a, vertex_b))]
-            print(f"possible intersecting edges: {candidate_edges}")
-            closest_edge, edge_crossing = find_closest_edge_intersection(edge_points, candidate_edges, positions)
-            print(f"Intersection with Edge {closest_edge} @ {edge_crossing}")
-        else:
-            print(f"Inner Angle {inner_face_angle} DOES NOT ACCEPT hypothetical angle {hypothetical_angle}")
+        # If the hypothetical and observed angle are incompabitle, continue
+        if inner_face_angle < hypothetical_angle: continue
+
+        # Find the Closest Intersection
+        # print(f"Inner Angle {inner_face_angle} ACCEPTS hypothetical angle {hypothetical_angle}")
+        # print(f"Check with Vertex {vertices[vertex_indices[bound_index]]} as origin!")
+        edge_points = (positions[vertices[vertex_indices[bound_index]]], bound_intersection)
+        candidate_edges = [edge for edge in edges if not set(edge).intersection((vertex_a, vertex_b))]
+        # print(f"possible intersecting edges: {candidate_edges}")
+        closest_edge, crossing_point = find_closest_edge_intersection(edge_points, candidate_edges, positions)
+        # print(f"Intersection with Edge {closest_edge} @ {crossing_point}")
+
+        # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
+        origin_vertex, new_vertex_index = vertices[vertex_indices[bound_index]], max(graph.nodes) + 1
+        graph.add_node(node_for_adding=new_vertex_index, split=0, target=0, virtual=1, boundary=0, segment=0)
+        positions[new_vertex_index] = crossing_point
+        graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, virtual=0, target=0, segment=1)
+        added_vertices.append(new_vertex_index)
+
+    #
+    if (len(added_vertices) > 0) and (not already_connected):
+        graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, virtual=0, target=0, segment=1)
+
+    #
+    return added_vertices
 
 
 def is_vertex_visible(vertex_a, vertex_b, edges, positions):

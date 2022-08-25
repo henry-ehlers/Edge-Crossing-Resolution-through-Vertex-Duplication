@@ -141,15 +141,15 @@ if __name__ == '__main__':
     sight_cells = get_sight_cells(faces, ordered_face_edges, plane_graph, plane_positions)
     print(sight_cells)
 
-    sys.exit()
-    [print(f"{key} - {ordered_face_edges[key]}") for key in ordered_face_edges.keys()]
-
     # Draw and Save Planar, Convex-Face Graph
     planar_drawing_start_time = timeit.default_timer()
     draw_graph(graph=plane_graph, positions=plane_positions)
     output_path = create_output_path(embedding=embedding, n_vertices=n_vertices, m_edges=m_edges, seed=seed, n_splits=3.5)
     save_drawn_graph(output_path)
     planar_drawing_time = timeit.default_timer() - planar_drawing_start_time
+
+    sys.exit()
+    [print(f"{key} - {ordered_face_edges[key]}") for key in ordered_face_edges.keys()]
 
     # Find Best Face
     face_selection_start_time = timeit.default_timer()
