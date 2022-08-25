@@ -320,9 +320,9 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
 
             # Check whether bend and other vertex can 'see' each other
             if are_vertices_adjacent(joint_vertex, connecting_vertex, graph):
-                visibility = True
+                is_visible = True
             else:
-                visibility = is_vertex_visible(joint_vertex,
+                is_visible = is_vertex_visible(joint_vertex,
                                                connecting_vertex,
                                                inner_angles,
                                                graph,
@@ -330,13 +330,13 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
                                                edges,
                                                positions)
 
-            print(f"\nVertex {joint_vertex} and {connecting_vertex} can see each other -> {visibility}")
+            print(f"\nVertex {joint_vertex} and {connecting_vertex} can see each other -> {is_visible}")
             # If they cannot see each other, skip to the next pair
-            if not visibility:
+            if not is_visible:
                 continue
 
             # Extend the sight-line, producing a
-            new_vertices, virtual_map = extend_sight_line(joint_vertex=joint_vertex,
+            bisected_edge, new_vertex = extend_sight_line(joint_vertex=joint_vertex,
                                                           connecting_vertex=connecting_vertex,
                                                           inner_angles=inner_angles,
                                                           vertices=vertices,
@@ -345,35 +345,42 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
                                                           positions=positions,
                                                           bounds=bounds)
 
+            # Keep track of what has been added
+            print(f"bisected edge: {bisected_edge}")
+            added_vertices.append(new_vertex)
 
+            # Vertices can see one-another, but not produce a legal extension.
+            if bisected_edge is None:
+                continue
 
+            # Add
+            if bisected_edge in edge_to_virtual_vertices:
+                edge_to_virtual_vertices[bisected_edge].add(new_vertex)
+            else:
+                edge_to_virtual_vertices[bisected_edge] = {new_vertex}
+    print(f"graph: {graph}")
+    print(f"edge_to_virtual_vertices: {edge_to_virtual_vertices}")
+    # Remove edges which have been intersected, and replace them with ordered virtual edges
+    virtual_edge_set = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
+    remove_edges(graph, edge_to_virtual_vertices.keys())
 
+    # Locate Edge Crossings and Faces in Subgraph
+    face_vertices = vertices + added_vertices
+    face_positions = {key: positions.get(key) for key in face_vertices}
+    face_graph = nx.Graph(graph.subgraph(nodes=face_vertices))
 
-            # if len(new_vertices) > 0:
-            #     added_vertices.append(new_vertices)
-            #     edge_to_virtual_vertices.update(virtual_map)
+    # Find remaining edge crossings
+    face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
+    if len(face_edge_crossings) > 1:
+        face_graph, face_positions, virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
+        graph.update(face_graph)
+        positions.update(face_positions)
 
-    # # Remove edges which have been intersected, and replace them with ordered virtual edges
-    # virtual_edge_set = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
-    # remove_edges(graph, edge_to_virtual_vertices.keys())
-    #
-    # # Locate Edge Crossings and Faces in Subgraph
-    # face_vertices = vertices + list(it.chain.from_iterable(added_vertices))
-    # face_positions = {key: positions.get(key) for key in face_vertices}
-    # face_graph = nx.Graph(graph.subgraph(nodes=face_vertices))
-    #
-    # # Find remaining edge crossings
-    # face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
-    # if len(face_edge_crossings) > 1:
-    #     face_graph, face_positions, virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
-    #     graph.update(face_graph)
-    #     positions.update(face_positions)
-    #
-    # # Define Sight Cells, i.e. faces
-    # sight_cells = find_all_faces(face_graph)
+    # Define Sight Cells, i.e. faces
+    sight_cells = find_all_faces(face_graph)
 
     # Return Sight Cells
-    return []
+    return sight_cells
 
 
 def get_sight_cell_visibilities(sight_cells, target_vertices, graph, positions):
@@ -384,78 +391,46 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
 
     # Calculate intersections of extended line with boundaries in both directions
     bound_intersections = extend_line(positions[joint_vertex], positions[connecting_vertex], bounds)
+    closest_intersection_to_joint = bound_intersections[0]
 
-    # Check if vertex a and b are already connected by an edge
-    already_connected = are_vertices_adjacent(joint_vertex, connecting_vertex)
+    already_connected = are_vertices_adjacent(joint_vertex, connecting_vertex, graph)
+    if already_connected:
+        print("CAN SIMPLY EXTEND IF ALREADY CONNECTED")
+        is_visible = True
+    else:
+        print("CHECKING EXTENSIONS OF NOT-CONNECTED VERTICES")
+        is_visible = check_vertex_visibility_by_angle(joint_vertex=joint_vertex,
+                                                      inner_angles=inner_angles,
+                                                      edges=edges,
+                                                      vertices=vertices,
+                                                      positions=positions,
+                                                      connecting_position=closest_intersection_to_joint)
 
-    edge_to_virtual_vertex = {edge: set() for edge in edges}
-    added_vertices = []
+    # If the hypothetical and observed angle are incompatible, then continue
+    if not is_visible:
+        print("ILLEGAL ANGLE")
+        return None, None
 
-    # Get Indices of selected vertices
-    vertex_indices = ([index for index in range(0, len(vertices)) if vertices[index] == joint_vertex][0],
-                      [index for index in range(0, len(vertices)) if vertices[index] == connecting_vertex][0])
-    print(f"\nVertices {joint_vertex} and {connecting_vertex} @ {vertex_indices[0]} and {vertex_indices[1]}")
+    print("LEGAL ANGLE")
+    # Find the Closest Intersection
+    extended_line = (positions[joint_vertex], closest_intersection_to_joint)
+    candidate_edges = [edge for edge in edges if not set(edge).intersection((joint_vertex, connecting_vertex))]
+    print(f"candidate edges: {candidate_edges}")
+    closest_edge, crossing_point = find_closest_edge_intersection(extended_line, candidate_edges, positions)
+    print(f"Intersection with Edge {closest_edge} @ {crossing_point}")
 
-    # Iterate over the bound intersections and check whether the extended line segments falls out of the face
-    for bound_index, bound_intersection in enumerate(bound_intersections):
-
-        print(f"Extending {vertices[vertex_indices[bound_index]]}")
-        if already_connected:
-            print("CHECKING EXTENSIONS OF ALREADY CONNECTED VERTICES")
-            is_visible = 180 < inner_angles[vertices[vertex_indices[bound_index]]]
-        else:
-            print("CHECKING EXTENSIONS OF NOT-CONNECTED VERTICES")
-            is_visible = check_vertex_visibility_by_angle(vertex_a=vertices[vertex_indices[bound_index]],
-                                                          inner_angles=inner_angles,
-                                                          edges=edges,
-                                                          positions=positions,
-                                                          position_b=bound_intersection)
-        #
-        #
-        # inner_triangle_indices = [(vertex_indices[bound_index] + 1) % len(vertices),
-        #                           vertex_indices[bound_index],
-        #                           vertex_indices[bound_index] - 1]
-        # point_a, point_b, point_c = [positions[vertices[index]] for index in inner_triangle_indices]
-        # inner_face_angle = calculate_inner_angle(point_a, point_b, point_c)
-        # print(f"inner_face_angle: {inner_face_angle}")
-        #
-        # # Calculate Angle between inner face edges and boundary point
-        # # TODO: maybe check whether the vertex of the edge == the line segment projection vertex, i.e. sidestep nan
-        # # TODO: BROKEN!
-        # hypothetical_angle = 180 if already_connected else calculate_inner_angle(point_a, point_b, bound_intersection)
-        # print(f"hypothetical_angle: {hypothetical_angle}")
-
-        # If the hypothetical and observed angle are incompatible, then continue
-        if not is_visible:
-            print("ILLEGAL ANGLE")
-            continue
-
-        print("LEGAL ANGLE")
-        # Find the Closest Intersection
-        edge_points = (positions[vertices[vertex_indices[bound_index]]], bound_intersection)
-        candidate_edges = [edge for edge in edges if not set(edge).intersection((vertex_a, vertex_b))]
-        print(f"candidate edges: {candidate_edges}")
-        closest_edge, crossing_point = find_closest_edge_intersection(edge_points, candidate_edges, positions)
-        print(f"Intersection with Edge {closest_edge} @ {crossing_point}")
-
-        # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
-        origin_vertex, new_vertex_index = vertices[vertex_indices[bound_index]], max(graph.nodes) + 1
-        graph.add_node(node_for_adding=new_vertex_index, split=0, target=0, virtual=1, boundary=0, segment=0)
-        positions[new_vertex_index] = crossing_point
-        graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, virtual=0, target=0, segment=1)
-
-        edge_to_virtual_vertex[closest_edge].add(new_vertex_index)
-        added_vertices.append(new_vertex_index)
+    # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
+    origin_vertex, new_vertex_index = joint_vertex, max(graph.nodes) + 1
+    graph.add_node(node_for_adding=new_vertex_index, split=0, target=0, virtual=1, boundary=0, segment=0)
+    positions[new_vertex_index] = crossing_point
+    graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, virtual=0, target=0, segment=1)
 
     # If the two vertices were not already connected + had a line segment extended, also add a virtual edge between them
-    if (len(added_vertices) > 0) and (not already_connected):
-        graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, virtual=0, target=0, segment=1)
-
-    # Keep only those edge to virtual vertex map entries which are not empty
-    edge_to_virtual_vertex = {k: v for k, v in edge_to_virtual_vertex.items() if v}
+    if not already_connected:
+        graph.add_edge(u_of_edge=joint_vertex, v_of_edge=connecting_vertex, virtual=0, target=0, segment=1)
 
     # Return a list of added vertices and a map of edges to newly placed virtual vertices
-    return added_vertices, edge_to_virtual_vertex
+    return closest_edge, new_vertex_index
 
 
 def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, graph, vertices, edges, positions):

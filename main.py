@@ -143,6 +143,7 @@ if __name__ == '__main__':
 
     # Get Sight Cells
     sight_cells = get_face_sight_cell(faces, ordered_face_edges, plane_graph, plane_positions)
+    print(f"graph: {plane_graph}")
     print(sight_cells)
 
     # Draw and Save Planar, Convex-Face Graph

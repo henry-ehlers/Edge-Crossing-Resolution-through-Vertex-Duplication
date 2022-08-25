@@ -130,6 +130,7 @@ def planarize_graph(graph, positions, edge_crossings):
             [edges_to_be_removed.add(edge) for edge in [edge_a, edge_b]]
 
     # Remove original edge set and add virtual edge set
+    print(f"edge_to_virtual_vertex: {edge_to_virtual_vertex}")
     virtual_edge_set = add_virtual_edges(planar_graph, planar_positions, edge_to_virtual_vertex)
     remove_edges(planar_graph, list(edges_to_be_removed))
 
