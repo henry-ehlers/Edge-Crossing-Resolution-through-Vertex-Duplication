@@ -87,7 +87,6 @@ def close_closed_face(convex_face_edge_list, graph):
 
         # If no edge exists, add one and update the convex face's ordered edge list
         if edge is None:
-            print(f"Added {vertex_a} and {vertex_b}")
             graph.add_edge(vertex_a, vertex_b, virtual=1, segment=0, target=0)
 
         # Append (new) edge to this face's list of edges
@@ -110,7 +109,6 @@ def find_outer_face(ordered_face_edges, graph):
                 sys.exit("Shit's fucked")
 
     min_face_count = min(faces_per_edge.values())
-    print(f"minimum face count: {min_face_count}")
     outer_face = [edge for edge in faces_per_edge.keys() if faces_per_edge[edge] == min_face_count]
     return outer_face
 
@@ -263,8 +261,6 @@ def get_face_sight_cell(faces, ordered_face_edges, graph, positions, bounds=((-1
     # Iterate over all faces
     for face in faces:
 
-        print(f"\nFace: {face}")
-
         # Get Vertices and ensure they are listed in counter-clockwise order
         face_edges = ordered_face_edges[face]
         face_vertices = get_sorted_face_vertices(face_edges, is_sorted=True)
@@ -273,7 +269,6 @@ def get_face_sight_cell(faces, ordered_face_edges, graph, positions, bounds=((-1
 
         # Calculate Inner Angles to check convexity
         face_inner_angles = calculate_face_inner_angles(face_vertices, positions)
-        print(f"Inner Angles: {face_inner_angles}")
 
         # If the face is convex, the face is the sight-cell
         if is_convex(face_inner_angles):
@@ -281,7 +276,6 @@ def get_face_sight_cell(faces, ordered_face_edges, graph, positions, bounds=((-1
 
         # Otherwise, split into sight cells and return set of frozen sets of vertices per sight-cell
         else:
-            print(f"FACE INNER ANGLES: {face_inner_angles}")
             cells = split_face_into_sight_cells(face_edges, face_vertices, face_inner_angles, graph, positions)
             sight_cells[face] = cells
 
@@ -322,15 +316,14 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
             if are_vertices_adjacent(joint_vertex, connecting_vertex, graph):
                 is_visible = True
             else:
-                is_visible = is_vertex_visible(joint_vertex,
-                                               connecting_vertex,
-                                               inner_angles,
-                                               graph,
-                                               vertices,
-                                               edges,
-                                               positions)
+                is_visible = is_vertex_visible(joint_vertex=joint_vertex,
+                                               connecting_vertex=connecting_vertex,
+                                               inner_angles=inner_angles,
+                                               graph=graph,
+                                               vertices=vertices,
+                                               edges=edges,
+                                               positions=positions)
 
-            print(f"\nVertex {joint_vertex} and {connecting_vertex} can see each other -> {is_visible}")
             # If they cannot see each other, skip to the next pair
             if not is_visible:
                 continue
@@ -346,7 +339,6 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
                                                           bounds=bounds)
 
             # Keep track of what has been added
-            print(f"bisected edge: {bisected_edge}")
             added_vertices.append(new_vertex)
 
             # Vertices can see one-another, but not produce a legal extension.
@@ -358,8 +350,7 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
                 edge_to_virtual_vertices[bisected_edge].add(new_vertex)
             else:
                 edge_to_virtual_vertices[bisected_edge] = {new_vertex}
-    print(f"graph: {graph}")
-    print(f"edge_to_virtual_vertices: {edge_to_virtual_vertices}")
+
     # Remove edges which have been intersected, and replace them with ordered virtual edges
     virtual_edge_set = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
     remove_edges(graph, edge_to_virtual_vertices.keys())
@@ -393,12 +384,11 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
     bound_intersections = extend_line(positions[joint_vertex], positions[connecting_vertex], bounds)
     closest_intersection_to_joint = bound_intersections[0]
 
+    # If vertices are adjacent, they can see one-another; otherwise we must check explcitly
     already_connected = are_vertices_adjacent(joint_vertex, connecting_vertex, graph)
     if already_connected:
-        print("CAN SIMPLY EXTEND IF ALREADY CONNECTED")
         is_visible = True
     else:
-        print("CHECKING EXTENSIONS OF NOT-CONNECTED VERTICES")
         is_visible = check_vertex_visibility_by_angle(joint_vertex=joint_vertex,
                                                       inner_angles=inner_angles,
                                                       edges=edges,
@@ -408,16 +398,12 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
 
     # If the hypothetical and observed angle are incompatible, then continue
     if not is_visible:
-        print("ILLEGAL ANGLE")
         return None, None
 
-    print("LEGAL ANGLE")
-    # Find the Closest Intersection
+    # Find the Closest Intersection of the extended line with edges not incident to joint or connecting vertex
     extended_line = (positions[joint_vertex], closest_intersection_to_joint)
     candidate_edges = [edge for edge in edges if not set(edge).intersection((joint_vertex, connecting_vertex))]
-    print(f"candidate edges: {candidate_edges}")
     closest_edge, crossing_point = find_closest_edge_intersection(extended_line, candidate_edges, positions)
-    print(f"Intersection with Edge {closest_edge} @ {crossing_point}")
 
     # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
     origin_vertex, new_vertex_index = joint_vertex, max(graph.nodes) + 1
@@ -426,6 +412,7 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
     graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, virtual=0, target=0, segment=1)
 
     # If the two vertices were not already connected + had a line segment extended, also add a virtual edge between them
+    # TODO: check functionality for added virtual segments of previously unconnected vertices
     if not already_connected:
         graph.add_edge(u_of_edge=joint_vertex, v_of_edge=connecting_vertex, virtual=0, target=0, segment=1)
 
@@ -452,7 +439,10 @@ def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, graph, vert
 
     # Check specific edge crossings between (Vertex A, Vertex B) and all non-incident edges
     possible_crossing_edges = [edge for edge in edges if (joint_vertex not in edge) and (connecting_vertex not in edge)]
-    crossing_visibility = check_vertex_visibility_by_crossing(joint_vertex, connecting_vertex, possible_crossing_edges, positions)
+    crossing_visibility = check_vertex_visibility_by_crossing(vertex_a=joint_vertex,
+                                                              vertex_b=connecting_vertex,
+                                                              candidate_edges=possible_crossing_edges,
+                                                              positions=positions)
     if not crossing_visibility:
         return crossing_visibility
 
@@ -463,26 +453,25 @@ def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, graph, vert
 def check_vertex_visibility_by_angle(joint_vertex, inner_angles, edges, vertices, positions,
                                      connecting_vertex=None, connecting_position=None):
 
+    # Ensure that either a vertex or a position has been provided
     assert (connecting_vertex is not None) or (connecting_position is not None), \
         "Specify a Connecting Point when checking its visibility by angle"
 
     # Get points for new angle calculation
     joint_index = [index for index in range(0, len(vertices)) if vertices[index] == joint_vertex][0]
-    print(f"Joint Index: {joint_index} and Vertices: {vertices}")
     ref_vertex_a, ref_vertex_b = vertices[(joint_index + 1) % len(vertices)], vertices[joint_index - 1]
     debug_angle = calculate_inner_angle(positions[ref_vertex_a], positions[joint_vertex], positions[ref_vertex_b])
 
     # Get the Angle of the Joint against which we are comparing the new incoming angle:
     observed_angle = inner_angles[joint_vertex]
-    print(f"Vertex Triangle {ref_vertex_a} {joint_vertex} {ref_vertex_b}")
-    print(f"Debug Angle: {debug_angle} and Stored Angle: {observed_angle}")
+
+    # Make sure the vertex ordering provides the expected angle results
+    assert observed_angle == debug_angle, \
+        "Angle Calculation is incorrect"
 
     # Calculate Hypothetical Angle
-    if connecting_vertex is not None:
-        print(f"Vertex Triangle {ref_vertex_a} {joint_vertex} {connecting_vertex}")
     connecting_position = connecting_position if connecting_position is not None else positions[connecting_vertex]
     hypothetical_angle = calculate_inner_angle(positions[ref_vertex_a], positions[ref_vertex_b], connecting_position)
-    print(f"hypothetical angle {hypothetical_angle}")
 
     # If the angle between Vertex A and B is larger than between Vertex A and its neighbors, Vertex B is not visible
     return False if hypothetical_angle > observed_angle else True

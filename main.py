@@ -134,12 +134,13 @@ if __name__ == '__main__':
     print(f"faces: {faces}")
 
     # Find the outer face(s)
-    outer_face = find_outer_face(ordered_face_edges, plane_graph)
-    ordered_outer_face_edges = sort_face_edges(outer_face)
-    ordered_outer_face_vertices = get_sorted_face_vertices(ordered_outer_face_edges, is_sorted=True)
-    print(f"ordered outer face edges: {ordered_outer_face_edges}")
-    print(f"ordered outer face vertices: {ordered_outer_face_vertices}")
-    outer_face_inner_angles = calculate_face_inner_angles(ordered_outer_face_vertices, plane_positions)
+    # TODO: redo the outer face and account for branches
+    # outer_face = find_outer_face(ordered_face_edges, plane_graph)
+    # ordered_outer_face_edges = sort_face_edges(outer_face)
+    # ordered_outer_face_vertices = get_sorted_face_vertices(ordered_outer_face_edges, is_sorted=True)
+    # print(f"ordered outer face edges: {ordered_outer_face_edges}")
+    # print(f"ordered outer face vertices: {ordered_outer_face_vertices}")
+    # outer_face_inner_angles = calculate_face_inner_angles(ordered_outer_face_vertices, plane_positions)
 
     # Get Sight Cells
     sight_cells = get_face_sight_cell(faces, ordered_face_edges, plane_graph, plane_positions)
