@@ -283,54 +283,71 @@ def is_convex(inner_angles):
 
 def split_face_into_sight_cells(edges, vertices, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
 
-    print(vertices)
-    new_vertices = []
+    added_vertices, edge_to_virtual_vertices = [], {}
     for origin_index in range(0, len(vertices)):
 
-        for target_index in range(0, len(vertices)):
+        for target_index in range(origin_index + 1, len(vertices)):
 
             vertex_a, vertex_b = vertices[origin_index], vertices[target_index]
-            vertex_set = {vertex_a, vertex_b}
+            if (vertex_a == vertex_b):
+                continue
 
-            print(f"\nVertex Set: {vertex_set}")
-            if (vertex_a == vertex_b): continue
+            if not is_vertex_visible(vertex_a, vertex_b, edges, positions):
+                continue
 
-            ind_diff = abs(origin_index - target_index)
-            adjacent = True if ((ind_diff == 1) or (ind_diff == len(vertices) - 1)) else False
-            is_visible = is_vertex_visible(vertex_a, vertex_b, edges, positions)
-            print(f"\nVertices {vertex_a} and {vertex_b} can see one-another: {is_visible}")
+            # Extend the sight-line, producing a
+            new_vertices, virtual_map = extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bounds)
+            if len(new_vertices) > 0:
+                added_vertices.append(new_vertices)
+                edge_to_virtual_vertices.update(virtual_map)
+    print(f"\nfinal map: {edge_to_virtual_vertices}")
 
-            # TODO: if is visible, extend line beyond until it intersect another line
-            # TODO: Check using angle visibility in which direction to extend
-            # TODO: if multiple intersections, take closest one (the other is not visible)
+    # Remove edges which have been intersected, and replace them with ordered virtual edges
+    virtual_edge_set = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
+    remove_edges(graph, edge_to_virtual_vertices.keys())
 
-            # TODO: MUST CONSIDER EXTENSIONS IN BOTH DIRECTIONS TO COVER EDGE_CASES, REGARDLESS OF WHETHER ADJACENT OR NOT
-            if is_visible:
-                print(f"Vertices: {vertices}")
-                new_vertices.append(extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bounds))
-                print(f"Vertices: {vertices}")
+    # Locate Edge Crossings and Faces in Subgraph
+    complete_vertices = vertices + added_vertices
+    face_graph = graph.subgraph(nodes=complete_vertices)
+    face_positions = {key: positions.get(key) for key in vertices}
+
+    # TODO: find remaining edge crossings
+    # TODO: create virtual vertices at points of edge crossings and reconnect with virtual edges
+    # TODO: find faces in planarized subgraph
+    # TODO: check visibility of each face to all targets using barycenter coordinates as point of reference
+
+
+
+# edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
+    # if len(edge_crossings) > 0:
+    #     print("FOUND CROSSINGS")
+    #     face_graph, face_positions, virtual_edge_set = planarize_graph(face_graph, face_positions, edge_crossings)
+    # face_sigh_cells = find_all_faces(face_graph)
+    # print(f"sight cells: {face_sigh_cells}")
 
 
 def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bounds):
 
     # Calculate intersections of extended line with boundaries in both directions
     bound_intersections = extend_line(positions[vertex_a], positions[vertex_b], bounds)
+
+    # Check if vertex a and b are already connected by an edge
     try:
         already_connected = True
         existing_edge = graph.edges[vertex_a, vertex_b]
     except KeyError:
         already_connected = False
 
-
     print(f"Vertices {vertex_a} and {vertex_b} are already connected -> {already_connected}")
     print(f"edges: {edges}")
+    edge_to_virtual_vertex = {edge: set() for edge in edges}
     added_vertices = []
 
     # Get Indices of selected vertices
     vertex_indices = ([index for index in range(0, len(vertices)) if vertices[index] == vertex_a][0],
                       [index for index in range(0, len(vertices)) if vertices[index] == vertex_b][0])
     # print(f"vertices: {vertices}")
-    # print(f"vertices {vertex_a} and {vertex_b} @ {vertex_indices[0]} and {vertex_indices[1]}")
+    print(f"vertices {vertex_a} and {vertex_b} @ {vertex_indices[0]} and {vertex_indices[1]}")
 
     # Iterate over the bound intersections and check whether the extended line segments falls out of the face
     for bound_index, bound_intersection in enumerate(bound_intersections):
@@ -341,7 +358,7 @@ def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bou
                                   vertex_indices[bound_index] - 1]
         point_a, point_b, point_c = [positions[vertices[index]] for index in inner_triangle_indices]
         inner_face_angle = calculate_inner_angle(point_a, point_b, point_c)
-        # print(f"inner triangle indices: {inner_triangle_indices}")
+        print(f"inner triangle indices: {inner_triangle_indices}")
         # print(f"inner triangle: {[vertices[index] for index in inner_triangle_indices]}")
 
         # Calculate Angle between inner face edges and boundary point
@@ -359,21 +376,25 @@ def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bou
         candidate_edges = [edge for edge in edges if not set(edge).intersection((vertex_a, vertex_b))]
         # print(f"possible intersecting edges: {candidate_edges}")
         closest_edge, crossing_point = find_closest_edge_intersection(edge_points, candidate_edges, positions)
-        # print(f"Intersection with Edge {closest_edge} @ {crossing_point}")
+        print(f"Intersection with Edge {closest_edge} @ {crossing_point}")
 
         # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
         origin_vertex, new_vertex_index = vertices[vertex_indices[bound_index]], max(graph.nodes) + 1
         graph.add_node(node_for_adding=new_vertex_index, split=0, target=0, virtual=1, boundary=0, segment=0)
         positions[new_vertex_index] = crossing_point
         graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, virtual=0, target=0, segment=1)
+
+        edge_to_virtual_vertex[closest_edge].add(new_vertex_index)
         added_vertices.append(new_vertex_index)
 
-    #
+    # If the two vertices were not already connected + had a line segment extended, also add a virtual edge between them
     if (len(added_vertices) > 0) and (not already_connected):
         graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, virtual=0, target=0, segment=1)
 
     #
-    return added_vertices
+    edge_to_virtual_vertex = {k: v for k, v in edge_to_virtual_vertex.items() if v}
+    print(f"map: {edge_to_virtual_vertex}")
+    return added_vertices, edge_to_virtual_vertex
 
 
 def is_vertex_visible(vertex_a, vertex_b, edges, positions):
