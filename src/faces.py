@@ -251,7 +251,7 @@ def calculate_face_inner_angles(counter_clockwise_face_vertices, positions):
     return inner_angles
 
 
-def get_sight_cells(faces, ordered_face_edges, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
+def get_face_sight_cell(faces, ordered_face_edges, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
 
     #
     sight_cells = {face: None for face in faces}
@@ -265,15 +265,17 @@ def get_sight_cells(faces, ordered_face_edges, graph, positions, bounds=((-1, -1
         if calculate_face_signed_area(face_vertices, positions) < 0:
             face_vertices = list(reversed(face_vertices))
 
-        # Calculate Inner Angles
+        # Calculate Inner Angles to check convexity
         face_inner_angles = calculate_face_inner_angles(face_vertices, positions)
+
+        # If the face is convex, the face is the sight-cell
         if is_convex(face_inner_angles):
             sight_cells[face] = face_edges
         else:
-            # split into sight cells
-            # TODO: can we recycle the calculated inner_angles somehow? we need to know the reference and both endpoints
-            split_face_into_sight_cells(face_edges, face_vertices, graph, positions)
+            # split into sight cells and return set of frozen sets of vertices per sight-cell
+            sight_cells[face] = split_face_into_sight_cells(face_edges, face_vertices, graph, positions)
 
+    # Return
     return sight_cells
 
 
@@ -283,15 +285,19 @@ def is_convex(inner_angles):
 
 def split_face_into_sight_cells(edges, vertices, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
 
+    # Keep track of the added vertices, and in which edges they were added
     added_vertices, edge_to_virtual_vertices = [], {}
-    for origin_index in range(0, len(vertices)):
 
+    # Iterate over all pairs of vertices in the current face
+    for origin_index in range(0, len(vertices)):
         for target_index in range(origin_index + 1, len(vertices)):
 
+            # Double check that vertex A and B are not the same
             vertex_a, vertex_b = vertices[origin_index], vertices[target_index]
-            if (vertex_a == vertex_b):
+            if vertex_a == vertex_b:
                 continue
 
+            # Do not project line segment if vertices cannot see one-another
             if not is_vertex_visible(vertex_a, vertex_b, edges, positions):
                 continue
 
@@ -300,30 +306,32 @@ def split_face_into_sight_cells(edges, vertices, graph, positions, bounds=((-1, 
             if len(new_vertices) > 0:
                 added_vertices.append(new_vertices)
                 edge_to_virtual_vertices.update(virtual_map)
-    print(f"\nfinal map: {edge_to_virtual_vertices}")
 
     # Remove edges which have been intersected, and replace them with ordered virtual edges
     virtual_edge_set = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
     remove_edges(graph, edge_to_virtual_vertices.keys())
 
     # Locate Edge Crossings and Faces in Subgraph
-    complete_vertices = vertices + added_vertices
-    face_graph = graph.subgraph(nodes=complete_vertices)
-    face_positions = {key: positions.get(key) for key in vertices}
+    face_vertices = vertices + list(it.chain.from_iterable(added_vertices))
+    face_positions = {key: positions.get(key) for key in face_vertices}
+    face_graph = nx.Graph(graph.subgraph(nodes=face_vertices))
 
-    # TODO: find remaining edge crossings
-    # TODO: create virtual vertices at points of edge crossings and reconnect with virtual edges
-    # TODO: find faces in planarized subgraph
-    # TODO: check visibility of each face to all targets using barycenter coordinates as point of reference
+    # Find remaining edge crossings
+    face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
+    if len(face_edge_crossings) > 1:
+        face_graph, face_positions, virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
+        graph.update(face_graph)
+        positions.update(face_positions)
+
+    # Define Sight Cells, i.e. faces
+    sight_cells = find_all_faces(face_graph)
+
+    # Return Sight Cells
+    return sight_cells
 
 
-
-# edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
-    # if len(edge_crossings) > 0:
-    #     print("FOUND CROSSINGS")
-    #     face_graph, face_positions, virtual_edge_set = planarize_graph(face_graph, face_positions, edge_crossings)
-    # face_sigh_cells = find_all_faces(face_graph)
-    # print(f"sight cells: {face_sigh_cells}")
+def get_sight_cell_visibilities(sight_cells, target_vertices, graph, positions):
+    pass
 
 
 def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bounds):
@@ -332,9 +340,9 @@ def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bou
     bound_intersections = extend_line(positions[vertex_a], positions[vertex_b], bounds)
 
     # Check if vertex a and b are already connected by an edge
+    already_connected = True
     try:
-        already_connected = True
-        existing_edge = graph.edges[vertex_a, vertex_b]
+        graph.edges[vertex_a, vertex_b]
     except KeyError:
         already_connected = False
 
@@ -346,7 +354,6 @@ def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bou
     # Get Indices of selected vertices
     vertex_indices = ([index for index in range(0, len(vertices)) if vertices[index] == vertex_a][0],
                       [index for index in range(0, len(vertices)) if vertices[index] == vertex_b][0])
-    # print(f"vertices: {vertices}")
     print(f"vertices {vertex_a} and {vertex_b} @ {vertex_indices[0]} and {vertex_indices[1]}")
 
     # Iterate over the bound intersections and check whether the extended line segments falls out of the face
@@ -359,22 +366,20 @@ def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bou
         point_a, point_b, point_c = [positions[vertices[index]] for index in inner_triangle_indices]
         inner_face_angle = calculate_inner_angle(point_a, point_b, point_c)
         print(f"inner triangle indices: {inner_triangle_indices}")
-        # print(f"inner triangle: {[vertices[index] for index in inner_triangle_indices]}")
 
         # Calculate Angle between inner face edges and boundary point
+        # TODO: maybe check whether the vertex of the edge == the line segment projection vertex, i.e. sidestep nan
         angle_against_a = calculate_inner_angle(point_a, point_b, bound_intersection)
         angle_against_c = calculate_inner_angle(bound_intersection, point_b, point_c)
         hypothetical_angle = angle_against_a if not math.isnan(angle_against_a) else angle_against_c
 
         # If the hypothetical and observed angle are incompabitle, continue
-        if inner_face_angle < hypothetical_angle: continue
+        if inner_face_angle < hypothetical_angle:
+            continue
 
         # Find the Closest Intersection
-        # print(f"Inner Angle {inner_face_angle} ACCEPTS hypothetical angle {hypothetical_angle}")
-        # print(f"Check with Vertex {vertices[vertex_indices[bound_index]]} as origin!")
         edge_points = (positions[vertices[vertex_indices[bound_index]]], bound_intersection)
         candidate_edges = [edge for edge in edges if not set(edge).intersection((vertex_a, vertex_b))]
-        # print(f"possible intersecting edges: {candidate_edges}")
         closest_edge, crossing_point = find_closest_edge_intersection(edge_points, candidate_edges, positions)
         print(f"Intersection with Edge {closest_edge} @ {crossing_point}")
 
@@ -391,9 +396,10 @@ def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bou
     if (len(added_vertices) > 0) and (not already_connected):
         graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, virtual=0, target=0, segment=1)
 
-    #
+    # Keep only those edge to virtual vertex map entries which are not empty
     edge_to_virtual_vertex = {k: v for k, v in edge_to_virtual_vertex.items() if v}
-    print(f"map: {edge_to_virtual_vertex}")
+
+    # Return a list of added vertices and a map of edges to newly placed virtual vertices
     return added_vertices, edge_to_virtual_vertex
 
 
