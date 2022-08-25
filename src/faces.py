@@ -4,6 +4,7 @@ from src.edge_crossings import *
 import networkx as nx
 import itertools as it
 import numpy as np
+import math
 import copy
 import sys
 
@@ -296,7 +297,7 @@ def split_face_into_sight_cells(edges, vertices, graph, positions, bounds=((-1, 
             ind_diff = abs(origin_index - target_index)
             adjacent = True if ((ind_diff == 1) or (ind_diff == len(vertices) - 1)) else False
             is_visible = is_vertex_visible(vertex_a, vertex_b, edges, positions)
-            print(f"Vertices {vertex_a} and {vertex_b} can see one-another: {is_visible}")
+            print(f"\nVertices {vertex_a} and {vertex_b} can see one-another: {is_visible}")
 
             # TODO: if is visible, extend line beyond until it intersect another line
             # TODO: Check using angle visibility in which direction to extend
@@ -304,44 +305,54 @@ def split_face_into_sight_cells(edges, vertices, graph, positions, bounds=((-1, 
 
             # TODO: MUST CONSIDER EXTENSIONS IN BOTH DIRECTIONS TO COVER EDGE_CASES, REGARDLESS OF WHETHER ADJACENT OR NOT
             if is_visible:
-                extend_sight_line(vertex_a, vertex_b, edges, graph, positions, bounds)
+                extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bounds)
 
 
-def squared_distance(point_a, point_b):
-    (x1, y1) = point_a
-    (x2, y2) = point_b
-    return (x2 - x1) ** 2 + (y2 - y1) ** 2
-
-
-def extend_sight_line(vertex_a, vertex_b, adjacent, edges, graph, positions, bounds):
+def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bounds):
 
     # Calculate intersections of extended line with boundaries in both directions
     bound_intersections = extend_line(positions[vertex_a], positions[vertex_b], bounds)
+    already_connected = {vertex_a, vertex_b} in edges
     print(f"intersections: {bound_intersections}")
+    print(f"Already Connected: {already_connected}")
+    print(f"edges: {edges}")
 
-    # If the vertices are not adjacent, check which one is legal based on
-    if not adjacent:
-        intersection_reference = bound_intersections[0] \
-            if check_vertex_visibility_by_angle(vertex_a, bound_intersections[0], edges, positions) \
-            else bound_intersections[1]
-    else:
-        distance_from_a = [squared_distance(vertex_a, intersection) for intersection in bound_intersections]
-        distance_from_b = [squared_distance(vertex_b, intersection) for intersection in bound_intersections]
-        intersection_reference = bound_intersections[0] \
-            if (distance_from_b[0] < distance_from_b[1]) and (distance_from_a[0] > distance_from_a[1]) \
-            else bound_intersections[1]
-    print(f"reference: {intersection_reference}")
-    possible_crossing_edges = [edge for edge in edges if (vertex_a not in edge) and (vertex_b not in edge)]
-    print(f"possible crossing edges: {possible_crossing_edges}")
-    point_a, point_b = positions[vertex_a], intersection_reference
-    print(f"Points A and B: {point_a} and {point_b}")
-    for edge in possible_crossing_edges:
-        point_c, point_d = positions[edge[0]], positions[edge[1]]
-        print(f"Points C and D: {point_c} and {point_d}")
-        edge_intersections = line_intersection(point_a, point_b, point_c, point_d)
-        if edge_intersections is not None:
-            print("INTERSECTION")
-    pass
+    # Get Indices of selected vertices
+    vertex_indices = ([index for index in range(0, len(vertices)) if vertices[index] == vertex_a][0],
+                      [index for index in range(0, len(vertices)) if vertices[index] == vertex_b][0])
+    print(f"vertices: {vertices}")
+    print(f"vertices {vertex_a} and {vertex_b} @ {vertex_indices[0]} and {vertex_indices[1]}")
+
+    # Iterate over the bound intersections and check whether the extended line segments falls out of the face
+    for bound_index, bound_intersection in enumerate(bound_intersections):
+        print("|")
+        print(f"-> Bound Intersection: {bound_intersection}")
+
+        # Calculate the face's inner triangle's angle
+        inner_triangle_indices = [(vertex_indices[bound_index] + 1) % len(vertices),
+                                  vertex_indices[bound_index],
+                                  vertex_indices[bound_index] - 1]
+        point_a, point_b, point_c = [positions[vertices[index]] for index in inner_triangle_indices]
+        inner_face_angle = calculate_inner_angle(point_a, point_b, point_c)
+        print(f"inner triangle indices: {inner_triangle_indices}")
+        print(f"inner triangle: {[vertices[index] for index in inner_triangle_indices]}")
+
+        # Calculate Angle between inner face edges and boundary point
+        hypothetical_angle_a = calculate_inner_angle(point_a, point_b, bound_intersection)
+        hypothetical_angle_c = calculate_inner_angle(bound_intersection, point_b, point_c)
+        hypothetical_angle = hypothetical_angle_a if not math.isnan(hypothetical_angle_a) else hypothetical_angle_c
+
+        # If
+        if inner_face_angle > hypothetical_angle:
+            print(f"Inner Angle {inner_face_angle} ACCEPTS hypothetical angle {hypothetical_angle}")
+            print(f"Check with Vertex {vertices[vertex_indices[bound_index]]} as origin!")
+            edge_points = (positions[vertex_indices[bound_index]], bound_intersection)
+            candidate_edges = [edge for edge in edges if not set(edge).intersection((vertex_a, vertex_b))]
+            print(f"possible intersecting edges: {candidate_edges}")
+            closest_edge, edge_crossing = find_closest_edge_intersection(edge_points, candidate_edges, positions)
+            print(f"Intersection with Edge {closest_edge} @ {edge_crossing}")
+        else:
+            print(f"Inner Angle {inner_face_angle} DOES NOT ACCEPT hypothetical angle {hypothetical_angle}")
 
 
 def is_vertex_visible(vertex_a, vertex_b, edges, positions):

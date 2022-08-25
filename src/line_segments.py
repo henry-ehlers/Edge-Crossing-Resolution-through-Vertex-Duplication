@@ -49,8 +49,7 @@ def extend_line(point_1, point_2, bounds=((-2, -2), (-2, 2), (2, 2), (2, -2))):
 def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
 
     # Create new graph and positions objects
-    segment_graph = copy.deepcopy(graph)
-    segment_positions = copy.deepcopy(positions)
+    segment_graph, segment_positions = copy.deepcopy(graph), copy.deepcopy(positions)
 
     # Store nodes and edges for easier look-up
     node_list = list(segment_graph.nodes())
@@ -69,8 +68,7 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1),
             # Check if this particular combination of vertices maps to a virtual edge set
             found_set = [v_edge_set for v_edge_set in virtual_edge_set if {vertex_a, vertex_b} <= v_edge_set]
             if found_set:
-                if any(graph.nodes[vertex]["virtual"] == 1 for vertex in [vertex_a, vertex_b]):
-                    continue
+                if any(graph.nodes[vertex]["virtual"] == 1 for vertex in [vertex_a, vertex_b]): continue
                 already_connected = 1
             else:
                 already_connected = 1 if {node_list[index_a], node_list[index_b]} in edges else 0

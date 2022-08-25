@@ -183,6 +183,30 @@ def is_without_edge_crossings(graph, positions):
     return sum(vertex_crossings) == 0
 
 
+def squared_distance(point_a, point_b):
+    (x1, y1) = point_a
+    (x2, y2) = point_b
+    return (x2 - x1) ** 2 + (y2 - y1) ** 2
+
+
+def find_closest_edge_intersection(edge_points, other_edges, positions):
+    intersections, distances = dict(), dict()
+    point_a, point_b = edge_points
+    for edge in other_edges:
+        point_c, point_d = positions[edge[0]], positions[edge[1]]
+        print(f"Checking {edge} with positions {positions[edge[0]], positions[edge[1]]}")
+        intersection = line_intersection(point_a, point_b, point_c, point_d)
+        print(f"Intersection: {intersection}")
+        if intersection is None: continue
+        intersections[edge] = intersection
+        distances[edge] = squared_distance(point_a, intersection)
+        print(f"Distance to Origin: {distances[edge] }")
+    closest_intersection = min(distances, key=distances.get)
+
+    # Return the Edge Name, and it's intersection as a tuple
+    return closest_intersection, intersections[closest_intersection]
+
+
 def edge_intersection(edge_a, edge_b, vertex_positions):
     point_a_0 = vertex_positions[edge_a[0]]
     point_a_1 = vertex_positions[edge_a[1]]
@@ -198,16 +222,20 @@ def line_intersection(p1, p2, p3, p4):
     x4, y4 = float(p4[0]), float(p4[1])
 
     denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+    print(f"DENOM: {denominator}")
     if denominator == 0:  # parallel
         return None
     ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
+    print(f"UA: {ua}")
 
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
     if ua < 0 or ua >= 1:
         return None
     ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
+    print(f"UB: {ub}")
 
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
+    print(f"{ub < 0 or ub >= 1}")
     if ub < 0 or ub >= 1:
         return None
     x = x1 + ua * (x2 - x1)
