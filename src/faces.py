@@ -45,6 +45,9 @@ def get_ordered_face_edges(faces, graph):
 
 def find_all_faces(graph):
 
+    # TODO: find "singleton" edges, i.e. branches that do not map to a cycle, but do define the outer face
+    # TODO: in all subsequent functions which use the face dictionary, check the length of the face (no singletons)
+
     # Identify the minimum cycle basis of the graph
     # TODO: this does not identify outer faces (i.e. the outer cycle)
     cycles = nx.minimum_cycle_basis(G=graph)
@@ -226,6 +229,7 @@ def calculate_inner_angle(point_a, point_b, point_c):
     # Calculate Signed Angle between two Vectors
     signed_angle = vector_angle(vector_1, vector_2)
 
+
     # Return inner angle
     return signed_angle if cross_product(vector_1, vector_2) > 0.0 else 360 - signed_angle
 
@@ -259,6 +263,8 @@ def get_face_sight_cell(faces, ordered_face_edges, graph, positions, bounds=((-1
     # Iterate over all faces
     for face in faces:
 
+        print(f"\nFace: {face}")
+
         # Get Vertices and ensure they are listed in counter-clockwise order
         face_edges = ordered_face_edges[face]
         face_vertices = get_sorted_face_vertices(face_edges, is_sorted=True)
@@ -267,13 +273,17 @@ def get_face_sight_cell(faces, ordered_face_edges, graph, positions, bounds=((-1
 
         # Calculate Inner Angles to check convexity
         face_inner_angles = calculate_face_inner_angles(face_vertices, positions)
+        print(f"Inner Angles: {face_inner_angles}")
 
         # If the face is convex, the face is the sight-cell
         if is_convex(face_inner_angles):
             sight_cells[face] = face_edges
+
+        # Otherwise, split into sight cells and return set of frozen sets of vertices per sight-cell
         else:
-            # split into sight cells and return set of frozen sets of vertices per sight-cell
-            sight_cells[face] = split_face_into_sight_cells(face_edges, face_vertices, graph, positions)
+            print(f"FACE INNER ANGLES: {face_inner_angles}")
+            cells = split_face_into_sight_cells(face_edges, face_vertices, face_inner_angles, graph, positions)
+            sight_cells[face] = cells
 
     # Return
     return sight_cells
@@ -283,10 +293,14 @@ def is_convex(inner_angles):
     return all(angle <= 180.0 for angle in inner_angles.values())
 
 
-def split_face_into_sight_cells(edges, vertices, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
+def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
+                                bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
 
     # Keep track of the added vertices, and in which edges they were added
     added_vertices, edge_to_virtual_vertices = [], {}
+    if calculate_face_signed_area(vertices, positions) < 0:
+        print('REVERSED')
+        vertices = list(reversed(vertices))
 
     # Iterate over all pairs of vertices in the current face
     for origin_index in range(0, len(vertices)):
@@ -297,12 +311,20 @@ def split_face_into_sight_cells(edges, vertices, graph, positions, bounds=((-1, 
             if vertex_a == vertex_b:
                 continue
 
+            print(f"Vertices A and B {vertex_a} and {vertex_b}")
             # Do not project line segment if vertices cannot see one-another
-            if not is_vertex_visible(vertex_a, vertex_b, edges, positions):
+            if not is_vertex_visible(vertex_a, vertex_b, inner_angles, graph, edges, positions):
                 continue
 
             # Extend the sight-line, producing a
-            new_vertices, virtual_map = extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bounds)
+            new_vertices, virtual_map = extend_sight_line(vertex_a=vertex_a,
+                                                          vertex_b=vertex_b,
+                                                          inner_angles=inner_angles,
+                                                          vertices=vertices,
+                                                          edges=edges,
+                                                          graph=graph,
+                                                          positions=positions,
+                                                          bounds=bounds)
             if len(new_vertices) > 0:
                 added_vertices.append(new_vertices)
                 edge_to_virtual_vertices.update(virtual_map)
@@ -334,7 +356,7 @@ def get_sight_cell_visibilities(sight_cells, target_vertices, graph, positions):
     pass
 
 
-def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bounds):
+def extend_sight_line(vertex_a, vertex_b, inner_angles, vertices, edges, graph, positions, bounds):
 
     # Calculate intersections of extended line with boundaries in both directions
     bound_intersections = extend_line(positions[vertex_a], positions[vertex_b], bounds)
@@ -346,40 +368,53 @@ def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bou
     except KeyError:
         already_connected = False
 
-    print(f"Vertices {vertex_a} and {vertex_b} are already connected -> {already_connected}")
-    print(f"edges: {edges}")
     edge_to_virtual_vertex = {edge: set() for edge in edges}
     added_vertices = []
 
     # Get Indices of selected vertices
     vertex_indices = ([index for index in range(0, len(vertices)) if vertices[index] == vertex_a][0],
                       [index for index in range(0, len(vertices)) if vertices[index] == vertex_b][0])
-    print(f"vertices {vertex_a} and {vertex_b} @ {vertex_indices[0]} and {vertex_indices[1]}")
+    print(f"\nVertices {vertex_a} and {vertex_b} @ {vertex_indices[0]} and {vertex_indices[1]}")
 
     # Iterate over the bound intersections and check whether the extended line segments falls out of the face
     for bound_index, bound_intersection in enumerate(bound_intersections):
 
-        # Calculate the face's inner triangle's angle
-        inner_triangle_indices = [(vertex_indices[bound_index] + 1) % len(vertices),
-                                  vertex_indices[bound_index],
-                                  vertex_indices[bound_index] - 1]
-        point_a, point_b, point_c = [positions[vertices[index]] for index in inner_triangle_indices]
-        inner_face_angle = calculate_inner_angle(point_a, point_b, point_c)
-        print(f"inner triangle indices: {inner_triangle_indices}")
+        print(f"Extending {vertices[vertex_indices[bound_index]]}")
+        if already_connected:
+            print("CHECKING EXTENSIONS OF ALREADY CONNECTED VERTICES")
+            is_visible = 180 < inner_angles[vertices[vertex_indices[bound_index]]]
+        else:
+            print("CHECKING EXTENSIONS OF NOT-CONNECTED VERTICES")
+            is_visible = check_vertex_visibility_by_angle(vertex_a=vertices[vertex_indices[bound_index]],
+                                                          inner_angles=inner_angles,
+                                                          edges=edges,
+                                                          positions=positions,
+                                                          position_b=bound_intersection)
+        #
+        #
+        # inner_triangle_indices = [(vertex_indices[bound_index] + 1) % len(vertices),
+        #                           vertex_indices[bound_index],
+        #                           vertex_indices[bound_index] - 1]
+        # point_a, point_b, point_c = [positions[vertices[index]] for index in inner_triangle_indices]
+        # inner_face_angle = calculate_inner_angle(point_a, point_b, point_c)
+        # print(f"inner_face_angle: {inner_face_angle}")
+        #
+        # # Calculate Angle between inner face edges and boundary point
+        # # TODO: maybe check whether the vertex of the edge == the line segment projection vertex, i.e. sidestep nan
+        # # TODO: BROKEN!
+        # hypothetical_angle = 180 if already_connected else calculate_inner_angle(point_a, point_b, bound_intersection)
+        # print(f"hypothetical_angle: {hypothetical_angle}")
 
-        # Calculate Angle between inner face edges and boundary point
-        # TODO: maybe check whether the vertex of the edge == the line segment projection vertex, i.e. sidestep nan
-        angle_against_a = calculate_inner_angle(point_a, point_b, bound_intersection)
-        angle_against_c = calculate_inner_angle(bound_intersection, point_b, point_c)
-        hypothetical_angle = angle_against_a if not math.isnan(angle_against_a) else angle_against_c
-
-        # If the hypothetical and observed angle are incompabitle, continue
-        if inner_face_angle < hypothetical_angle:
+        # If the hypothetical and observed angle are incompatible, then continue
+        if not is_visible:
+            print("ILLEGAL ANGLE")
             continue
 
+        print("LEGAL ANGLE")
         # Find the Closest Intersection
         edge_points = (positions[vertices[vertex_indices[bound_index]]], bound_intersection)
         candidate_edges = [edge for edge in edges if not set(edge).intersection((vertex_a, vertex_b))]
+        print(f"candidate edges: {candidate_edges}")
         closest_edge, crossing_point = find_closest_edge_intersection(edge_points, candidate_edges, positions)
         print(f"Intersection with Edge {closest_edge} @ {crossing_point}")
 
@@ -403,10 +438,23 @@ def extend_sight_line(vertex_a, vertex_b, vertices, edges, graph, positions, bou
     return added_vertices, edge_to_virtual_vertex
 
 
-def is_vertex_visible(vertex_a, vertex_b, edges, positions):
+def is_vertex_visible(vertex_a, vertex_b, inner_angles, graph, edges, positions):
+
+
+    # Check if vertex A and B are adjacenet to one-another
+    already_connected = True
+    try:
+        graph.edges[vertex_a, vertex_b]
+    except KeyError:
+        already_connected = False
+
+    # If vertices are neighbors, they can see one-another
+    if already_connected:
+        return True
 
     # Check Angle first, and only if the angle is legal, exclude possible intersection edges
-    angle_visibility = check_vertex_visibility_by_angle(vertex_a, vertex_b, edges, positions)
+    angle_visibility = check_vertex_visibility_by_angle(vertex_a, inner_angles, edges, positions, vertex_b=vertex_b)
+    print(f"ANGLE VISIBILITY: {angle_visibility}")
     if not angle_visibility:
         return angle_visibility
 
@@ -420,19 +468,27 @@ def is_vertex_visible(vertex_a, vertex_b, edges, positions):
     return True
 
 
-def check_vertex_visibility_by_angle(vertex_a, vertex_or_position_b, edges, positions):
+def check_vertex_visibility_by_angle(vertex_a, inner_angles, edges, positions, vertex_b=None, position_b=None):
+
+    print(f"vertex A: {vertex_a} against vertex B: {vertex_b} and Position: {position_b}")
 
     # Calculate Angle of between Vertex A and its two neighbors relative to Vertex Edge_a[0]
     edge_a = [edge for edge in edges if vertex_a == edge[1]][0]  # Order of vertices in edges important; here 2nd
     edge_b = [edge for edge in edges if vertex_a == edge[0]][0]  # Order of vertices in edges important; here 1st
-    point_a, point_b, point_c = positions[edge_a[0]], positions[edge_a[1]], positions[edge_b[1]]
-    observed_angle = calculate_inner_angle(point_a, point_b, point_c)
+
+    observed_angle = inner_angles[vertex_a]
+    print(f"{edge_b[1]} {edge_b[0]} {edge_a[0]}")
+    print(f"observed angle {observed_angle}")
     # TODO: make sure the observed angle actually IS the inner angle; before we needed to use the signed area
 
     # Calculate angle between Vertex A and Vertex B relative to Vertex Edge_a[0]
-    point_a, point_b = positions[edge_a[0]], positions[edge_a[1]],
-    point_c = positions[vertex_or_position_b] if isinstance(vertex_or_position_b, int) else vertex_or_position_b
+    point_a, point_b = positions[edge_a[0]], positions[edge_a[1]]
+    point_c = position_b if position_b is not None else positions[vertex_b]
+
+    print(f"{vertex_b} - {edge_a[1]} -{edge_a[0]}")
+    # point_b, point_c = positions[edge_a[1]], positions[edge_a[0]]
     hypothetical_angle = calculate_inner_angle(point_a, point_b, point_c)
+    print(f"hypothetical angle {hypothetical_angle}")
 
     # If the angle between Vertex A and B is larger than between Vertex A and its neighbors, Vertex B is not visible
     return False if hypothetical_angle > observed_angle else True

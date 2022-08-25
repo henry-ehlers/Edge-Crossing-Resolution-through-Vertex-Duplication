@@ -125,7 +125,7 @@ if __name__ == '__main__':
     faces = find_all_faces(graph=plane_graph)
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
     face_detection_start_time = timeit.default_timer() - face_detection_start_time
-
+    print(f"faces: {faces}")
     #
     face_incidences = find_face_vertex_incidence(faces, target_vertex_adjacency)
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
