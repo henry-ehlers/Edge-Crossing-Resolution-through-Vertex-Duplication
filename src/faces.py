@@ -573,6 +573,7 @@ def find_minimal_sight_cell_set(face_cells_incidence, target_vertices):
     # Find minimal assignment cost
     row_indices, col_indices = sp.optimize.linear_sum_assignment(cost_matrix=cost_matrix, maximize=False)
     # TODO: ties are causing things to be fucky
+    print(f'rows: {row_indices}')
 
 
 def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, edges, graph, positions, bounds):
