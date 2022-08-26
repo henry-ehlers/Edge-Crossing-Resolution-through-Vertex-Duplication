@@ -535,6 +535,8 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
             graph.add_edge(u_of_edge=new_edge[0], v_of_edge=new_edge[1], virtual=0 if real_edge else 1)
             common_vertex = set(vertex_edges[0]).intersection(set(vertex_edges[1]))
             graph.remove_node(common_vertex.pop())
+            # TODO: remove diagonal virtual edges that did connected to real vertices
+            # TODO: remove deleted vertices also from the existing sight sets!
             return True
 
 
