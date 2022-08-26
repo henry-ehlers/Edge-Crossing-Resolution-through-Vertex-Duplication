@@ -32,7 +32,7 @@ if __name__ == '__main__':
     # TESTS ------------------------------------------------------------------------------------------------------------
 
     # Specify vertices and edges
-    coordinates = [(0, 1), (1, -1), (2, 0), (3, -1), (4, 1), (2, 2)]
+    coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
     vertices = range(0, len(coordinates))
     edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
 
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
 
     # Create Output Directory
-    output_directory = "./drawings/tests/"
+    output_directory = "./drawings/tests/snake_face"
     Path(output_directory).mkdir(parents=True, exist_ok=True)
 
     # Draw Initial Embedding
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     # Get Sight Cells
     print("SIGHT CELLS")
     sight_cells = get_face_sight_cell(faces, ordered_face_edges, plane_graph, plane_positions,
-                                      bounds=((-4, -4), (-4, 4), (4, 4), (4, -4)))
+                                      bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)))
     print(f"graph: {plane_graph}")
     print(sight_cells)
 
