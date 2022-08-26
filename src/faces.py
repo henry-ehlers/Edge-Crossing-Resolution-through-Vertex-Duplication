@@ -1,6 +1,7 @@
 from src.edges import *
 from src.line_segments import *
 from src.edge_crossings import *
+from src.vertex_splitting import calculate_face_centroid
 import networkx as nx
 import itertools as it
 import numpy as np
@@ -361,7 +362,8 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
     face_positions = {key: positions.get(key) for key in face_vertices}
     face_graph = nx.Graph(graph.subgraph(nodes=face_vertices))
 
-    # Find remaining edge crossings
+    # Find remaining edge crossings (between placed line-segments) and replace them with virtual vertices
+    # TODO: TEST THIS PART
     face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
     if len(face_edge_crossings) > 1:
         face_graph, face_positions, virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
@@ -375,8 +377,49 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
     return sight_cells
 
 
-def get_sight_cell_visibilities(sight_cells, target_vertices, graph, positions):
-    pass
+def get_face_sight_cell_incidences(sight_cells, face_incidences, target_vertices, ordered_face_edges, positions):
+    sight_cell_incidences = {sight_cell: set() for sight_cell in list(it.chain.from_iterable(sight_cells.values()))}
+
+    for face in sight_cells.keys():
+
+        if len(sight_cells[face]) == 1:
+            sight_cell_incidences[face].add(face_incidences[face])
+            continue
+
+        face_edge_list = ordered_face_edges[face]
+        for sight_cell in sight_cells[face]:
+            sight_cell_incidences[sight_cell].update(
+                get_sight_cell_incidence(sight_cell_vertices=sight_cell,
+                                         target_vertices=target_vertices,
+                                         face_edges=face_edge_list,
+                                         positions=positions))
+    return sight_cell_incidences
+
+
+def get_sight_cell_incidence(sight_cell_vertices, target_vertices, face_edges, positions):
+
+    targets_in_cell = sight_cell_vertices.intersection(target_vertices)
+    remaining_targets = set(target_vertices) - targets_in_cell
+    print(f"Targets: {target_vertices} - Found {targets_in_cell} = Remaining {remaining_targets}")
+
+    sight_cell_incidence = set(targets_in_cell)
+    sight_cell_positions = [positions[vertex] for vertex in list(sight_cell_vertices)]
+    print(f"sight cell positions: {sight_cell_positions}")
+    sight_cell_centroid = calculate_face_centroid(sight_cell_positions)
+
+    # Iterate over all
+    for target in remaining_targets:
+        print(f"Target Vertex: {target}")
+        sight_line = [sight_cell_centroid, positions[target]]
+        for edge in face_edges:
+            edge_line = [positions[vertex] for vertex in edge]
+            intersection = line_intersection(sight_line[0], sight_line[1], edge_line[0], edge_line[1])
+            if intersection is not None:
+                break
+        sight_cell_incidence.add(target)
+
+    print(f"AFTER: {sight_cell_vertices}")
+    return list(sight_cell_incidence)
 
 
 def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, edges, graph, positions, bounds):
@@ -412,7 +455,7 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
     origin_vertex, new_vertex_index = joint_vertex, max(graph.nodes) + 1
     graph.add_node(node_for_adding=new_vertex_index, virtual=1)
     graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, segment=1)
-    positions[new_vertex_index] = crossing_point
+    positions[new_vertex_index] = np.array(crossing_point)
     if not already_connected:
         graph.add_edge(u_of_edge=joint_vertex, v_of_edge=connecting_vertex, segment=1)
 

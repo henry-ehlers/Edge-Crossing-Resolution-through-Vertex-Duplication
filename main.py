@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import networkx as nx
+import itertools as it
 import numpy as np
 import timeit
 import sys
@@ -33,12 +34,14 @@ if __name__ == '__main__':
 
     # Specify vertices and edges
     coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
+    target_vertices = [0, 2, 6, 7]
     vertices = range(0, len(coordinates))
     edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
 
     # Create Graph
     graph = nx.Graph()
-    graph.add_nodes_from(vertices)
+    for vertex in vertices:
+        graph.add_node(vertex, target=1 if vertex in target_vertices else 0)
     graph.add_edges_from(edges)
     positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
 
@@ -52,11 +55,8 @@ if __name__ == '__main__':
 
     # Planarize Graph
     edge_crossings, vertex_crossings = locate_edge_crossings(graph, positions)
-    print(edge_crossings)
     plane_graph, plane_positions, virtual_edge_set = planarize_graph(
         graph=graph, positions=positions, edge_crossings=edge_crossings)
-    print(plane_graph)
-    print(plane_positions)
 
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
@@ -65,16 +65,23 @@ if __name__ == '__main__':
     # # Locate faces and best two for target face
     faces = find_all_faces(graph=plane_graph)
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
+    face_incidences = find_face_vertex_incidence(faces, target_vertices)
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
+    print(f"ordered edges: {ordered_face_edges}")
     print(f"faces: {faces}")
-    print(f"ordered face edges: {ordered_face_edges}")
+    print(f"incidences: {face_incidences}")
 
     # Get Sight Cells
     print("SIGHT CELLS")
     sight_cells = get_face_sight_cell(faces, ordered_face_edges, plane_graph, plane_positions,
                                       bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)))
-    print(f"graph: {plane_graph}")
-    print(sight_cells)
+    print(f"sight cells: {sight_cells}")
+    print()
+
+    sight_cell_incidences = get_face_sight_cell_incidences(sight_cells, face_incidences, target_vertices,
+                                                      ordered_face_edges, plane_positions)
+
+    print(f"sight cells: {sight_cell_incidences}")
 
     # Draw and Save Planar, Convex-Face Graph
     planar_drawing_start_time = timeit.default_timer()
