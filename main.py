@@ -87,8 +87,11 @@ if __name__ == '__main__':
                                                            face_edges=ordered_face_edges,
                                                            face_edge_map=edge_map,
                                                            positions=plane_positions)
-
     [print(f"{cell} \t\t {sight_cell_incidences[cell]}") for cell in sight_cell_incidences.keys()]
+    # TODO: merge faces if incidence is the same and they are neighbors
+
+    # Find best set
+    find_minimal_sight_cell_set(sight_cell_incidences, target_vertices)
 
     # Draw and Save Planar, Convex-Face Graph
     planar_drawing_start_time = timeit.default_timer()

@@ -3,6 +3,8 @@ from src.line_segments import *
 from src.edge_crossings import *
 from src.vertex_splitting import calculate_face_centroid
 from src.graph_drawing import get_graph_entity_data
+
+import scipy as sp
 import networkx as nx
 import itertools as it
 import numpy as np
@@ -452,6 +454,27 @@ def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edg
     # Return the found set of visible vertices
     return sight_cell_incidence
 
+
+def find_minimal_sight_cell_set(face_cells_incidence, target_vertices):
+    cost_matrix = np.ones(shape=(len(face_cells_incidence), len(target_vertices)), dtype=int)
+    print(cost_matrix)
+    row_names = list(face_cells_incidence.keys())
+    print(row_names)
+
+    for sight_cell in row_names:
+        row_index = row_names.index(sight_cell)  # maybe not necessary, but to ensure the dict order is stable
+        print(f"\nRow: {row_index}")
+        for visible_vertex in face_cells_incidence[sight_cell]:
+            col_index = target_vertices.index(visible_vertex)
+            print(f"Col: {col_index}")
+            print(f"visible vertex: {visible_vertex}")
+            cost_matrix[row_index, col_index] -=1
+
+    print(cost_matrix)
+    row_indices, col_indices = sp.optimize.linear_sum_assignment(cost_matrix=cost_matrix, maximize=False)
+    print(row_indices)
+    # TODO: ties are causing things to be fucky
+    [print(row_names[row_index]) for row_index in row_indices]
 
 def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, edges, graph, positions, bounds):
 
