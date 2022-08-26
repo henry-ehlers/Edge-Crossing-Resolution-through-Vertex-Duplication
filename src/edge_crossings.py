@@ -130,7 +130,6 @@ def planarize_graph(graph, positions, edge_crossings):
             [edges_to_be_removed.add(edge) for edge in [edge_a, edge_b]]
 
     # Remove original edge set and add virtual edge set
-    print(f"edge_to_virtual_vertex: {edge_to_virtual_vertex}")
     virtual_edge_set = add_virtual_edges(planar_graph, planar_positions, edge_to_virtual_vertex)
     remove_edges(planar_graph, list(edges_to_be_removed))
 
@@ -195,13 +194,10 @@ def find_closest_edge_intersection(edge_points, other_edges, positions):
     point_a, point_b = edge_points
     for edge in other_edges:
         point_c, point_d = positions[edge[0]], positions[edge[1]]
-        print(f"Checking {edge} with positions {positions[edge[0]], positions[edge[1]]}")
         intersection = line_intersection(point_a, point_b, point_c, point_d)
-        print(f"Intersection: {intersection}")
         if intersection is None: continue
         intersections[edge] = intersection
         distances[edge] = squared_distance(point_a, intersection)
-        print(f"Distance to Origin: {distances[edge] }")
     closest_intersection = min(distances, key=distances.get)
 
     # Return the Edge Name, and it's intersection as a tuple

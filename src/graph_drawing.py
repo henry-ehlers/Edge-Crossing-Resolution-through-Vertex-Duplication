@@ -34,14 +34,31 @@ def embed_graph(graph, embedding, n_iter=None, seed=None):
         return nx.spring_layout(G=graph, iterations=5000, seed=24)
 
 
+def get_graph_entity_data(entity_dictionary, entity_key, data_key, default_value):
+
+    # Ensure the entity exists in dictionary
+    assert entity_dictionary.get(entity_key, None) is not None, \
+        f"Entity {entity_key} does not exist in provided dictionary."
+
+    # Try to access the entity's request data
+    try:
+        data = entity_dictionary[entity_key][data_key]
+    except KeyError:
+        data = default_value
+
+    # Return Retrieved or Default Values
+    return data
+
+
 def color_split_vertices(graph):
     node_color_map = []
     for vertex in graph:
-        if graph.nodes[vertex]["target"] == 1:
+        if get_graph_entity_data(graph.nodes, vertex, "target", 0) == 1:
             color = "blue"
-        elif graph.nodes[vertex]["boundary"] == 1:
+        elif get_graph_entity_data(graph.nodes, vertex, "boundary", 0) == 1:
             color = "red"
-        elif graph.nodes[vertex]["virtual"] == 0 and graph.nodes[vertex]["target"] == 0:
+        elif get_graph_entity_data(graph.nodes, vertex, "boundary", 0) == 0 \
+                and get_graph_entity_data(graph.nodes, vertex, "target", 0) == 0:
             color = "black"
         else:
             color = "lightgrey"
@@ -52,13 +69,13 @@ def color_split_vertices(graph):
 def color_edges(graph):
     edge_color_map = []
     for edge in graph.edges:
-        if graph.edges[edge]["segment"] == 1:
+        if get_graph_entity_data(graph.edges, edge, "segment", 0) == 1:
             color = "green"
-        elif graph.edges[edge]["target"] == 1:
+        elif get_graph_entity_data(graph.edges, edge, "target", 0) == 1:
             color = "blue"
-        elif graph.edges[edge]["virtual"] == 0:
+        elif get_graph_entity_data(graph.edges, edge, "virtual", 0) == 0:
             color = "black"
-        elif graph.edges[edge]["virtual"] == 1:
+        elif get_graph_entity_data(graph.edges, edge, "virtual", 0) == 1:
             color = "lightgrey"
         else:
             color = "lightgrey"

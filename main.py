@@ -29,6 +29,60 @@ if __name__ == '__main__':
     diagnostics_directory = "./output/diagnostics"
     diagnostics_file=f"barabasi_albert_{n_vertices}_{m_edges}_{seed}"
 
+    # TESTS ------------------------------------------------------------------------------------------------------------
+
+    # Specify vertices and edges
+    coordinates = [(0, 1), (1, -1), (2, 0), (3, -1), (4, 1), (2, 2)]
+    vertices = range(0, len(coordinates))
+    edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
+
+    # Create Graph
+    graph = nx.Graph()
+    graph.add_nodes_from(vertices)
+    graph.add_edges_from(edges)
+    positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
+
+    # Create Output Directory
+    output_directory = "./drawings/tests/"
+    Path(output_directory).mkdir(parents=True, exist_ok=True)
+
+    # Draw Initial Embedding
+    draw_graph(graph=graph, positions=positions)
+    save_drawn_graph(f"{output_directory}/sight_cell_line_segments_0.png")
+
+    # Planarize Graph
+    edge_crossings, vertex_crossings = locate_edge_crossings(graph, positions)
+    print(edge_crossings)
+    plane_graph, plane_positions, virtual_edge_set = planarize_graph(
+        graph=graph, positions=positions, edge_crossings=edge_crossings)
+    print(plane_graph)
+    print(plane_positions)
+
+    # Draw and Save Planar rGraph
+    draw_graph(graph=plane_graph, positions=plane_positions)
+    save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.png")
+
+    # # Locate faces and best two for target face
+    faces = find_all_faces(graph=plane_graph)
+    face_edge_map = build_face_to_edge_map(plane_graph, faces)
+    ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
+    print(f"faces: {faces}")
+    print(f"ordered face edges: {ordered_face_edges}")
+
+    # Get Sight Cells
+    print("SIGHT CELLS")
+    sight_cells = get_face_sight_cell(faces, ordered_face_edges, plane_graph, plane_positions,
+                                      bounds=((-4, -4), (-4, 4), (4, 4), (4, -4)))
+    print(f"graph: {plane_graph}")
+    print(sight_cells)
+
+    # Draw and Save Planar, Convex-Face Graph
+    planar_drawing_start_time = timeit.default_timer()
+    draw_graph(graph=plane_graph, positions=plane_positions)
+    save_drawn_graph(f"{output_directory}/sight_cell_line_segments_2.png")
+    planar_drawing_time = timeit.default_timer() - planar_drawing_start_time
+    sys.exit()
+
     # EMBED INPUT GRAPH ------------------------------------------------------------------------------------------------
 
     # Create Simulated Graph
