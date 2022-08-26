@@ -57,9 +57,9 @@ def color_split_vertices(graph):
             color = "red"
         elif get_graph_entity_data(graph.nodes, vertex, "boundary", 0) == 1:
             color = "blue"
-        elif get_graph_entity_data(graph.nodes, vertex, "boundary", 0) == 0 \
-                and get_graph_entity_data(graph.nodes, vertex, "target", 0) == 0:
-            color = "black"
+        elif get_graph_entity_data(graph.nodes, vertex, "virtual", 0) == 1:
+            color = "lightgrey"
+
         else:
             color = "lightgrey"
         node_color_map.append(color)

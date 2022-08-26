@@ -478,26 +478,15 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph, start
     for cell_index_a in range(start_index, len(cells)):
         for cell_index_b in range(cell_index_a + 1, len(cells)):
             cell_a, cell_b = cells[cell_index_a], cells[cell_index_b]
-            cell_a_edges, cell_b_edges = set(cells_edge_list[cell_a]), set(cells_edge_list[cell_b])
-            incidence_a, incidence_b = cell_incidences[cell_a], cell_incidences[cell_b]
 
-            #
-            incidence_intersection = len(incidence_a - incidence_b)
-            overlapping_edge = cell_a_edges.intersection(cell_b_edges)
-
-            if incidence_intersection == 0 and len(overlapping_edge) > 0:
-                print(f"\nCell A {cell_a} and Cell B {cell_b}")
-                print(f"Cell A Edges {cell_a_edges}, Cell B Edges {cell_b_edges}")
-                print(f"cell A - {cell_a} and cell B - {cell_b} along Edge {overlapping_edge}")
-                merge_two_sight_cells(cell_a=cell_a,
-                                      cell_b=cell_b,
-                                      cells=cells,
-                                      cells_edge_list=cells_edge_list,
-                                      cell_incidences=cell_incidences,
-                                      graph=graph,
-                                      merge_edge=overlapping_edge)
-                print(f"Cells After Merger: {cells}")
-                print(f"Edges After Merger: {cells_edge_list}")
+            print(f"\nCell A {cell_a} and Cell B {cell_b}")
+            merge_successful = try_merge_two_sight_cells(cell_a=cell_a,
+                                                         cell_b=cell_b,
+                                                         cells=cells,
+                                                         cells_edge_list=cells_edge_list,
+                                                         cell_incidences=cell_incidences,
+                                                         graph=graph)
+            if merge_successful:
                 merge_face_sight_cells(cells=cells,
                                        cells_edge_list=cells_edge_list,
                                        cell_incidences=cell_incidences,
@@ -507,15 +496,18 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph, start
     return
 
 
-def merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incidences, graph, merge_edge=None):
+def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incidences, graph):
 
     # Determine along which the two cells are to be merged and where the cells are located in the list
-    merge_edge = merge_edge if merge_edge is not None else cells_edge_list[cell_a].intersection(cells_edge_list[cell_b])
+    merge_edge = set(cells_edge_list[cell_a]).intersection(set(cells_edge_list[cell_b]))
+    incidence_a, incidence_b = cell_incidences[cell_a], cell_incidences[cell_b]
     cell_a_index, cell_b_index = cells.index(cell_a), cells.index(cell_b)
+
+    if len(incidence_a - incidence_b) > 0 or len(merge_edge) == 0:
+        return False
 
     # Determine the new cell's vertex set and edge list
     new_edge_set = set(cells_edge_list[cell_a]).union(set(cells_edge_list[cell_b]) - merge_edge)
-    print(f"new edge set: {new_edge_set}")
     new_cell_a = cell_a.union(cell_b)
 
     # Update the Cell List
@@ -534,9 +526,16 @@ def merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incidence
 
     # Update the graph
     merge_edge = unlist(merge_edge)
-    print(f"MERGER EDGE: {merge_edge}")
-    # TODO: also remove the vertex which is now only connected along the old real edge (check if all edges are virtual)
     graph.remove_edge(u=merge_edge[0], v=merge_edge[1])
+    for vertex in merge_edge:
+        vertex_edges = list(copy.deepcopy(graph.edges(vertex)))
+        if len(vertex_edges) == 2:
+            new_edge = [vertex for vertex in unlist(vertex_edges) if vertex not in merge_edge]
+            real_edge = all([get_graph_entity_data(graph.nodes, vertex, "virtual", 0) for vertex in new_edge])
+            graph.add_edge(u_of_edge=new_edge[0], v_of_edge=new_edge[1], virtual=0 if real_edge else 1)
+            common_vertex = set(vertex_edges[0]).intersection(set(vertex_edges[1]))
+            graph.remove_node(common_vertex.pop())
+            return True
 
 
 def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, graph):
