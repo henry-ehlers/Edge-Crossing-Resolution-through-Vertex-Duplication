@@ -40,6 +40,13 @@ def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
     return subfaces
 
 
+def get_sight_cells_ordered_edges(sight_cells, graph):
+    sight_cell_edge_list = {face: {} for face in sight_cells.keys()}
+    for face in sight_cells.keys():
+        sight_cell_edge_list[face].update(get_ordered_face_edges(sight_cells[face], graph))
+    return sight_cell_edge_list
+
+
 def get_ordered_face_edges(faces, graph):
     ordered_face_edges = dict.fromkeys(faces)
     for face in faces:
@@ -455,26 +462,119 @@ def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edg
     return sight_cell_incidence
 
 
-def find_minimal_sight_cell_set(face_cells_incidence, target_vertices):
-    cost_matrix = np.ones(shape=(len(face_cells_incidence), len(target_vertices)), dtype=int)
-    print(cost_matrix)
-    row_names = list(face_cells_incidence.keys())
-    print(row_names)
+def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph, start_index=0):
+    # iterate over all pairs of sight cells
+    # for each pair check if incidence is the same, and they have an edge in common
+    # if so, merge the two in the "sight_cells" object and delete the common edge
+    # also delete one of the vertices that formed the edge in question
+    # recurse back into the same function if at least one thing was merged, else return sight cells
+    print(f"\ncells: {cells}")
+    print(f"\ncell_edge_list: {cells_edge_list}")
+    print(f"\ncell_incidences: {cell_incidences}")
 
+    if start_index >= len(cells):
+        return
+
+    for cell_index_a in range(start_index, len(cells)):
+        for cell_index_b in range(cell_index_a + 1, len(cells)):
+            cell_a, cell_b = cells[cell_index_a], cells[cell_index_b]
+            cell_a_edges, cell_b_edges = set(cells_edge_list[cell_a]), set(cells_edge_list[cell_b])
+            incidence_a, incidence_b = cell_incidences[cell_a], cell_incidences[cell_b]
+
+            #
+            incidence_intersection = len(incidence_a - incidence_b)
+            overlapping_edge = cell_a_edges.intersection(cell_b_edges)
+
+            if incidence_intersection == 0 and len(overlapping_edge) > 0:
+                print(f"\nCell A {cell_a} and Cell B {cell_b}")
+                print(f"Cell A Edges {cell_a_edges}, Cell B Edges {cell_b_edges}")
+                print(f"cell A - {cell_a} and cell B - {cell_b} along Edge {overlapping_edge}")
+                merge_two_sight_cells(cell_a=cell_a,
+                                      cell_b=cell_b,
+                                      cells=cells,
+                                      cells_edge_list=cells_edge_list,
+                                      cell_incidences=cell_incidences,
+                                      graph=graph,
+                                      merge_edge=overlapping_edge)
+                print(f"Cells After Merger: {cells}")
+                print(f"Edges After Merger: {cells_edge_list}")
+                merge_face_sight_cells(cells=cells,
+                                       cells_edge_list=cells_edge_list,
+                                       cell_incidences=cell_incidences,
+                                       graph=graph,
+                                       start_index=cell_index_a)
+                return
+    return
+
+
+def merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incidences, graph, merge_edge=None):
+
+    # Determine along which the two cells are to be merged and where the cells are located in the list
+    merge_edge = merge_edge if merge_edge is not None else cells_edge_list[cell_a].intersection(cells_edge_list[cell_b])
+    cell_a_index, cell_b_index = cells.index(cell_a), cells.index(cell_b)
+
+    # Determine the new cell's vertex set and edge list
+    new_edge_set = set(cells_edge_list[cell_a]).union(set(cells_edge_list[cell_b]) - merge_edge)
+    print(f"new edge set: {new_edge_set}")
+    new_cell_a = cell_a.union(cell_b)
+
+    # Update the Cell List
+    cells[cell_a_index] = new_cell_a
+    del cells[cell_b_index]
+
+    # Update each Cell's edge list
+    cells_edge_list[new_cell_a] = new_edge_set
+    del cells_edge_list[cell_a]
+    del cells_edge_list[cell_b]
+
+    # Update the Cells Incidences
+    cell_incidences[new_cell_a] = cell_incidences[cell_a]
+    del cell_incidences[cell_a]
+    del cell_incidences[cell_b]
+
+    # Update the graph
+    merge_edge = unlist(merge_edge)
+    print(f"MERGER EDGE: {merge_edge}")
+    # TODO: also remove the vertex which is now only connected along the old real edge (check if all edges are virtual)
+    graph.remove_edge(u=merge_edge[0], v=merge_edge[1])
+
+
+def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, graph):
+    print(f"face_sight_cells: {face_sight_cells}")
+    print(f"face_cell_incidences: {cell_incidences}")
+
+    for face in face_sight_cells.keys():
+
+        # Skip convex faces
+        if len(face_sight_cells[face]) == 1:
+            continue
+
+        # Try Merging Cells in non-convex face
+        merge_face_sight_cells(cells=list(face_sight_cells[face]),
+                               cells_edge_list=face_cell_edge_map[face],
+                               cell_incidences=cell_incidences,
+                               graph=graph)
+
+
+def find_minimal_sight_cell_set(face_cells_incidence, target_vertices):
+
+    # Initiate cost matrix of ones
+    cost_matrix = np.ones(shape=(len(face_cells_incidence), len(target_vertices)), dtype=int)
+
+    # Store sight cells in list to avoid ordering problems
+    row_names = list(face_cells_incidence.keys())
+
+    # Iterate over all sight cells and extract their incidences to build cost matrix
     for sight_cell in row_names:
-        row_index = row_names.index(sight_cell)  # maybe not necessary, but to ensure the dict order is stable
-        print(f"\nRow: {row_index}")
+        row_index = row_names.index(sight_cell)
         for visible_vertex in face_cells_incidence[sight_cell]:
             col_index = target_vertices.index(visible_vertex)
-            print(f"Col: {col_index}")
-            print(f"visible vertex: {visible_vertex}")
-            cost_matrix[row_index, col_index] -=1
+            cost_matrix[row_index, col_index] -= 1
 
-    print(cost_matrix)
+    # Find minimal assignment cost
     row_indices, col_indices = sp.optimize.linear_sum_assignment(cost_matrix=cost_matrix, maximize=False)
-    print(row_indices)
     # TODO: ties are causing things to be fucky
-    [print(row_names[row_index]) for row_index in row_indices]
+
 
 def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, edges, graph, positions, bounds):
 

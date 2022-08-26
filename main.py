@@ -58,10 +58,6 @@ if __name__ == '__main__':
     plane_graph, plane_positions, virtual_edge_set = planarize_graph(
         graph=graph, positions=positions, edge_crossings=edge_crossings)
 
-    # Draw and Save Planar rGraph
-    draw_graph(graph=plane_graph, positions=plane_positions)
-    save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.png")
-
     # # Locate faces and best two for target face
     faces = find_all_faces(graph=plane_graph)
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
@@ -78,9 +74,11 @@ if __name__ == '__main__':
                                                  graph=plane_graph,
                                                  positions=plane_positions,
                                                  bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)))
-    print(f"sight cells: {sight_cells}")
-    print(f"virtual edges: {edge_map}")
+    # Draw and Save Planar rGraph
+    draw_graph(graph=plane_graph, positions=plane_positions)
+    save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.png")
 
+    #
     sight_cell_incidences = get_face_sight_cell_incidences(sight_cells=sight_cells,
                                                            face_incidences=face_incidences,
                                                            target_vertices=target_vertices,
@@ -88,10 +86,15 @@ if __name__ == '__main__':
                                                            face_edge_map=edge_map,
                                                            positions=plane_positions)
     [print(f"{cell} \t\t {sight_cell_incidences[cell]}") for cell in sight_cell_incidences.keys()]
+
+    #
+    ordered_sight_cell_edges = get_sight_cells_ordered_edges(sight_cells, plane_graph)
+    print(f"test: {ordered_sight_cell_edges}")
+    merge_all_face_cells(sight_cells, ordered_sight_cell_edges, sight_cell_incidences, plane_graph)
     # TODO: merge faces if incidence is the same and they are neighbors
 
     # Find best set
-    find_minimal_sight_cell_set(sight_cell_incidences, target_vertices)
+    # find_minimal_sight_cell_set(sight_cell_incidences, target_vertices)
 
     # Draw and Save Planar, Convex-Face Graph
     planar_drawing_start_time = timeit.default_timer()
