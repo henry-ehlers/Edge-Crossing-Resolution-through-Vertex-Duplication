@@ -88,8 +88,9 @@ if __name__ == '__main__':
     [print(f"{cell} \t\t {sight_cell_incidences[cell]}") for cell in sight_cell_incidences.keys()]
 
     #
-    ordered_sight_cell_edges = get_sight_cells_ordered_edges(sight_cells, plane_graph)
-    merge_all_face_cells(sight_cells, ordered_sight_cell_edges, sight_cell_incidences, plane_graph)
+    sight_cell_edges = get_sight_cells_edge_sets(sight_cells, plane_graph)
+    print(f"sight cell edges: {sight_cell_edges}")
+    merge_all_face_cells(sight_cells, sight_cell_edges, sight_cell_incidences, plane_graph)
     # TODO: merge faces if incidence is the same and they are neighbors
     print(f'post merger incidences: {sight_cell_incidences}')
 
