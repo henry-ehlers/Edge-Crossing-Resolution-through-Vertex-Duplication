@@ -333,7 +333,6 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
 
     # Consider only those vertices whose angle is greater than 180 degrees
     bend_vertices = [key for key in inner_angles.keys() if inner_angles[key] > 180]
-    print(f"inner angles: {inner_angles}")
 
     for joint_vertex in bend_vertices:
         for connecting_vertex in vertices:
@@ -354,11 +353,9 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
 
             # If they cannot see each other, skip to the next pair
             if not is_visible:
-                print(f"\nJoint Vertex {joint_vertex} and Connecting Vertex {connecting_vertex} cannot see each other")
                 continue
 
             # Extend the sight-line, producing a
-            print(f"\nChecking Joint Vertex {joint_vertex} and Connecting Vertex {connecting_vertex}")
             bisected_edge, new_vertex = extend_sight_line(joint_vertex=joint_vertex,
                                                           connecting_vertex=connecting_vertex,
                                                           inner_angles=inner_angles,
@@ -367,7 +364,6 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
                                                           graph=graph,
                                                           positions=positions,
                                                           bounds=bounds)
-            print(f"Found Edge {bisected_edge} with New Vertex {new_vertex}")
 
             # Keep track of what has been added
             added_vertices.append(new_vertex)
@@ -581,6 +577,18 @@ def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, 
     return removed_vertices
 
 
+def update_merged_sight_cell_data(cells, cell_incidences, cell_edges, faces, deleted_vertices):
+    if not deleted_vertices:
+        return
+
+    # Update Face-Level Information
+    new_cells = {face: set() for face in faces}
+    for face in faces:
+        new_cells = []
+
+    new_incidences = []
+
+
 def find_minimal_sight_cell_set(face_cells_incidence, target_vertices):
 
     # Initiate cost matrix of ones
@@ -588,7 +596,6 @@ def find_minimal_sight_cell_set(face_cells_incidence, target_vertices):
 
     # Store sight cells in list to avoid ordering problems
     row_names = list(face_cells_incidence.keys())
-
     # Iterate over all sight cells and extract their incidences to build cost matrix
     for sight_cell in row_names:
         row_index = row_names.index(sight_cell)
@@ -599,14 +606,12 @@ def find_minimal_sight_cell_set(face_cells_incidence, target_vertices):
     # Find minimal assignment cost
     row_indices, col_indices = sp.optimize.linear_sum_assignment(cost_matrix=cost_matrix, maximize=False)
     # TODO: ties are causing things to be fucky
-    print(f'rows: {row_indices}')
 
 
 def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, edges, graph, positions, bounds):
 
     # Calculate intersections of extended line with boundaries in both directions
     bound_intersections = extend_line(positions[joint_vertex], positions[connecting_vertex], bounds)
-    print(f"Bound Intersections: {bound_intersections}")
     closest_intersection_to_joint = bound_intersections[0]
 
     # If vertices are adjacent, they can see one-another; otherwise we must check explicitly
@@ -619,7 +624,6 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
                                               vertices=vertices,
                                               positions=positions,
                                               connecting_position=closest_intersection_to_joint)
-    print(f"Adjacent: {already_connected} / Visible: {is_visible}")
 
     # If the hypothetical and observed angle are incompatible, then continue
     if not is_visible:
@@ -628,7 +632,6 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
     # Find the Closest Intersection of the extended line with edges not incident to joint or connecting vertex
     extended_line = (positions[joint_vertex], closest_intersection_to_joint)
     candidate_edges = [edge for edge in edges if not set(edge).intersection((joint_vertex, connecting_vertex))]
-    print(f"candidate edges: {candidate_edges}")
     closest_edge, crossing_point = find_closest_edge_intersection(extended_line, candidate_edges, positions)
 
     # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
@@ -689,17 +692,13 @@ def check_vertex_visibility_by_angle(joint_vertex, inner_angles, edges, vertices
     debug_angle = calculate_inner_angle(positions[ref_vertex_a], positions[joint_vertex], positions[ref_vertex_b])
 
     # Get the Angle of the Joint against which we are comparing the new incoming angle:
-    print(f"Reference Vertex Triangle: {ref_vertex_a} {joint_vertex} {ref_vertex_b}")
     observed_angle = inner_angles[joint_vertex]
-    print(f"Observed Joint Angle: {observed_angle}")
     assert observed_angle == debug_angle, \
         "Angle Calculation is incorrect"
 
     # Calculate Hypothetical Angle
     connecting_position = connecting_position if (connecting_position is not None) else positions[connecting_vertex]
-    print(f"Vertex Triangle: {ref_vertex_a} {joint_vertex} {connecting_vertex}/{connecting_position}")
     hypothetical_angle = calculate_inner_angle(positions[ref_vertex_a], positions[joint_vertex], connecting_position)
-    print(f"Calculated Hypothetical Angle: {hypothetical_angle}")
 
     # If the angle between Vertex A and B is larger than between Vertex A and its neighbors, Vertex B is not visible
     return hypothetical_angle < observed_angle

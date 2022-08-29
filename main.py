@@ -63,12 +63,8 @@ if __name__ == '__main__':
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
     face_incidences = find_face_vertex_incidence(faces, target_vertices)
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
-    print(f"ordered edges: {ordered_face_edges}")
-    print(f"faces: {faces}")
-    print(f"incidences: {face_incidences}")
 
     # Get Sight Cells
-    print("SIGHT CELLS")
     sight_cells, edge_map = get_face_sight_cells(faces=faces,
                                                  ordered_face_edges=ordered_face_edges,
                                                  graph=plane_graph,
@@ -85,15 +81,12 @@ if __name__ == '__main__':
                                                            face_edges=ordered_face_edges,
                                                            face_edge_map=edge_map,
                                                            positions=plane_positions)
-    [print(f"{cell} \t\t {sight_cell_incidences[cell]}") for cell in sight_cell_incidences.keys()]
 
     #
     sight_cell_edges = get_sight_cells_edge_sets(sight_cells, plane_graph)
-    print(f"sight cell edges: {sight_cell_edges}")
-    merge_all_face_cells(sight_cells, sight_cell_edges, sight_cell_incidences, plane_graph)
-    # TODO: merge faces if incidence is the same and they are neighbors
-    print(f'post merger incidences: {sight_cell_incidences}')
 
+    removed_vertices = merge_all_face_cells(sight_cells, sight_cell_edges, sight_cell_incidences, plane_graph)
+    # todo: update sight cells, their incidences, and edges to reflect the removed vertices
     # Find best set
     find_minimal_sight_cell_set(sight_cell_incidences, target_vertices)
 
