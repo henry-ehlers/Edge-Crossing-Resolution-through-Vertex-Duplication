@@ -555,9 +555,6 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
 
 def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, graph):
 
-    # Initialize empty list of removed vertices
-    removed_vertices = []
-
     # Iterate over all faces, and attempt to merge their faces
     for face in face_sight_cells.keys():
 
@@ -566,27 +563,60 @@ def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, 
             continue
 
         # Try Merging Cells in non-convex face
+        print(f"face: {face_cell_edge_map[face]}")
         removed_vertices = merge_face_sight_cells(cells=list(face_sight_cells[face]),
                                                   cells_edge_list=face_cell_edge_map[face],
                                                   cell_incidences=cell_incidences,
                                                   removed_vertices=[],
                                                   graph=graph)
-        # TODO: instead of returning these vertices, update the incidence, edge-map, and cell list
 
-    # Return a list of removed vertices
-    return removed_vertices
+        # Update the face's cells, their incidents, and edges based on deleted vertices
+        update_merged_sight_cell_data(face_cells=face_sight_cells[face],
+                                      face_cell_incidences=cell_incidences,
+                                      face_cell_edges=face_cell_edge_map[face],
+                                      deleted_vertices=frozenset(removed_vertices))
 
 
-def update_merged_sight_cell_data(cells, cell_incidences, cell_edges, faces, deleted_vertices):
+def update_merged_sight_cell_data(face_cells, face_cell_incidences, face_cell_edges, deleted_vertices):
+    """
+
+    :param face_cells:
+    :param face_cell_incidences:
+    :param face_cell_edges:
+    :param deleted_vertices: a FROZENSET of vertex ID's
+    :return: nothing; the provided three datastructure are modified in place and returned by reference
+    """
+
+    # Skip if no vertices were deleted
     if not deleted_vertices:
         return
 
-    # Update Face-Level Information
-    new_cells = {face: set() for face in faces}
-    for face in faces:
-        new_cells = []
+    # Clear Face's Old set of sight cells
+    face_cells.clear()
 
-    new_incidences = []
+    # Update Face-Level Information
+    old_cells = list(face_cell_incidences.keys())
+    for old_cell in old_cells:
+
+        # Check whether the old cell contains any deleted vertices
+        if not deleted_vertices.intersection(old_cell):
+            continue
+
+        # Create new cell without any of the previously deleted vertices
+        new_cell = set(old_cell)
+        [new_cell.discard(vertex) for vertex in deleted_vertices]
+        new_cell = frozenset(new_cell)
+
+        # Update The List of Cells
+        face_cells.add(new_cell)
+
+        # Update the Face Cell Incidences
+        face_cell_incidences[new_cell] = face_cell_incidences.pop(old_cell)
+
+        # Update the Dictionary of Cell Edges
+        face_cell_edges[new_cell] = face_cell_edges.pop(old_cell)
+        edges = copy.copy(face_cell_edges[new_cell])
+        [face_cell_edges[new_cell].remove(edge) for edge in edges if deleted_vertices.intersection(edge)]
 
 
 def find_minimal_sight_cell_set(face_cells_incidence, target_vertices):

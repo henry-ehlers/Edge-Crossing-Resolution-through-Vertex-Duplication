@@ -85,8 +85,11 @@ if __name__ == '__main__':
     #
     sight_cell_edges = get_sight_cells_edge_sets(sight_cells, plane_graph)
 
-    removed_vertices = merge_all_face_cells(sight_cells, sight_cell_edges, sight_cell_incidences, plane_graph)
-    # todo: update sight cells, their incidences, and edges to reflect the removed vertices
+    merge_all_face_cells(sight_cells, sight_cell_edges, sight_cell_incidences, plane_graph)
+    print(f"\ncells: {sight_cells}")
+    print(f"\nedges: {sight_cell_edges}")
+    print(f"\nincid: {sight_cell_incidences}")
+
     # Find best set
     find_minimal_sight_cell_set(sight_cell_incidences, target_vertices)
 
