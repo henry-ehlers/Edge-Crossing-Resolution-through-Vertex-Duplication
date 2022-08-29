@@ -246,12 +246,11 @@ def calculate_outer_angle(point_a, point_b, point_c):
     # Calculate Signed Angle between two Vectors
     signed_angle = vector_angle(vector_1, vector_2)
 
-
     # Return Outer angle
     return signed_angle if cross_product(vector_1, vector_2) < 0.0 else 360 - signed_angle
 
 
-def calculate_outer_face_angles(counter_clockwise_face_vertices, positions):
+def calculate_face_outer_angles(counter_clockwise_face_vertices, positions):
 
     # Initialize emtpy dictionary to store inner angles
     outer_angles = {vertex: None for vertex in counter_clockwise_face_vertices}
@@ -280,7 +279,6 @@ def calculate_inner_angle(point_a, point_b, point_c):
     # Calculate Signed Angle between two Vectors
     signed_angle = vector_angle(vector_1, vector_2)
 
-
     # Return inner angle
     return signed_angle if cross_product(vector_1, vector_2) > 0.0 else 360 - signed_angle
 
@@ -306,8 +304,35 @@ def calculate_face_inner_angles(counter_clockwise_face_vertices, positions):
     return inner_angles
 
 
+def add_boundary_to_graph(bounds, graph, positions, offset=0.2):
+
+    # Define the labels of vertices and their edges
+    bound_vertices = list(range(max(graph.nodes) + 1, max(graph.nodes) + 1 + len(bounds)))
+    bound_edges = [(bound_vertices[ind],
+                    bound_vertices[(ind + 1) % len(bounds)]
+                    )
+                   for ind in range(0, len(bounds))]
+    print(f"bounding edges: {bound_edges}")
+    print(f"drawing bounds: {bounds}")
+    print(f"vertex indices: {bound_vertices}")
+
+    # Update Graph, Edges, and Vertex Positions
+    for index in range(0, len(bounds)):
+        new_position = np.array(bounds[index]) - np.sign(np.array(bounds[index])) * np.array([offset, offset])
+        print(f"new position = {new_position}")
+        positions[bound_vertices[index]] = new_position
+    graph.add_nodes_from(bound_vertices)
+    graph.add_edges_from(bound_edges)
+
+    # Return the added vertex labels and edges
+    return bound_vertices, bound_edges
+
+
 def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
-                         bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
+                         bounds=((-1, -1), (-1, 1), (1, 1), (1, -1)),
+                         outer=False):
+
+    bound_vertices, bound_edges = add_boundary_to_graph(bounds, graph, positions) if outer else ([], [])
 
     #
     face_edge_map = {face: {} for face in selected_faces}
@@ -323,18 +348,22 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
             face_vertices = list(reversed(face_vertices))
 
         # Calculate Inner Angles to check convexity
-        face_inner_angles = calculate_face_inner_angles(face_vertices, positions)
+        face_angles = calculate_face_inner_angles(face_vertices, positions) if not outer \
+            else calculate_face_outer_angles(face_vertices, positions)
 
         # If the face is convex, the face is the sight-cell
-        if is_convex(face_inner_angles):
+        if is_convex(face_angles) and not outer:
             face_edge_map[face].update({edge: [edge] for edge in face_edges})
             sight_cells[face] = face_edges
 
         # Otherwise, split into sight cells and return set of frozen sets of vertices per sight-cell
         else:
-            cells, virtual_edge_map = split_face_into_sight_cells(edges=face_edges,
+            print(f"angles: {face_angles}")
+            candidate_edges = face_edges + bound_edges if bound_edges else face_edges
+            print(f"candidate_edges {candidate_edges}")
+            cells, virtual_edge_map = split_face_into_sight_cells(edges=candidate_edges,
                                                                   vertices=face_vertices,
-                                                                  inner_angles=face_inner_angles,
+                                                                  inner_angles=face_angles,
                                                                   graph=graph,
                                                                   positions=positions,
                                                                   bounds=bounds)
@@ -375,7 +404,7 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
             # Skip any vertex pair that is a) consists of the same vertex, or b) has already been investigated
             if connecting_vertex == joint_vertex:
                 continue
-
+            print(f"\nChecking Joint {joint_vertex} and Target {connecting_vertex}")
             # Check whether bend and other vertex can 'see' each other
             is_visible = True if are_vertices_adjacent(joint_vertex, connecting_vertex, graph) \
                 else is_vertex_visible(joint_vertex=joint_vertex,
@@ -389,8 +418,10 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
             # If they cannot see each other, skip to the next pair
             if not is_visible:
                 continue
+            print("CAN see one-another")
 
             # Extend the sight-line, producing a
+            # TODO: extend "outer" keyword all the way down
             bisected_edge, new_vertex = extend_sight_line(joint_vertex=joint_vertex,
                                                           connecting_vertex=connecting_vertex,
                                                           inner_angles=inner_angles,
@@ -726,6 +757,7 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
 
     # If vertices are adjacent, they can see one-another; otherwise we must check explicitly
     already_connected = are_vertices_adjacent(joint_vertex, connecting_vertex, graph)
+    print("Extend Sight Line")
     is_visible = True \
         if already_connected \
         else check_vertex_visibility_by_angle(joint_vertex=joint_vertex,
@@ -737,11 +769,13 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
 
     # If the hypothetical and observed angle are incompatible, then continue
     if not is_visible:
+        print("Extension is not visible")
         return None, None
 
     # Find the Closest Intersection of the extended line with edges not incident to joint or connecting vertex
     extended_line = (positions[joint_vertex], closest_intersection_to_joint)
     candidate_edges = [edge for edge in edges if not set(edge).intersection((joint_vertex, connecting_vertex))]
+    print(f"Candidate Edges: {candidate_edges}")
     closest_edge, crossing_point = find_closest_edge_intersection(extended_line, candidate_edges, positions)
 
     # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
@@ -763,6 +797,7 @@ def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, graph, vert
         return True
 
     # Check Angle around the Joint Vertex allows for visibility to the connecting vertex
+    print("Check Visibility")
     angle_visibility = check_vertex_visibility_by_angle(joint_vertex=joint_vertex,
                                                         inner_angles=inner_angles,
                                                         edges=edges,
@@ -803,8 +838,10 @@ def check_vertex_visibility_by_angle(joint_vertex, inner_angles, edges, vertices
 
     # Get the Angle of the Joint against which we are comparing the new incoming angle:
     observed_angle = inner_angles[joint_vertex]
-    assert observed_angle == debug_angle, \
-        "Angle Calculation is incorrect"
+    print(f"Reference Angle:  {observed_angle}")
+    print(f"Calculated Angle: {debug_angle}")
+    # assert observed_angle == debug_angle, \
+    #     "Angle Calculation is incorrect"
 
     # Calculate Hypothetical Angle
     connecting_position = connecting_position if (connecting_position is not None) else positions[connecting_vertex]

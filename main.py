@@ -72,10 +72,16 @@ if __name__ == '__main__':
     print(outer_face)
     sorted_vertices = get_sorted_face_vertices(outer_face)
     print(f"\nSorted Vertices: {sorted_vertices}")
-    outer_angles = calculate_outer_face_angles(counter_clockwise_face_vertices=sorted_vertices,
+    outer_angles = calculate_face_outer_angles(counter_clockwise_face_vertices=sorted_vertices,
                                                positions=plane_positions)
     print(f"\nBoundary: {nx.node_boundary(plane_graph, outer_face)}")
     print(f"\nOuter{outer_angles}")
+    outer_cells, outer_edge_map = get_face_sight_cells(selected_faces=faces,
+                                                       ordered_face_edges=ordered_face_edges,
+                                                       graph=plane_graph,
+                                                       positions=plane_positions,
+                                                       bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)),
+                                                       outer=True)
 
     # todo: Select Faces
 
