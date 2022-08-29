@@ -33,7 +33,9 @@ if __name__ == '__main__':
     # TESTS ------------------------------------------------------------------------------------------------------------
 
     # Specify vertices and edges
-    coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
+    # todo: the example below causes floating point crashes as all their x and y points are identical
+    #coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
+    coordinates = [(0, 2), (1, 0), (2, 1), (3, 0), (4, 2), (2, 4)]
     target_vertices = [0, 2, 6, 7]
     vertices = range(0, len(coordinates))
     edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
@@ -83,7 +85,13 @@ if __name__ == '__main__':
                                                        bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)),
                                                        outer=True)
 
-    # todo: Select Faces
+    # Draw and Save Planar rGraph
+    draw_graph(graph=plane_graph, positions=plane_positions)
+    save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.5.png")
+
+    sys.exit()
+
+    # TODO: select faces
 
     # Get Sight Cells FOR A SELECTION OF TWO FACES
     sight_cells, edge_map = get_face_sight_cells(selected_faces=faces,
