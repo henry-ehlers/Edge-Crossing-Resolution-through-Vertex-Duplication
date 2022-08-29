@@ -60,16 +60,32 @@ if __name__ == '__main__':
 
     # # Locate faces and best two for target face
     faces = find_all_faces(graph=plane_graph)
+    print(f"\nfaces: {faces}")
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
     face_incidences = find_face_vertex_incidence(faces, target_vertices)
+    print(f"\nFace incidences: {face_incidences}")
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
+    print(f"\nFace Edges: {ordered_face_edges}")
 
-    # Get Sight Cells
-    sight_cells, edge_map = get_face_sight_cells(faces=faces,
+    # Outer Face
+    outer_face = list(ordered_face_edges.values())[0]
+    print(outer_face)
+    sorted_vertices = get_sorted_face_vertices(outer_face)
+    print(f"\nSorted Vertices: {sorted_vertices}")
+    outer_angles = calculate_outer_face_angles(counter_clockwise_face_vertices=sorted_vertices,
+                                               positions=plane_positions)
+    print(f"\nBoundary: {nx.node_boundary(plane_graph, outer_face)}")
+    print(f"\nOuter{outer_angles}")
+
+    # todo: Select Faces
+
+    # Get Sight Cells FOR A SELECTION OF TWO FACES
+    sight_cells, edge_map = get_face_sight_cells(selected_faces=faces,
                                                  ordered_face_edges=ordered_face_edges,
                                                  graph=plane_graph,
                                                  positions=plane_positions,
                                                  bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)))
+
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.png")
@@ -86,18 +102,24 @@ if __name__ == '__main__':
     sight_cell_edges = get_sight_cells_edge_sets(sight_cells, plane_graph)
 
     merge_all_face_cells(sight_cells, sight_cell_edges, sight_cell_incidences, plane_graph)
-    print(f"\ncells: {sight_cells}")
-    print(f"\nedges: {sight_cell_edges}")
-    print(f"\nincid: {sight_cell_incidences}")
+    print(f"\nSight Cells: {sight_cells}")
+    print(f"\nSight Edges: {sight_cell_edges}")
+    print(f"\nIncidences:  {sight_cell_incidences}")
 
-    # Find best set
-    find_minimal_sight_cell_set(sight_cell_incidences, target_vertices)
+    # Find best set of sight cells per face
+    selected_cells = select_sight_cells(sight_cells, sight_cell_incidences)
+    print(f"\nSelected:    {selected_cells}")
+
+    # Check whether selected faces match sight cell incidence
+    rerank = match_cell_and_face_incidence(face_incidences=face_incidences,
+                                           selected_sight_cell_incidences=selected_cells)
 
     # Draw and Save Planar, Convex-Face Graph
     planar_drawing_start_time = timeit.default_timer()
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_2.png")
     planar_drawing_time = timeit.default_timer() - planar_drawing_start_time
+
     sys.exit()
 
     # EMBED INPUT GRAPH ------------------------------------------------------------------------------------------------
@@ -271,6 +293,7 @@ if __name__ == '__main__':
 
     # All Line Segments ------------------------------------------------------------------------------------------------
     line_segment_start_time = timeit.default_timer()
+    # todo: store all line-segments between runs, update them when new split places, and delete when vertex is deleted
 
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
     all_segment_graph, all_segment_positions = draw_all_line_segments(

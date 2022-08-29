@@ -238,6 +238,40 @@ def calculate_face_signed_area(ordered_face_vertices, positions):
     return area
 
 
+def calculate_outer_angle(point_a, point_b, point_c):
+
+    # Assumed that point b connects to both a and c
+    vector_1, vector_2 = point_a - point_b, point_c - point_b
+
+    # Calculate Signed Angle between two Vectors
+    signed_angle = vector_angle(vector_1, vector_2)
+
+
+    # Return Outer angle
+    return signed_angle if cross_product(vector_1, vector_2) < 0.0 else 360 - signed_angle
+
+
+def calculate_outer_face_angles(counter_clockwise_face_vertices, positions):
+
+    # Initialize emtpy dictionary to store inner angles
+    outer_angles = {vertex: None for vertex in counter_clockwise_face_vertices}
+
+    # Iterate over all vertices, and calculate angle for each
+    for vertex_index in range(0, len(counter_clockwise_face_vertices)):
+
+        # Get three vertices that form an angle (the ordered hereof is crucial)
+        vertex_a = counter_clockwise_face_vertices[vertex_index]
+        vertex_b = counter_clockwise_face_vertices[vertex_index - 1]
+        vertex_c = counter_clockwise_face_vertices[vertex_index - 2]
+
+        # Calculate Inner angle and store as with center vertex as key
+        point_a, point_b, point_c = positions[vertex_a], positions[vertex_b], positions[vertex_c]
+        outer_angles[vertex_b] = calculate_outer_angle(point_a, point_b, point_c)
+
+    # Return all inner angles
+    return outer_angles
+
+
 def calculate_inner_angle(point_a, point_b, point_c):
 
     # Assumed that point b connects to both a and c
@@ -272,14 +306,15 @@ def calculate_face_inner_angles(counter_clockwise_face_vertices, positions):
     return inner_angles
 
 
-def get_face_sight_cells(faces, ordered_face_edges, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
+def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
+                         bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
 
     #
-    face_edge_map = {face: {} for face in faces}
-    sight_cells = {face: None for face in faces}
+    face_edge_map = {face: {} for face in selected_faces}
+    sight_cells = {face: None for face in selected_faces}
 
     # Iterate over all faces
-    for face in faces:
+    for face in selected_faces:
 
         # Get Vertices and ensure they are listed in counter-clockwise order
         face_edges = ordered_face_edges[face]
@@ -429,6 +464,8 @@ def get_face_sight_cell_incidences(sight_cells, face_incidences, target_vertices
                                                                               target_vertices=target_vertices,
                                                                               real_face_edges=face_edge_list,
                                                                               positions=positions))
+
+    # Return a
     return sight_cell_incidences
 
 
@@ -563,7 +600,6 @@ def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, 
             continue
 
         # Try Merging Cells in non-convex face
-        print(f"face: {face_cell_edge_map[face]}")
         removed_vertices = merge_face_sight_cells(cells=list(face_sight_cells[face]),
                                                   cells_edge_list=face_cell_edge_map[face],
                                                   cell_incidences=cell_incidences,
@@ -619,23 +655,67 @@ def update_merged_sight_cell_data(face_cells, face_cell_incidences, face_cell_ed
         [face_cell_edges[new_cell].remove(edge) for edge in edges if deleted_vertices.intersection(edge)]
 
 
-def find_minimal_sight_cell_set(face_cells_incidence, target_vertices):
+def find_minimal_sight_cell_set(cell_incidences):
+    """
 
+    :param cell_incidences: SUBSET OF ALL CELL INCIDENCES FOR A PARTICULAR FACE
+    :return:
+    """
+    # TODO: implement Anais' thing here instead. we don;t need one task per one worker, but multiple per worker
+    # todo: get target vertex list from list of unique vertices in incidences
     # Initiate cost matrix of ones
-    cost_matrix = np.ones(shape=(len(face_cells_incidence), len(target_vertices)), dtype=int)
-
-    # Store sight cells in list to avoid ordering problems
-    row_names = list(face_cells_incidence.keys())
-    # Iterate over all sight cells and extract their incidences to build cost matrix
-    for sight_cell in row_names:
-        row_index = row_names.index(sight_cell)
-        for visible_vertex in face_cells_incidence[sight_cell]:
-            col_index = target_vertices.index(visible_vertex)
-            cost_matrix[row_index, col_index] -= 1
+    # cost_matrix = np.ones(shape=(len(face_cells_incidence), len(target_vertices)), dtype=int)
+    #
+    # # Store sight cells in list to avoid ordering problems
+    # row_names = list(face_cells_incidence.keys())
+    # # Iterate over all sight cells and extract their incidences to build cost matrix
+    # for sight_cell in row_names:
+    #     row_index = row_names.index(sight_cell)
+    #     for visible_vertex in face_cells_incidence[sight_cell]:
+    #         col_index = target_vertices.index(visible_vertex)
+    #         cost_matrix[row_index, col_index] -= 1
 
     # Find minimal assignment cost
-    row_indices, col_indices = sp.optimize.linear_sum_assignment(cost_matrix=cost_matrix, maximize=False)
-    # TODO: ties are causing things to be fucky
+    incidence_number = {cell: len(cell_incidences[cell]) for cell in cell_incidences.keys()}
+    incidence_number = dict(sorted(incidence_number.items(), key=lambda item: item[1], reverse=True))
+    print(incidence_number)
+    selected_cells = list(incidence_number)[0:2]  # todo: selection could be arbitrarily long
+    print(selected_cells)
+    return {cell: cell_incidences[cell] for cell in selected_cells}
+
+
+def select_sight_cells(sight_cells, sight_cell_incidence):
+    minimal_cell_set = {face: {} for face in sight_cells.keys()}
+    for face in sight_cells.keys():
+        face_cell_incidences = {cell: sight_cell_incidence[cell] for cell in sight_cells[face]}
+        minimal_cell_set[face].update(find_minimal_sight_cell_set(face_cell_incidences))
+    return minimal_cell_set
+
+
+def match_cell_and_face_incidence(face_incidences, selected_sight_cell_incidences):
+
+    # Indicator whether faces must be reranked (i.e if incidences did not match)
+    rerank_faces = False
+
+    # Iterate over all (both selected faces)
+    for face in face_incidences.keys():
+
+        # Extract the set of target vertices incident to the current face and its selected cells
+        face_incidence, cell_incidences = face_incidences[face], selected_sight_cell_incidences[face]
+
+        # If the number of cells is greater than 1, than no single face contains the target incidence set
+        if len(cell_incidences) > 1:
+
+            # Replace the original face with its sight cells
+            face_incidences.pop(face)
+            face_incidences.update(cell_incidences)
+
+            # Move on to next face and rerank all faces.
+            rerank_faces = True
+            break
+
+    # Return indicator
+    return rerank_faces
 
 
 def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, edges, graph, positions, bounds):
