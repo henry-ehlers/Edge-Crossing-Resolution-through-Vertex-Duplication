@@ -102,11 +102,13 @@ if __name__ == '__main__':
                                                                  positions=plane_positions)
 
     outer_sight_cell_edges = get_sight_cells_edge_sets(outer_cells, plane_graph)
+    print(f"edge sights: {outer_sight_cell_edges}")
 
     merge_all_face_cells(outer_cells, outer_sight_cell_edges, outer_sight_cell_incidences, plane_graph)
     print(f"\nSight Cells: {outer_cells}")
     print(f"\nSight Edges: {outer_sight_cell_edges}")
     print(f"\nIncidences:  {outer_sight_cell_incidences}")
+    print(f"\nGraph Edges: {plane_graph.edges}")
 
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
