@@ -4,6 +4,7 @@ from src.edge_crossings import *
 from src.vertex_splitting import calculate_face_centroid
 from src.graph_drawing import get_graph_entity_data
 
+import matplotlib.path as mpltPath
 import scipy as sp
 import networkx as nx
 import itertools as it
@@ -34,7 +35,7 @@ def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
 
         # Keep only vertices pertaining to current subgraph and search for cycle basis within
         subgraph = copy.deepcopy(graph).subgraph(list(vertices_to_keep))
-        subfaces[target_face] = find_all_faces(subgraph)
+        subfaces[target_face] = find_all_faces(subgraph)  # todo: also pass positions?
 
     # Return all subfaces for each target face
     return subfaces
@@ -62,19 +63,92 @@ def get_ordered_face_edges(faces, graph):
     return ordered_face_edges
 
 
-def find_all_faces(graph, as_set=True):
+def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
+
+    sorted_vertices = get_sorted_face_vertices(sorted_edges[cycle], is_sorted=True)
+    cycle_coordinates = [positions[vertex] for vertex in sorted_vertices]
+
+    # Get positions from polygon of ordered points of current cycle
+    cycle_path = mpltPath.Path(cycle_coordinates[0:-1])
+    for other_cycle in other_cycles:
+
+        # Skip if the cycle == the other cycle
+        if other_cycle == cycle:
+            continue
+
+        vertex_intersection = cycle.intersection(other_cycle)
+        if len(vertex_intersection) == 0:
+            continue
+
+        remaining_vertices = other_cycle - vertex_intersection
+        remaining_coordinates = [positions[vertex] for vertex in remaining_vertices]
+        in_side = cycle_path.contains_points(remaining_coordinates)
+
+        if not all(in_side):
+            if not all(not in_side[index] for index in range(0, len(remaining_vertices))):
+                print("shit's fucked")
+            continue
+
+        #
+        if len(vertex_intersection) == 1:
+            # TODO: fix this section -> edge order is unclear
+            print(f"Of Length 1")
+            new_cycle = cycle.union(remaining_vertices)
+            new_edge_list = get_face_vertex_sequence(new_cycle, graph)
+            print(f"new cycle: {new_cycle}")
+            print(f"Sorted Vertices: {sorted_edges[new_cycle]}")
+
+        elif len(vertex_intersection) >= 2:
+            cycle_edge_list = set([frozenset(edge) for edge in sorted_edges[cycle]])
+            other_edge_list = set([frozenset(edge) for edge in sorted_edges[other_cycle]])
+
+            new_edge_set = cycle_edge_list.symmetric_difference(other_edge_list)
+            new_edge_list = sort_face_edges(list([tuple(edge) for edge in new_edge_set]))
+            new_cycle = frozenset().union(*new_edge_set)
+
+        else:
+            print("shit's fucked")
+
+        print(f"Merged {cycle} and {other_cycle}")
+
+        # Update the list of cycles
+        [other_cycles.remove(element) for element in [cycle, other_cycle]]
+        other_cycles.add(new_cycle)
+
+        # Update the cycle sorted edge dictionary
+        sorted_edges[new_cycle] = new_edge_list
+        sorted_edges.pop(cycle)
+
+        # Recurse and return
+        return shrink_cycle(new_cycle, other_cycles, sorted_edges, graph, positions)
+
+
+def find_all_faces(graph, positions=None, as_set=True):
 
     # TODO: find "singleton" edges, i.e. branches that do not map to a cycle, but do define the outer face
     # TODO: in all subsequent functions which use the face dictionary, check the length of the face (no singletons)
 
     # Identify the minimum cycle basis of the graph
-    # TODO: this does not identify outer faces (i.e. the outer cycle)
     cycles = nx.minimum_cycle_basis(G=graph)
+    cycles = set([frozenset(cycle) for cycle in cycles]) if as_set else [set(cycle) for cycle in cycles]
 
-    # Convert the minimum cycle basis into face sets
-    # TODO: check that cycles are indeed legal faces
-    faces = set([frozenset(cycle) for cycle in cycles]) if as_set else [set(cycle) for cycle in cycles]
+    # If no positions are given with which to check the validity of the cycles, return the cycles as faces
+    if positions is None:
+        return cycles
 
+    # Get the ordered edge list per cycle
+    cycle_ordered_edges = get_ordered_face_edges(cycles, graph)
+
+    # For each Cycle recursively check that the face is indeed a face
+    faces = copy.copy(cycles)
+    for cycle in cycles:
+        shrink_cycle(cycle=cycle,
+                     other_cycles=faces,
+                     sorted_edges=cycle_ordered_edges,
+                     graph=graph,
+                     positions=positions)
+
+    print(f"\nnew cycles: {faces}")
     # Return set of faces (frozen sets of vertices)
     return faces
 
@@ -308,10 +382,7 @@ def add_boundary_to_graph(bounds, graph, positions, offset=0.2):
 
     # Define the labels of vertices and their edges
     bound_vertices = list(range(max(graph.nodes) + 1, max(graph.nodes) + 1 + len(bounds)))
-    bound_edges = [(bound_vertices[ind],
-                    bound_vertices[(ind + 1) % len(bounds)]
-                    )
-                   for ind in range(0, len(bounds))]
+    bound_edges = [(bound_vertices[ind], bound_vertices[(ind + 1) % len(bounds)]) for ind in range(0, len(bounds))]
     print(f"bounding edges: {bound_edges}")
     print(f"drawing bounds: {bounds}")
     print(f"vertex indices: {bound_vertices}")
@@ -323,7 +394,7 @@ def add_boundary_to_graph(bounds, graph, positions, offset=0.2):
         positions[bound_vertices[index]] = new_position
     graph.add_nodes_from(bound_vertices)
     graph.add_edges_from(bound_edges)
-
+    print(f"\ngraph vertices: {graph.nodes}")
     # Return the added vertex labels and edges
     return bound_vertices, bound_edges
 
@@ -366,6 +437,7 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
                                                                   inner_angles=face_angles,
                                                                   graph=graph,
                                                                   positions=positions,
+                                                                  bound_vertices=bound_vertices,
                                                                   bounds=bounds,
                                                                   outer=outer)
             face_edge_map[face].update(virtual_edge_map)
@@ -391,21 +463,23 @@ def are_vertices_adjacent(vertex_a, vertex_b, graph):
     return adjacent
 
 
-def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions, bounds, outer):
+def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions, bound_vertices, bounds, outer):
 
     # Keep track of the added vertices, and in which edges they were added
     added_vertices, edge_to_virtual_vertices = [], {}
-
+    print(f"\ngraph vertices in SPLIT 1: {graph.nodes}")
+    print(f"\nvertex {8}'s edges 1: {graph.edges(8)}")
     # Consider only those vertices whose angle is greater than 180 degrees
     bend_vertices = [key for key in inner_angles.keys() if inner_angles[key] > 180]
 
     for joint_vertex in bend_vertices:
+        print(f"\nChecking Joint {joint_vertex}")
         for connecting_vertex in vertices:
-
+            print(f"\nConnecting Vertex {connecting_vertex}")
             # Skip any vertex pair that is a) consists of the same vertex, or b) has already been investigated
             if connecting_vertex == joint_vertex:
                 continue
-            print(f"\nChecking Joint {joint_vertex} and Target {connecting_vertex}")
+
             # Check whether bend and other vertex can 'see' each other
             is_visible = True if are_vertices_adjacent(joint_vertex, connecting_vertex, graph) \
                 else is_vertex_visible(joint_vertex=joint_vertex,
@@ -449,27 +523,41 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
             else:
                 edge_to_virtual_vertices[bisected_edge] = {new_vertex}
 
+    print(f"\ngraph vertices in SPLIT 2: {graph.nodes}")
+    print(f"\nvertex {8}'s edges 2: {graph.edges(8)}")
+    print(f"\n Graph Edges 2: {graph.edges}")
     print(f"edge_to_virtual_vertices: {edge_to_virtual_vertices}")
+
     # Remove edges which have been intersected, and replace them with ordered virtual edges
     virtual_edge_map = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
     # TODO: figure out how to better index old edge -> virtual split edges
     remove_edges(graph, edge_to_virtual_vertices.keys())
 
     # Locate Edge Crossings and Faces in Subgraph
-    face_vertices = vertices + added_vertices
+    print(f"BOUND VERTICES: {bound_vertices}")
+    face_vertices = vertices + added_vertices + bound_vertices
     face_positions = {key: positions.get(key) for key in face_vertices}
     face_graph = nx.Graph(graph.subgraph(nodes=face_vertices))
 
+    print(f"\ngraph vertices in SPLIT 3: {graph.nodes}")
+    print(f"\nvertex {8}'s edges 3: {graph.edges(8)}")
+    print(f"\nFace Graph Edges 3: {face_graph.edges}")
     # Find remaining edge crossings (between placed line-segments) and replace them with virtual vertices
     # TODO: TEST THIS PART
     face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
+    print(f"\nEdge Crossings: {face_edge_crossings}")
     if len(face_edge_crossings) > 1:
         face_graph, face_positions, virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
         graph.update(face_graph)
         positions.update(face_positions)
 
+    print(f"\ngraph vertices in SPLIT 4: {graph.nodes}")
+    print(f"\nvertex {8}'s edges 4: {graph.edges(8)}")
+    print(f"\nFace Graph Edges 4: {face_graph.edges}")
     # Define Sight Cells, i.e. faces
-    sight_cells = find_all_faces(face_graph)
+
+    sight_cells = find_all_faces(face_graph, positions)
+    print(f"\nFace Graph sight_cells: {sight_cells}")
 
     # Return Sight Cells
     return sight_cells, virtual_edge_map
@@ -541,16 +629,24 @@ def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edg
 
 
 def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vertices, graph):
+    # todo: outer face also contains all faces INSIDE of the graph
     # iterate over all pairs of sight cells
     # for each pair check if incidence is the same, and they have an edge in common
     # if so, merge the two in the "sight_cells" object and delete the common edge
     # also delete one of the vertices that formed the edge in question
     # recurse back into the same function if at least one thing was merged, else return sight cells
-
+    print(f"\ncells: {cells}")
+    print(f"Length: {len(cells)}")
+    print(f"\nedges: {cells_edge_list}")
+    print(f"Length: {len(cells_edge_list)}")
+    print(f"\nincidences: {cell_incidences}")
+    print(f"Length: {len(cell_incidences)}")
     # Iterate over all cell pairs
     for cell_index_a in range(0, len(cells)):
+        print(f"\nCell A {cells[cell_index_a]}")
         for cell_index_b in range(cell_index_a + 1, len(cells)):
             cell_a, cell_b = cells[cell_index_a], cells[cell_index_b]
+            print(f"Cell B {cell_b}")
 
             # Attempt to merge the two cells, return a boolean for success and a (possibly empty) vertex ID
             merge_successful, removed_vertex = try_merge_two_sight_cells(cell_a=cell_a,
@@ -562,9 +658,11 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
 
             # If the merge was successful, recurse
             if merge_successful:
+                print("Merge Successful")
 
                 # If a vertex was removed, keep track if its removal
                 if removed_vertex is not None:
+                    print(f"Removed Vertex {removed_vertex}")
                     removed_vertices.append(removed_vertex)
 
                 # Recurse and repeat merging
@@ -587,6 +685,9 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
     merge_edge = cells_edge_list[cell_a].intersection(cells_edge_list[cell_b])
     incidence_a, incidence_b = cell_incidences[cell_a], cell_incidences[cell_b]
     non_overlapping_incidences = incidence_a ^ incidence_b
+    print(f"Merge Edge:  {merge_edge}")
+    print(f"Non Overlap: {non_overlapping_incidences}")
+
     if non_overlapping_incidences or len(merge_edge) == 0:
         return False, None
 
@@ -612,13 +713,15 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
 
     # Identify a vertex connected to deleted edge which is couched between virtual edges. Remove vertex and replace edge
     vertex_edges, common_vertex = unlist([list(graph.edges(v)) for v in merge_edge if len(graph.edges(v)) == 2]), None
+    print(f"vertex edges:  {vertex_edges}")
+    print(f"common vertex: {common_vertex}")
     if vertex_edges:
 
         # Define a new edge which skips the now singleton vertex
         new_edge = [vertex for vertex in unlist(vertex_edges) if vertex not in merge_edge]
         real_edge = all([get_graph_entity_data(graph.nodes, vertex, "virtual", 0) for vertex in new_edge])
         graph.add_edge(u_of_edge=new_edge[0], v_of_edge=new_edge[1], virtual=0 if real_edge else 1)
-
+        print(f"Removed Edges {vertex_edges} with {new_edge}")
         # Remove the singleton virtual vertex from the graph and cells
         common_vertex = set(vertex_edges[0]).intersection(set(vertex_edges[1])).pop()
         graph.remove_node(common_vertex)

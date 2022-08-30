@@ -1,10 +1,15 @@
+import networkx as nx
 
 
 def get_face_vertex_sequence(face, graph):
+    # todo: does not work if edges exist between elements of the face other than the minimal cycle
+    print(f"Face: {face}")
     face_edges = [None] * len(face)
     current = 0
+    print(nx.find_cycle(G=graph, source=list(face)))
     for edge in graph.edges:
-        if len(set(edge) & face) == 2:
+        common_vertices = face.intersection(set(edge))
+        if len(common_vertices) == 2:
             face_edges[current] = edge
             current += 1
     sorted_face_edges = sort_face_edges(face_edges)

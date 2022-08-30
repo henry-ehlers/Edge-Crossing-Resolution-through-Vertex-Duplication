@@ -36,7 +36,7 @@ if __name__ == '__main__':
     # todo: the example below causes floating point crashes as all their x and y points are identical
     #coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
     coordinates = [(0, 2), (1, 0), (2, 1), (3, 0), (4, 2), (2, 4)]
-    target_vertices = [0, 2, 6, 7]
+    target_vertices = [0, 2]
     vertices = range(0, len(coordinates))
     edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
 
     # Create Output Directory
-    output_directory = "./drawings/tests/snake_face"
+    output_directory = "./drawings/tests/outer_face"
     Path(output_directory).mkdir(parents=True, exist_ok=True)
 
     # Draw Initial Embedding
@@ -61,6 +61,7 @@ if __name__ == '__main__':
         graph=graph, positions=positions, edge_crossings=edge_crossings)
 
     # # Locate faces and best two for target face
+    # TODO: find outer face
     faces = find_all_faces(graph=plane_graph)
     print(f"\nfaces: {faces}")
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
@@ -84,14 +85,35 @@ if __name__ == '__main__':
                                                        positions=plane_positions,
                                                        bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)),
                                                        outer=True)
+    print(outer_cells)
+    print(f"\nOuter Cells: {outer_cells[frozenset({0, 1, 2, 3, 4, 5})]}")
+    outer_cells[frozenset({0, 1, 2, 3, 4, 5})].remove(frozenset({0, 1, 2, 3, 4, 5}))
 
+    print(f"edges: {plane_graph.edges}")
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.5.png")
 
-    sys.exit()
+    outer_sight_cell_incidences = get_face_sight_cell_incidences(sight_cells=outer_cells,
+                                                                 face_incidences=face_incidences,
+                                                                 target_vertices=target_vertices,
+                                                                 face_edges=ordered_face_edges,
+                                                                 face_edge_map=outer_edge_map,
+                                                                 positions=plane_positions)
+
+    outer_sight_cell_edges = get_sight_cells_edge_sets(outer_cells, plane_graph)
+
+    merge_all_face_cells(outer_cells, outer_sight_cell_edges, outer_sight_cell_incidences, plane_graph)
+    print(f"\nSight Cells: {outer_cells}")
+    print(f"\nSight Edges: {outer_sight_cell_edges}")
+    print(f"\nIncidences:  {outer_sight_cell_incidences}")
+
+    # Draw and Save Planar rGraph
+    draw_graph(graph=plane_graph, positions=plane_positions)
+    save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.75.png")
 
     # TODO: select faces
+    sys.exit()
 
     # Get Sight Cells FOR A SELECTION OF TWO FACES
     sight_cells, edge_map = get_face_sight_cells(selected_faces=faces,
@@ -103,6 +125,8 @@ if __name__ == '__main__':
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.png")
+
+
 
     #
     sight_cell_incidences = get_face_sight_cell_incidences(sight_cells=sight_cells,
