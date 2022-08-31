@@ -84,6 +84,8 @@ if __name__ == '__main__':
     # Outer Face
     outer_faces = find_outer_face(ordered_face_edges, graph)
     print(f"\nouter_face: {outer_faces}")
+    outer_face_identifier = frozenset(set.union(*[set(outer_face) for outer_face in outer_faces]))
+    print("identifier: {outer_face_identifier}")
     outer_face_sorted_edges = [get_face_vertex_sequence(outer_face, plane_graph) for outer_face in outer_faces]
     outer_face_sorted_vertices = [get_sorted_face_vertices(edge, is_sorted=True) for edge in outer_face_sorted_edges]
     print(f"\nsorted outer face: {outer_face_sorted_vertices}")
@@ -106,9 +108,13 @@ if __name__ == '__main__':
                                                                        positions=plane_positions)
     print(f"Outer Cell Incidences: {outer_sight_cell_incidences}")
 
-    outer_sight_cell_edges = get_sight_cells_edge_sets(outer_cells, plane_graph)
+    outer_sight_cell_edges = get_sight_cell_edges(outer_cells, plane_graph)
+    print(f"Cell Edges: {outer_sight_cell_edges}")
 
-    merge_all_face_cells(outer_cells, outer_sight_cell_edges, outer_sight_cell_incidences, plane_graph)
+    merge_cells_wrapper(face_sight_cells=outer_cells,
+                        cells_edge_list=outer_sight_cell_edges,
+                        cell_incidences=outer_sight_cell_incidences,
+                        graph=plane_graph)
 
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)

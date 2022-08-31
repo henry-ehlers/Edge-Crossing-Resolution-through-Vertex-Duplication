@@ -42,10 +42,10 @@ def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
     return subfaces
 
 
-def get_sight_cells_edge_sets(sight_cells, graph):
-    sight_cell_edge_list = {face: {} for face in sight_cells.keys()}
-    for face in sight_cells.keys():
-        sight_cell_edge_list[face].update(get_sight_cell_edges(sight_cells[face], graph))
+def get_sight_cells_edge_sets(face_sight_cells, graph):
+    sight_cell_edge_list = {face: {} for face in face_sight_cells.keys()}
+    for face in face_sight_cells.keys():
+        sight_cell_edge_list[face].update(get_sight_cell_edges(face_sight_cells[face], graph))
     return sight_cell_edge_list
 
 
@@ -492,8 +492,7 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
     return sight_cells, face_edge_map
 
 
-def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
-                         bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
+def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
 
     bound_vertices, bound_edges = add_boundary_to_graph(bounds, graph, positions)
     all_face_edges = unlist([ordered_face_edges.get(face) for face in selected_faces])
@@ -694,7 +693,6 @@ def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edge
 
         visibility = [None] * len(face_edges.keys())
 
-        print(visibility)
         for face_index, face in enumerate(face_edges.keys()):
 
             # Extract all edges in the face, i.e. the virtual edges formed by virtual edge bisection
@@ -860,6 +858,22 @@ def update_merge_sight_cell_graph(merge_edge, graph):
     return None
 
 
+def merge_cells_wrapper(face_sight_cells, cells_edge_list, cell_incidences, graph):
+
+    # Try Merging Cells in non-convex face
+    removed_vertices = merge_face_sight_cells(cells=list(face_sight_cells),
+                                              cells_edge_list=cells_edge_list,
+                                              cell_incidences=cell_incidences,
+                                              removed_vertices=[],
+                                              graph=graph)
+
+    # Update the face's cells, their incidents, and edges based on deleted vertices
+    update_merged_sight_cell_data(face_cells=face_sight_cells,
+                                  face_cell_incidences=cell_incidences,
+                                  face_cell_edges=cells_edge_list,
+                                  deleted_vertices=frozenset(removed_vertices))
+
+
 def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, graph):
 
     # Iterate over all faces, and attempt to merge their faces
@@ -869,18 +883,11 @@ def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, 
         if len(face_sight_cells[face]) == 1:
             continue
 
-        # Try Merging Cells in non-convex face
-        removed_vertices = merge_face_sight_cells(cells=list(face_sight_cells[face]),
-                                                  cells_edge_list=face_cell_edge_map[face],
-                                                  cell_incidences=cell_incidences,
-                                                  removed_vertices=[],
-                                                  graph=graph)
+        merge_cells_wrapper(face_sight_cells=face_sight_cells[face],
+                            cells_edge_list=face_cell_edge_map[face],
+                            cell_incidences=cell_incidences,
+                            graph=graph)
 
-        # Update the face's cells, their incidents, and edges based on deleted vertices
-        update_merged_sight_cell_data(face_cells=face_sight_cells[face],
-                                      face_cell_incidences=cell_incidences,
-                                      face_cell_edges=face_cell_edge_map[face],
-                                      deleted_vertices=frozenset(removed_vertices))
 
 
 def update_merged_sight_cell_data(face_cells, face_cell_incidences, face_cell_edges, deleted_vertices):
