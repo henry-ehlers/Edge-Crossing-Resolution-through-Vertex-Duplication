@@ -9,6 +9,7 @@ def get_face_vertex_sequence(face, graph):
         if len(common_vertices) == 2:
             face_edges[current] = edge
             current += 1
+    print(f"face edges: {face_edges}")
     sorted_face_edges = sort_face_edges(face_edges)
     return sorted_face_edges
 

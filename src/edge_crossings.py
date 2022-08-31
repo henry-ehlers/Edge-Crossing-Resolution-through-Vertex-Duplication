@@ -190,6 +190,7 @@ def find_closest_edge_intersection(edge_points, other_edges, positions):
     intersections, distances = dict(), dict()
     point_a, point_b = edge_points
     for edge in other_edges:
+        print(f"edge: {edge}")
         point_c, point_d = positions[edge[0]], positions[edge[1]]
         intersection = line_intersection(point_a, point_b, point_c, point_d)
         if intersection is None: continue

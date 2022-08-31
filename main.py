@@ -36,19 +36,30 @@ if __name__ == '__main__':
     # todo: the example below causes floating point crashes as all their x and y points are identical
     #coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
     coordinates = [(0, 2), (1, 0), (2, 1), (3, 0), (4, 2), (2, 4)]
-    target_vertices = [0, 2]
+    target_vertices = [0, 2, 7]
     vertices = range(0, len(coordinates))
     edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
+
+    more_coordinates = [(-2, 1.5), (-1, 1.5), (-1, 0.5)]
+    more_vertices = range(len(coordinates), len(coordinates) + len(more_coordinates))
+
+    more_edges = ((more_vertices[index], more_vertices[(index + 1) % len(more_vertices)])
+                  for index in range(0, len(more_vertices)))
 
     # Create Graph
     graph = nx.Graph()
     for vertex in vertices:
         graph.add_node(vertex, target=1 if vertex in target_vertices else 0)
+    for vertex in more_vertices:
+        print(vertex)
+        graph.add_node(vertex, target=1 if vertex in target_vertices else 0)
     graph.add_edges_from(edges)
+    graph.add_edges_from(more_edges)
     positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
+    positions.update({more_vertices[index]: np.array(more_coordinates[index]) for index in range(0, len(more_vertices))})
 
     # Create Output Directory
-    output_directory = "./drawings/tests/outer_face"
+    output_directory = "./drawings/tests/complex_outer_face"
     Path(output_directory).mkdir(parents=True, exist_ok=True)
 
     # Draw Initial Embedding
@@ -69,16 +80,16 @@ if __name__ == '__main__':
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
 
     # Outer Face
-    outer_face = get_sorted_face_vertices(find_outer_face(ordered_face_edges, graph))
-    print(f"\nouter_face: {outer_face}")
-    outer_angles = calculate_face_outer_angles(counter_clockwise_face_vertices=outer_face,
-                                               positions=plane_positions)
-    outer_cells, outer_edge_map = get_face_sight_cells(selected_faces=faces,
-                                                       ordered_face_edges=ordered_face_edges,
-                                                       graph=plane_graph,
-                                                       positions=plane_positions,
-                                                       bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)),
-                                                       outer=True)
+    outer_faces = find_outer_face(ordered_face_edges, graph)
+    print(f"\nouter_face: {outer_faces}")
+    outer_face_sorted_edges = [get_face_vertex_sequence(outer_face, plane_graph) for outer_face in outer_faces]
+    outer_face_sorted_vertices = [get_sorted_face_vertices(edge, is_sorted=True) for edge in outer_face_sorted_edges]
+    print(f"\nsorted outer face: {outer_face_sorted_vertices}")
+    outer_cells, outer_edge_map = get_outer_face_sight_cells(selected_faces=outer_faces,
+                                                             ordered_face_edges=ordered_face_edges,
+                                                             graph=plane_graph,
+                                                             positions=plane_positions,
+                                                             bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)))
     outer_cells[frozenset({0, 1, 2, 3, 4, 5})].remove(frozenset({0, 1, 2, 3, 4, 5}))
 
     # Draw and Save Planar rGraph
