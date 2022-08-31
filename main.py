@@ -93,12 +93,12 @@ if __name__ == '__main__':
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.5.png")
+    sys.exit()
 
     outer_sight_cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=outer_cells,
                                                                        target_vertices=target_vertices,
                                                                        face_edges=ordered_face_edges,
                                                                        face_edge_map=outer_edge_map,
-                                                                       graph=plane_graph,
                                                                        positions=plane_positions)
 
     # Draw and Save Planar rGraph
