@@ -543,6 +543,7 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
     outer_face_vertices = list(set(unlist(unlist(list(face_edge_map.values())))))
     face_graph = nx.Graph(graph.subgraph(nodes=outer_face_vertices))
     sight_cells = find_all_faces(face_graph, positions=positions)
+    #[print(sight_cell) for sight_cell in sight_cells]
 
     # Remove the original set of faces that defined the outer face
     [sight_cells.remove(cell) for cell in copy.copy(sight_cells) for face in selected_faces if face.issubset(cell)]
@@ -555,13 +556,10 @@ def deep_update_of_virtual_edge_map(complete_map, new_map):
     for virtual_edge in new_map.keys():
         mapped = [real_edge for real_edge in complete_map.keys() if virtual_edge in complete_map[real_edge]]
         if len(mapped) == 1:
-            print(f"Inserting {virtual_edge} - {new_map[virtual_edge]}")
             real_edge = mapped[0]
             index = complete_map[real_edge].index(virtual_edge)
-            print(f"Before: {complete_map[real_edge]}")
             complete_map[real_edge][index:index] = new_map[virtual_edge]
             complete_map[real_edge].remove(virtual_edge)
-            print(f"After: {complete_map[real_edge]}")
         elif len(mapped) > 1:
             sys.exit("SHIT'S FUCKED")
         else:
@@ -665,13 +663,10 @@ def project_face_sight_lines(edges, vertices, inner_angles, graph, positions, bo
                 continue
 
             # Add
-            print(f"Bisected Edge: {bisected_edge} with vertex {new_vertex}")
             if bisected_edge in edge_to_virtual_vertices:
                 edge_to_virtual_vertices[bisected_edge].add(new_vertex)
             else:
                 edge_to_virtual_vertices[bisected_edge] = {new_vertex}
-
-    print(f"edge to virtual: {edge_to_virtual_vertices}")
 
     return edge_to_virtual_vertices, added_vertices
 
@@ -680,12 +675,9 @@ def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, grap
 
     # Remove edges which have been intersected, and replace them with ordered virtual edges
     virtual_edge_map = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
-    print(f"virtual edge map: {virtual_edge_map}")
     remove_edges(graph, edge_to_virtual_vertices.keys())
 
     # Locate Edge Crossings and Faces in Subgraph
-    # candidate_edge_vertices = list(set(unlist(edges)))
-    # face_vertices = vertices + added_vertices + candidate_edge_vertices
     face_positions = {key: positions.get(key) for key in face_vertices}
     face_graph = nx.Graph(graph.subgraph(nodes=face_vertices))
 
@@ -731,33 +723,38 @@ def get_faces_sight_cell_incidences(sight_cells, target_vertices, face_edges, fa
     return sight_cell_incidences
 
 
-def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edges, face_edge_map, positions):
+def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edges, face_edge_map, graph, positions):
 
     # Initialize an empty map of sight cell to incidence
     sight_cell_incidences = {sight_cell: set() for sight_cell in sight_cells}
 
     # Iterate over all faces in the graph
     for cell in sight_cells:
-
+        print(f"\nCell: {cell}")
         visibility = [None] * len(face_edges.keys())
 
         for face_index, face in enumerate(face_edges.keys()):
 
             # Extract all edges in the face, i.e. the virtual edges formed by virtual edge bisection
             face_edge_list = unlist([face_edge_map[edge] for edge in face_edges[face]])
+            print(f"face edge list: {face_edge_list}")
 
             # Get Incidences of sight cells in current face
+            # target_vertices_in_face = face.intersection(target_vertices)
             visibility[face_index] = get_sight_cell_incidence(cell,
                                                               target_vertices,
                                                               face_edge_list,
+                                                              graph,
                                                               positions)
+            print(f"visibility: {visibility[face_index]}")
         sight_cell_incidences[cell] = set.intersection(*visibility)
+        print(f"Sight cell Visibility: {sight_cell_incidences[cell]}")
 
     # Return a
     return sight_cell_incidences
 
 
-def get_face_sight_cells_incidences(face_sight_cells, face_edge_list, target_vertices, positions):
+def get_face_sight_cells_incidences(face_sight_cells, face_edge_list, target_vertices, graph, positions):
 
     # If the original face is convex, the sight cell is equivalent
     if len(face_sight_cells) == 1:
@@ -768,10 +765,11 @@ def get_face_sight_cells_incidences(face_sight_cells, face_edge_list, target_ver
         return get_sight_cell_incidence(sight_cell_vertices=sight_cell,
                                         target_vertices=target_vertices,
                                         real_face_edges=face_edge_list,
+                                        graph=graph,
                                         positions=positions)
 
 
-def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edges, positions):
+def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edges, graph, positions):
 
     # Check what targets are already in the current sight cell
     targets_in_cell = sight_cell_vertices.intersection(target_vertices)
@@ -782,16 +780,31 @@ def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edg
     sight_cell_centroid = calculate_face_centroid(sight_cell_positions)
     sight_cell_incidence = set(targets_in_cell)
 
+    # DEBUG
+    new_vertex_index = max(graph.nodes) + 1
+    graph.add_node(node_for_adding=new_vertex_index, target=1)
+    positions[new_vertex_index] = sight_cell_centroid
+    print(f"Vertices:  {sight_cell_vertices}")
+    print(f"Positions: {sight_cell_positions}")
+    print(f"Centroid:  {sight_cell_centroid}")
+    print(f"Targets: {target_vertices}")
     # Iterate over all targets that are not already incident to the cell
     for target in remaining_targets:
+        print(f"Considered Target: {target}")
+
         sight_line = [sight_cell_centroid, positions[target]]
 
         # Iterate over all edges and check whether they intersect the line between centroid and target
         is_target_visible = True
         for edge in real_face_edges:
+
+            if target in edge:
+                continue
+
+            print(f"Edge: {edge}")
             edge_line = [positions[vertex] for vertex in edge]
             intersection = line_intersection(sight_line[0], sight_line[1], edge_line[0], edge_line[1])
-
+            print(f"intersection: {intersection}")
             # If the two lines intersect, they are not visible
             if intersection is not None:
                 is_target_visible = False
@@ -812,11 +825,13 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
     # if so, merge the two in the "sight_cells" object and delete the common edge
     # also delete one of the vertices that formed the edge in question
     # recurse back into the same function if at least one thing was merged, else return sight cells
-
+    print(f"\nCells: {cells}")
     # Iterate over all cell pairs
     for cell_index_a in range(0, len(cells)):
+        print(f"\nCell A {cells[cell_index_a]} with incidence {cell_incidences[cells[cell_index_a]]}")
         for cell_index_b in range(cell_index_a + 1, len(cells)):
             cell_a, cell_b = cells[cell_index_a], cells[cell_index_b]
+            print(f"Cell B {cells[cell_index_b]} with incidence {cell_incidences[cells[cell_index_b]]}")
 
             # Attempt to merge the two cells, return a boolean for success and a (possibly empty) vertex ID
             merge_successful, removed = try_merge_two_sight_cells(cell_a=cell_a,
@@ -828,7 +843,7 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
 
             # If the merge was successful, recurse
             if merge_successful:
-
+                print("Merged")
                 # If a vertex was removed, keep track if its removal
                 if removed:
                     [removed_vertices.append(removed_vertex) for removed_vertex in removed]
@@ -853,6 +868,8 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
     merge_edges = cells_edge_list[cell_a].intersection(cells_edge_list[cell_b])
     incidence_a, incidence_b = cell_incidences[cell_a], cell_incidences[cell_b]
     non_overlapping_incidences = incidence_a ^ incidence_b
+    print(f"non overlap: {non_overlapping_incidences}")
+    print(f"shared edge: {merge_edges}")
 
     if non_overlapping_incidences or len(merge_edges) == 0:
         return False, None
