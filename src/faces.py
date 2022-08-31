@@ -128,6 +128,18 @@ def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
         return shrink_cycle(new_cycle, other_cycles, sorted_edges, graph, positions)
 
 
+def find_singleton_cycles(identified_cycles, graph, as_set=True):
+
+    # Find edges not Featured in Cycles
+    non_cycle_edges = [edge for edge in list(graph.edges) if edge not in identified_cycles]
+
+    # Add found singleton cycles to identified ones
+    if as_set:
+        [identified_cycles.add(singleton_cycle) for singleton_cycle in non_cycle_edges]
+    else:
+        [identified_cycles.append(singleton_cycle) for singleton_cycle in non_cycle_edges]
+
+
 def find_all_faces(graph, positions=None, as_set=True):
 
     # TODO: find "singleton" edges, i.e. branches that do not map to a cycle, but do define the outer face
@@ -136,6 +148,9 @@ def find_all_faces(graph, positions=None, as_set=True):
     # Identify the minimum cycle basis of the graph
     cycles = nx.minimum_cycle_basis(G=graph)
     cycles = set([frozenset(cycle) for cycle in cycles]) if as_set else [set(cycle) for cycle in cycles]
+
+    # Check for and add Singleton edges as singleton cycles
+    find_singleton_cycles(cycles, graph, as_set)
 
     # If no positions are given with which to check the validity of the cycles, return the cycles as faces
     if positions is None:
