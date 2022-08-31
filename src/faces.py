@@ -514,8 +514,7 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
 
     #
     face_edge_map = {edge: [edge] for edge in all_face_edges + bound_edges}
-    sight_cells = {}
-    # TODO: CANDIDATE EDGES ARE ALWAYS THE SAME
+    # TODO: change face_edge_map to work with frozensets instead of edge tuples -> maybe a problem later
 
     # Iterate over all faces
     for face in selected_faces:
@@ -523,7 +522,6 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
         # Add additional candidate edges if we are dealing with the outer face
         other_faces = copy.copy(selected_faces)
         other_faces.remove(face)
-
 
         # Get Vertices and ensure they are listed in counter-clockwise order
         face_edges = unlist([face_edge_map.get(edge) for edge in ordered_face_edges[face]])
@@ -533,8 +531,12 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
 
         # Calculate Inner Angles to check convexity
         face_angles = calculate_face_outer_angles(face_vertices, positions)
+
+        # Replace original edges with their virtual counter parts
+        # todo: possible that a virtual edge is again bisected causing problems?
         candidate_edges = unlist([face_edge_map.get(edge) for edge in all_face_edges + bound_edges])
-        print(f"\nFACE MAP A: {face_edge_map}")
+
+        # Extend all sight lines, add new vertices where necessary, and keep track of edge bisection
         cells, virtual_edge_map = project_face_sight_lines(edges=candidate_edges,
                                                            vertices=face_vertices,
                                                            inner_angles=face_angles,
@@ -542,20 +544,39 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
                                                            positions=positions,
                                                            bounds=bounds,
                                                            outer=True)
-        face_edge_map.update(virtual_edge_map)
-        print(f"FACE MAP B: {face_edge_map}")
-        # Also add those edges that were not bisected
 
-    # Find Sight Cells
-    # define subset of graph to be investigated
+        # Update the map of real to virtual edge maps
+        deep_update_of_virtual_edge_map(face_edge_map, virtual_edge_map)
+
+    print(f"Face Map: {face_edge_map}")
+
+    # Identify all faces (i.e. sight cells in outer face)
     outer_face_vertices = list(set(unlist(unlist(list(face_edge_map.values())))))
     face_graph = nx.Graph(graph.subgraph(nodes=outer_face_vertices))
     sight_cells = find_all_faces(face_graph, positions=positions)
-    print()
-    [print(cell) for cell in sight_cells]
+
+    # Remove the original set of faces that defined the outer face
+    [sight_cells.remove(cell) for cell in copy.copy(sight_cells) for face in selected_faces if face.issubset(cell)]
     sys.exit()
     # Return
     return sight_cells, face_edge_map
+
+
+def deep_update_of_virtual_edge_map(complete_map, new_map):
+    for virtual_edge in new_map.keys():
+        mapped = [real_edge for real_edge in complete_map.keys() if virtual_edge in complete_map[real_edge]]
+        if len(mapped) == 1:
+            print(f"Inserting {virtual_edge} - {new_map[virtual_edge]}")
+            real_edge = mapped[0]
+            index = complete_map[real_edge].index(virtual_edge)
+            print(f"Before: {complete_map[real_edge]}")
+            complete_map[real_edge][index:index] = new_map[virtual_edge]
+            complete_map[real_edge].remove(virtual_edge)
+            print(f"After: {complete_map[real_edge]}")
+        elif len(mapped) > 1:
+            sys.exit("SHIT'S FUCKED")
+        else:
+            complete_map.update({virtual_edge: new_map[virtual_edge]})
 
 
 def is_convex(inner_angles):
@@ -601,7 +622,6 @@ def project_face_sight_lines(edges, vertices, inner_angles, graph, positions, bo
                 continue
 
             # Extend the sight-line, producing a
-            # TODO: extend "outer" keyword all the way down
             bisected_edge, new_vertex = extend_sight_line(joint_vertex=joint_vertex,
                                                           connecting_vertex=connecting_vertex,
                                                           inner_angles=inner_angles,
