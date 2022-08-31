@@ -128,16 +128,24 @@ def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
         return shrink_cycle(new_cycle, other_cycles, sorted_edges, graph, positions)
 
 
-def find_singleton_cycles(identified_cycles, graph, as_set=True):
+def find_singleton_cycles(cycles, graph, as_set=True):
+
+    # Get Ordered Face edges for all identified cycles
+    ordered_face_edges = get_ordered_face_edges(cycles, graph)
 
     # Find edges not Featured in Cycles
-    non_cycle_edges = [edge for edge in list(graph.edges) if edge not in identified_cycles]
+    non_cycle_edges = set()
+    for edge in list(graph.edges):
+        in_cycle = [set(edge) in [set(cycle_edge) for cycle_edge in ordered_face_edges[cycle]] for cycle in cycles]
+        if any(in_cycle):
+            continue
+        non_cycle_edges.add(frozenset(edge))
 
     # Add found singleton cycles to identified ones
     if as_set:
-        [identified_cycles.add(singleton_cycle) for singleton_cycle in non_cycle_edges]
+        [cycles.add(singleton_cycle) for singleton_cycle in non_cycle_edges]
     else:
-        [identified_cycles.append(singleton_cycle) for singleton_cycle in non_cycle_edges]
+        [cycles.append(singleton_cycle) for singleton_cycle in non_cycle_edges]
 
 
 def find_all_faces(graph, positions=None, as_set=True):
