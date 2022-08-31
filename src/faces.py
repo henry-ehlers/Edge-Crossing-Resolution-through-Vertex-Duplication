@@ -60,7 +60,6 @@ def get_sight_cell_edges(sight_cells, graph):
 def get_ordered_face_edges(faces, graph):
     ordered_face_edges = dict.fromkeys(faces)
     for face in faces:
-        print(f"Face: {face}")
         ordered_face_edges[face] = get_face_vertex_sequence(face, graph)
     return ordered_face_edges
 
@@ -129,17 +128,12 @@ def find_singleton_cycles(cycles, graph, as_set=True):
     # Get Ordered Face edges for all identified cycles
     ordered_face_edges = get_ordered_face_edges(cycles, graph)
 
-    for cycle in cycles:
-        if 12 in cycle:
-            print(f"12 in cycle: {cycle}")
-
     # Find edges not Featured in Cycles
     non_cycle_edges = set()
     for edge in list(graph.edges):
         in_cycle = [set(edge) in [set(cycle_edge) for cycle_edge in ordered_face_edges[cycle]] for cycle in cycles]
         if any(in_cycle):
             continue
-        print(f"edge singleton: {edge}")
         non_cycle_edges.add(frozenset(edge))
 
     # Add found singleton cycles to identified ones
@@ -165,10 +159,7 @@ def find_all_faces(graph, positions=None, as_set=True):
         return cycles
 
     # Get the ordered edge list per cycle
-    print("a")
     cycle_ordered_edges = get_ordered_face_edges(cycles, graph)
-    print("b")
-    print(f"cycle ordered edges: {cycle_ordered_edges}")
     # For each Cycle recursively check that the face is indeed a face
     faces = copy.copy(cycles)
     for cycle in cycles:
@@ -465,10 +456,7 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
         # Add additional candidate edges if we are dealing with the outer face
         other_faces = copy.copy(selected_faces)
         other_faces.remove(face)
-        print(f"Others = {other_faces} = {selected_faces} - {face}")
-        print(f"All edges: {ordered_face_edges}")
         other_face_edges = unlist([ordered_face_edges.get(other_face) for other_face in other_faces]) if outer else []
-        print(f"For Face {face} we additionally consider edge {other_face_edges}")
 
         # Get Vertices and ensure they are listed in counter-clockwise order
         face_edges = ordered_face_edges[face]
@@ -479,7 +467,6 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
         # Calculate Inner Angles to check convexity
         face_angles = calculate_face_inner_angles(face_vertices, positions) if not outer \
             else calculate_face_outer_angles(face_vertices, positions)
-        print(f"Face Angles: {face_angles}")
         # If the face is convex, the face is the sight-cell
         if is_convex(face_angles) and not outer:
             face_edge_map[face].update({edge: [edge] for edge in face_edges})
@@ -488,7 +475,6 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
         # Otherwise, split into sight cells and return set of frozen sets of vertices per sight-cell
         else:
             candidate_edges = face_edges + bound_edges + other_face_edges
-            print(f"Candidate Edges: {candidate_edges}")
             cells, virtual_edge_map = project_face_sight_lines(edges=candidate_edges,
                                                                vertices=face_vertices,
                                                                inner_angles=face_angles,
@@ -533,7 +519,6 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
         face_angles = calculate_face_outer_angles(face_vertices, positions)
 
         # Replace original edges with their virtual counter parts
-        # todo: possible that a virtual edge is again bisected causing problems?
         candidate_edges = unlist([face_edge_map.get(edge) for edge in all_face_edges + bound_edges])
 
         # Extend all sight lines, add new vertices where necessary, and keep track of edge bisection
@@ -548,8 +533,6 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
         # Update the map of real to virtual edge maps
         deep_update_of_virtual_edge_map(face_edge_map, virtual_edge_map)
 
-    print(f"Face Map: {face_edge_map}")
-
     # Identify all faces (i.e. sight cells in outer face)
     outer_face_vertices = list(set(unlist(unlist(list(face_edge_map.values())))))
     face_graph = nx.Graph(graph.subgraph(nodes=outer_face_vertices))
@@ -557,7 +540,7 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
 
     # Remove the original set of faces that defined the outer face
     [sight_cells.remove(cell) for cell in copy.copy(sight_cells) for face in selected_faces if face.issubset(cell)]
-    sys.exit()
+
     # Return
     return sight_cells, face_edge_map
 
@@ -669,9 +652,6 @@ def project_face_sight_lines(edges, vertices, inner_angles, graph, positions, bo
         positions.update(face_positions)
         [graph.remove_edge(u=edge[0], v=edge[1]) for edge in virtual_edges.keys() if virtual_edges[edge]]
 
-    draw_graph(graph=graph, positions=positions)
-    save_drawn_graph("sight_cell_line_segments_1.25.png")
-
     # Define Sight Cells, i.e. faces
     sight_cells = find_all_faces(face_graph, positions=positions) if not outer else None
 
@@ -683,7 +663,7 @@ def unlist(nested_list):
     return list(it.chain.from_iterable(nested_list))
 
 
-def get_face_sight_cell_incidences(sight_cells, face_incidences, target_vertices, face_edges, face_edge_map, positions):
+def get_faces_sight_cell_incidences(sight_cells, target_vertices, face_edges, face_edge_map, positions):
 
     # Initialize an empty map of sight cell to incidence
     sight_cell_incidences = {sight_cell: set() for sight_cell in list(it.chain.from_iterable(sight_cells.values()))}
@@ -691,23 +671,58 @@ def get_face_sight_cell_incidences(sight_cells, face_incidences, target_vertices
     # Iterate over all faces in the graph
     for face in sight_cells.keys():
 
-        # If the original face is convex, the sight cell is equivalent
-        if len(sight_cells[face]) == 1:
-            sight_cell_incidences[face].add(face_incidences[face])
-            continue
-
         # Extract all edges in the face, i.e. the virtual edges formed by virtual edge bisection
         face_edge_list = unlist([face_edge_map[face][edge] for edge in face_edges[face]])
 
-        # Iterate over very sight cell in the current face and check visibility to the target vertices
-        for sight_cell in sight_cells[face]:
-            sight_cell_incidences[sight_cell].update(get_sight_cell_incidence(sight_cell_vertices=sight_cell,
-                                                                              target_vertices=target_vertices,
-                                                                              real_face_edges=face_edge_list,
-                                                                              positions=positions))
+        # Get Incidences of sight cells in current face
+        sight_cell_incidences[face].update(get_face_sight_cells_incidences(face_sight_cells=sight_cells[face],
+                                                                           face_edge_list=face_edge_list,
+                                                                           target_vertices=target_vertices,
+                                                                           positions=positions))
 
     # Return a
     return sight_cell_incidences
+
+
+def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edges, face_edge_map, positions):
+
+    # Initialize an empty map of sight cell to incidence
+    sight_cell_incidences = {sight_cell: set() for sight_cell in sight_cells}
+
+    # Iterate over all faces in the graph
+    for cell in sight_cells:
+
+        visibility = [None] * len(face_edges.keys())
+
+        print(visibility)
+        for face_index, face in enumerate(face_edges.keys()):
+
+            # Extract all edges in the face, i.e. the virtual edges formed by virtual edge bisection
+            face_edge_list = unlist([face_edge_map[edge] for edge in face_edges[face]])
+
+            # Get Incidences of sight cells in current face
+            visibility[face_index] = get_sight_cell_incidence(cell,
+                                                              target_vertices,
+                                                              face_edge_list,
+                                                              positions)
+        sight_cell_incidences[cell] = set.intersection(*visibility)
+
+    # Return a
+    return sight_cell_incidences
+
+
+def get_face_sight_cells_incidences(face_sight_cells, face_edge_list, target_vertices, positions):
+
+    # If the original face is convex, the sight cell is equivalent
+    if len(face_sight_cells) == 1:
+        return target_vertices.intersection(get_sorted_face_vertices(face_edge_list))
+
+    # Iterate over very sight cell in the current face and check visibility to the target vertices
+    for sight_cell in face_sight_cells:
+        return get_sight_cell_incidence(sight_cell_vertices=sight_cell,
+                                        target_vertices=target_vertices,
+                                        real_face_edges=face_edge_list,
+                                        positions=positions)
 
 
 def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edges, positions):

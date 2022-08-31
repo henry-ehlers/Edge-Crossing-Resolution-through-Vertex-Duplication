@@ -78,6 +78,8 @@ if __name__ == '__main__':
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
     face_incidences = find_face_vertex_incidence(faces, target_vertices)
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
+    print(f"ordered face vertices: {ordered_face_edges}")
+    print(f"Face Incidences: {face_incidences}")
 
     # Outer Face
     outer_faces = find_outer_face(ordered_face_edges, graph)
@@ -85,23 +87,24 @@ if __name__ == '__main__':
     outer_face_sorted_edges = [get_face_vertex_sequence(outer_face, plane_graph) for outer_face in outer_faces]
     outer_face_sorted_vertices = [get_sorted_face_vertices(edge, is_sorted=True) for edge in outer_face_sorted_edges]
     print(f"\nsorted outer face: {outer_face_sorted_vertices}")
+
     outer_cells, outer_edge_map = get_outer_face_sight_cells(selected_faces=outer_faces,
                                                              ordered_face_edges=ordered_face_edges,
                                                              graph=plane_graph,
                                                              positions=plane_positions,
                                                              bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)))
-    outer_cells[frozenset({0, 1, 2, 3, 4, 5})].remove(frozenset({0, 1, 2, 3, 4, 5}))
+    print(f"outer cells: {outer_cells}")
 
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.5.png")
 
-    outer_sight_cell_incidences = get_face_sight_cell_incidences(sight_cells=outer_cells,
-                                                                 face_incidences=face_incidences,
-                                                                 target_vertices=target_vertices,
-                                                                 face_edges=ordered_face_edges,
-                                                                 face_edge_map=outer_edge_map,
-                                                                 positions=plane_positions)
+    outer_sight_cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=outer_cells,
+                                                                       target_vertices=target_vertices,
+                                                                       face_edges=ordered_face_edges,
+                                                                       face_edge_map=outer_edge_map,
+                                                                       positions=plane_positions)
+    print(f"Outer Cell Incidences: {outer_sight_cell_incidences}")
 
     outer_sight_cell_edges = get_sight_cells_edge_sets(outer_cells, plane_graph)
 
