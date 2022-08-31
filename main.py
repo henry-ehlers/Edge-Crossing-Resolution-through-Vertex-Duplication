@@ -62,34 +62,25 @@ if __name__ == '__main__':
 
     # # Locate faces and best two for target face
     # TODO: find outer face
-    faces = find_all_faces(graph=plane_graph)
+    faces = find_all_faces(plane_graph, plane_positions)
     print(f"\nfaces: {faces}")
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
     face_incidences = find_face_vertex_incidence(faces, target_vertices)
-    print(f"\nFace incidences: {face_incidences}")
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
-    print(f"\nFace Edges: {ordered_face_edges}")
 
     # Outer Face
-    outer_face = list(ordered_face_edges.values())[0]
-    print(outer_face)
-    sorted_vertices = get_sorted_face_vertices(outer_face)
-    print(f"\nSorted Vertices: {sorted_vertices}")
-    outer_angles = calculate_face_outer_angles(counter_clockwise_face_vertices=sorted_vertices,
+    outer_face = get_sorted_face_vertices(find_outer_face(ordered_face_edges, graph))
+    print(f"\nouter_face: {outer_face}")
+    outer_angles = calculate_face_outer_angles(counter_clockwise_face_vertices=outer_face,
                                                positions=plane_positions)
-    print(f"\nBoundary: {nx.node_boundary(plane_graph, outer_face)}")
-    print(f"\nOuter{outer_angles}")
     outer_cells, outer_edge_map = get_face_sight_cells(selected_faces=faces,
                                                        ordered_face_edges=ordered_face_edges,
                                                        graph=plane_graph,
                                                        positions=plane_positions,
                                                        bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)),
                                                        outer=True)
-    print(outer_cells)
-    print(f"\nOuter Cells: {outer_cells[frozenset({0, 1, 2, 3, 4, 5})]}")
     outer_cells[frozenset({0, 1, 2, 3, 4, 5})].remove(frozenset({0, 1, 2, 3, 4, 5}))
 
-    print(f"edges: {plane_graph.edges}")
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.5.png")
@@ -102,13 +93,8 @@ if __name__ == '__main__':
                                                                  positions=plane_positions)
 
     outer_sight_cell_edges = get_sight_cells_edge_sets(outer_cells, plane_graph)
-    print(f"edge sights: {outer_sight_cell_edges}")
 
     merge_all_face_cells(outer_cells, outer_sight_cell_edges, outer_sight_cell_incidences, plane_graph)
-    print(f"\nSight Cells: {outer_cells}")
-    print(f"\nSight Edges: {outer_sight_cell_edges}")
-    print(f"\nIncidences:  {outer_sight_cell_incidences}")
-    print(f"\nGraph Edges: {plane_graph.edges}")
 
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)

@@ -82,7 +82,6 @@ def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
 
         remaining_vertices = other_cycle - vertex_intersection
         if len(remaining_vertices) == 0:
-            print("Already investigated this face/cell on a previous iteration.")
             continue
 
         remaining_coordinates = [positions[vertex] for vertex in remaining_vertices]
@@ -96,11 +95,8 @@ def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
         new_cycle, new_edge_list = None, None
         if len(vertex_intersection) == 1:
             # TODO: fix this section -> edge order is unclear
-            print(f"Of Length 1")
             new_cycle = cycle.union(remaining_vertices)
             new_edge_list = get_face_vertex_sequence(new_cycle, graph)
-            print(f"new cycle: {new_cycle}")
-            print(f"Sorted Vertices: {sorted_edges[new_cycle]}")
 
         elif len(vertex_intersection) >= 2:
             cycle_edge_list = set([frozenset(edge) for edge in sorted_edges[cycle]])
@@ -113,8 +109,6 @@ def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
         # Mention that something is broken
         if (new_cycle is None) or (new_edge_list is None):
             sys.exit("SHIT'S FUCKED")
-
-        print(f"Merged {cycle} and {other_cycle}")
 
         # Update the list of cycles
         other_cycles.remove(cycle)
@@ -150,7 +144,6 @@ def find_singleton_cycles(cycles, graph, as_set=True):
 
 def find_all_faces(graph, positions=None, as_set=True):
 
-    # TODO: find "singleton" edges, i.e. branches that do not map to a cycle, but do define the outer face
     # TODO: in all subsequent functions which use the face dictionary, check the length of the face (no singletons)
 
     # Identify the minimum cycle basis of the graph
@@ -410,18 +403,13 @@ def add_boundary_to_graph(bounds, graph, positions, offset=0.2):
     # Define the labels of vertices and their edges
     bound_vertices = list(range(max(graph.nodes) + 1, max(graph.nodes) + 1 + len(bounds)))
     bound_edges = [(bound_vertices[ind], bound_vertices[(ind + 1) % len(bounds)]) for ind in range(0, len(bounds))]
-    print(f"bounding edges: {bound_edges}")
-    print(f"drawing bounds: {bounds}")
-    print(f"vertex indices: {bound_vertices}")
 
     # Update Graph, Edges, and Vertex Positions
     for index in range(0, len(bounds)):
         new_position = np.array(bounds[index]) - np.sign(np.array(bounds[index])) * np.array([offset, offset])
-        print(f"new position = {new_position}")
         positions[bound_vertices[index]] = new_position
     graph.add_nodes_from(bound_vertices)
     graph.add_edges_from(bound_edges)
-    print(f"\ngraph vertices: {graph.nodes}")
     # Return the added vertex labels and edges
     return bound_vertices, bound_edges
 
@@ -456,9 +444,7 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
 
         # Otherwise, split into sight cells and return set of frozen sets of vertices per sight-cell
         else:
-            print(f"angles: {face_angles}")
             candidate_edges = face_edges + bound_edges if bound_edges else face_edges
-            print(f"candidate_edges {candidate_edges}")
             cells, virtual_edge_map = split_face_into_sight_cells(edges=candidate_edges,
                                                                   vertices=face_vertices,
                                                                   inner_angles=face_angles,
@@ -494,15 +480,11 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
 
     # Keep track of the added vertices, and in which edges they were added
     added_vertices, edge_to_virtual_vertices = [], {}
-    print(f"\ngraph vertices in SPLIT 1: {graph.nodes}")
-    print(f"\nvertex {8}'s edges 1: {graph.edges(8)}")
     # Consider only those vertices whose angle is greater than 180 degrees
     bend_vertices = [key for key in inner_angles.keys() if inner_angles[key] > 180]
 
     for joint_vertex in bend_vertices:
-        print(f"\nChecking Joint {joint_vertex}")
         for connecting_vertex in vertices:
-            print(f"\nConnecting Vertex {connecting_vertex}")
             # Skip any vertex pair that is a) consists of the same vertex, or b) has already been investigated
             if connecting_vertex == joint_vertex:
                 continue
@@ -521,7 +503,6 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
             # If they cannot see each other, skip to the next pair
             if not is_visible:
                 continue
-            print("CAN see one-another")
 
             # Extend the sight-line, producing a
             # TODO: extend "outer" keyword all the way down
@@ -554,7 +535,6 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
     remove_edges(graph, edge_to_virtual_vertices.keys())
 
     # Locate Edge Crossings and Faces in Subgraph
-    print(f"BOUND VERTICES: {bound_vertices}")
     face_vertices = vertices + added_vertices + bound_vertices
     face_positions = {key: positions.get(key) for key in face_vertices}
     face_graph = nx.Graph(graph.subgraph(nodes=face_vertices))
@@ -569,7 +549,6 @@ def split_face_into_sight_cells(edges, vertices, inner_angles, graph, positions,
 
     # Define Sight Cells, i.e. faces
     sight_cells = find_all_faces(face_graph, positions)
-    print(f"\nFace Graph sight_cells: {sight_cells}")
 
     # Return Sight Cells
     return sight_cells, virtual_edge_map
@@ -647,18 +626,11 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
     # if so, merge the two in the "sight_cells" object and delete the common edge
     # also delete one of the vertices that formed the edge in question
     # recurse back into the same function if at least one thing was merged, else return sight cells
-    print(f"\ncells: {cells}")
-    print(f"Length: {len(cells)}")
-    print(f"\nedges: {cells_edge_list}")
-    print(f"Length: {len(cells_edge_list)}")
-    print(f"\nincidences: {cell_incidences}")
-    print(f"Length: {len(cell_incidences)}")
+
     # Iterate over all cell pairs
     for cell_index_a in range(0, len(cells)):
-        print(f"\nCell A {cells[cell_index_a]}")
         for cell_index_b in range(cell_index_a + 1, len(cells)):
             cell_a, cell_b = cells[cell_index_a], cells[cell_index_b]
-            print(f"Cell B {cell_b}")
 
             # Attempt to merge the two cells, return a boolean for success and a (possibly empty) vertex ID
             merge_successful, removed = try_merge_two_sight_cells(cell_a=cell_a,
@@ -670,11 +642,9 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
 
             # If the merge was successful, recurse
             if merge_successful:
-                print("Merge Successful")
 
                 # If a vertex was removed, keep track if its removal
                 if removed:
-                    print(f"Removed Vertex {removed}")
                     [removed_vertices.append(removed_vertex) for removed_vertex in removed]
 
                 # Recurse and repeat merging
@@ -697,8 +667,6 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
     merge_edges = cells_edge_list[cell_a].intersection(cells_edge_list[cell_b])
     incidence_a, incidence_b = cell_incidences[cell_a], cell_incidences[cell_b]
     non_overlapping_incidences = incidence_a ^ incidence_b
-    print(f"Merge Edge:  {merge_edges}")
-    print(f"Non Overlap: {non_overlapping_incidences}")
 
     if non_overlapping_incidences or len(merge_edges) == 0:
         return False, None
@@ -708,22 +676,18 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
     new_cell = cell_a.union(cell_b)
 
     # Update the Cell List
-    print("Cell List")
     cells.append(new_cell)
     [cells.remove(cell_key) for cell_key in [cell_a, cell_b]]
 
     # Update each Cell's edge list
-    print("Edge List")
     cells_edge_list[new_cell] = new_edge_set
     [cells_edge_list.pop(cell_key, None) for cell_key in [cell_a, cell_b]]
 
     # Update the Cells Incidences
-    print("Incidence")
     cell_incidences[new_cell] = copy.deepcopy(cell_incidences[cell_a])
     [cell_incidences.pop(cell_key, None) for cell_key in [cell_a, cell_b]]
 
     # Update the graph
-    print("Graph")
     common_vertices = []
     for merge_edge in merge_edges:
         update_merge_sight_cell_graph(merge_edge, graph)
@@ -735,14 +699,12 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
 def update_merge_sight_cell_graph(merge_edge, graph):
 
     merge_edge = list(merge_edge)
-    print(f"Merging on and REMOVING {merge_edge}")
     graph.remove_edge(u=merge_edge[0], v=merge_edge[1])
 
     # Identify a vertex connected to deleted edge which is couched between virtual edges. Remove vertex and replace edge
     vertex_edges, common_vertex = unlist([list(graph.edges(v)) for v in merge_edge if len(graph.edges(v)) == 2]), None
-    print(f"vertex edges:  {vertex_edges}")
-    print(f"common vertex: {common_vertex}")
 
+    # todo: maybe clean up the graph of non-connected and virtual edges?
     # if vertex_edges:
     #     # Define a new edge which skips the now singleton vertex
     #     new_edge = [vertex for vertex in unlist(vertex_edges) if vertex not in merge_edge]
@@ -773,7 +735,6 @@ def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, 
                                                   cell_incidences=cell_incidences,
                                                   removed_vertices=[],
                                                   graph=graph)
-        print(f"\nAFTER MERGE EDGES: {graph.edges}")
 
         # Update the face's cells, their incidents, and edges based on deleted vertices
         update_merged_sight_cell_data(face_cells=face_sight_cells[face],
@@ -847,9 +808,7 @@ def find_minimal_sight_cell_set(cell_incidences):
     # Find minimal assignment cost
     incidence_number = {cell: len(cell_incidences[cell]) for cell in cell_incidences.keys()}
     incidence_number = dict(sorted(incidence_number.items(), key=lambda item: item[1], reverse=True))
-    print(incidence_number)
     selected_cells = list(incidence_number)[0:2]  # todo: selection could be arbitrarily long
-    print(selected_cells)
     return {cell: cell_incidences[cell] for cell in selected_cells}
 
 
@@ -895,7 +854,6 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
 
     # If vertices are adjacent, they can see one-another; otherwise we must check explicitly
     already_connected = are_vertices_adjacent(joint_vertex, connecting_vertex, graph)
-    print("Extend Sight Line")
     is_visible = True \
         if already_connected \
         else check_vertex_visibility_by_angle(joint_vertex=joint_vertex,
@@ -908,16 +866,12 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
 
     # If the hypothetical and observed angle are incompatible, then continue
     if not is_visible:
-        print("Extension is not visible")
         return None, None
 
     # Find the Closest Intersection of the extended line with edges not incident to joint or connecting vertex
     extended_line = (positions[joint_vertex], closest_intersection_to_joint)
     candidate_edges = [edge for edge in edges if not set(edge).intersection((joint_vertex, connecting_vertex))]
-    print(f"Candidate Edges: {candidate_edges}")
     closest_edge, crossing_point = find_closest_edge_intersection(extended_line, candidate_edges, positions)
-    print(f"Closest Edge:  {closest_edge}")
-    print(f"Closest Point: {crossing_point}")
 
     # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
     origin_vertex, new_vertex_index = joint_vertex, max(graph.nodes) + 1
@@ -938,7 +892,6 @@ def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, graph, vert
         return True
 
     # Check Angle around the Joint Vertex allows for visibility to the connecting vertex
-    print("Check Visibility")
     angle_visibility = check_vertex_visibility_by_angle(joint_vertex=joint_vertex,
                                                         inner_angles=inner_angles,
                                                         edges=edges,
@@ -981,7 +934,6 @@ def check_vertex_visibility_by_angle(joint_vertex, inner_angles, edges, vertices
 
     # Get the Angle of the Joint against which we are comparing the new incoming angle:
     observed_angle = inner_angles[joint_vertex]
-    print(f"Reference Angle:  {observed_angle}")
     assert observed_angle == debug_angle, \
         "Angle Calculation is incorrect"
 
@@ -989,7 +941,6 @@ def check_vertex_visibility_by_angle(joint_vertex, inner_angles, edges, vertices
     connecting_position = connecting_position if (connecting_position is not None) else positions[connecting_vertex]
     hypothetical_angle = calculate_outer_angle(positions[ref_vertex_a], positions[joint_vertex], connecting_position) \
         if outer else calculate_inner_angle(positions[ref_vertex_a], positions[joint_vertex], connecting_position)
-    print(f"Projected Angle: {hypothetical_angle}")
     # If the angle between Vertex A and B is larger than between Vertex A and its neighbors, Vertex B is not visible
     return hypothetical_angle < observed_angle
 

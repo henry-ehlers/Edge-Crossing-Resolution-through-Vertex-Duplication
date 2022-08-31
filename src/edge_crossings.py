@@ -80,7 +80,6 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
 
     # Iterate over all edges in the graph
     for edge in edge_to_virtual_vertex.keys():
-        # print("\nEdge: {}".format(edge))
 
         # Skip edge if it does not have any edge crossings
         if len(edge_to_virtual_vertex[edge]) == 0:
@@ -118,8 +117,6 @@ def planarize_graph(graph, positions, edge_crossings):
 
             # Update index
             index += 1
-
-            # print("{} - {} : {}".format(edge_a, edge_b, index))
 
             # Add new vertex to graph and drawing's locations
             planar_graph.add_node(node_for_adding=index, split=0, target=0, virtual=1, boundary=0, segment=0)
