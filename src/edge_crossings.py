@@ -138,7 +138,7 @@ def locate_edge_crossings(graph, positions):
 
     # Create object of edges for easier use
     edges = list(graph.edges)
-
+    print(f"edges in graph: {edges}")
     # Initialize vector and edge crossing containers
     vertex_crossings = {vertex: 0 for vertex in graph.nodes()}
     edge_crossings = dict()

@@ -518,7 +518,7 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
         face_angles = calculate_face_outer_angles(face_vertices, positions)
 
         # Replace original edges with their virtual counter parts
-        candidate_edges = unlist([face_edge_map.get(edge) for edge in all_face_edges + bound_edges])
+        candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
 
         # Extend all sight lines, add new vertices where necessary, and keep track of edge bisection
         edge_to_virtual_vertices, added_vertices = project_face_sight_lines(edges=candidate_edges,
@@ -528,14 +528,17 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
                                                                             positions=positions,
                                                                             bounds=bounds,
                                                                             outer=True)
+        print(f"Added Vertices  {added_vertices}")
         face_vertices = face_vertices + added_vertices + list(set(unlist(candidate_edges)))
+
+        print(f"edges before: {graph.edges}")
         cells, virtual_edge_map = update_sight_line_graph(edges=candidate_edges,
                                                           face_vertices=face_vertices,
                                                           edge_to_virtual_vertices=edge_to_virtual_vertices,
                                                           graph=graph,
                                                           positions=positions,
                                                           outer=True)
-
+        print(f"edges after: {graph.edges}")
         # Update the map of real to virtual edge maps
         deep_update_of_virtual_edge_map(face_edge_map, virtual_edge_map)
 
@@ -546,7 +549,8 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
                 continue
 
             # Replace original edges with their virtual counter parts
-            candidate_edges = unlist([face_edge_map.get(edge) for edge in all_face_edges + bound_edges])
+            candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
+
             print(f"candidate edges: {candidate_edges}")
             # todo: we can skip those vertices in the other face that are not 'real' since the are not border defining
             other_face_edges = unlist([face_edge_map.get(edge) for edge in ordered_face_edges[other_face]])
@@ -574,15 +578,18 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
                                                                                       positions,
                                                                                       bounds,
                                                                                       outer=True)
-
+            print(f"Added Vertices in face-face {added_vertices}")
             face_vertices = face_vertices + added_vertices + list(set(unlist(candidate_edges)))
+            print(f"\nFace vertices: {face_vertices}\n")
+            print(f"\nface map: {face_edge_map}\n")
+            print(f"edges before: {graph.edges}")
             cells, virtual_edge_map = update_sight_line_graph(edges=candidate_edges,
                                                               face_vertices=face_vertices,
                                                               edge_to_virtual_vertices=edge_to_virtual_vertices,
                                                               graph=graph,
                                                               positions=positions,
                                                               outer=True)
-
+            print(f"edges after: {graph.edges}")
             # Update the map of real to virtual edge maps
             deep_update_of_virtual_edge_map(face_edge_map, virtual_edge_map)
 
@@ -758,6 +765,7 @@ def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, grap
     print("\nRemoving Edge Crossings")
     [print(f"{crossing} - {face_edge_crossings[crossing]}") for crossing in face_edge_crossings]
     if len(face_edge_crossings) > 1:
+        # todo: this is update is not adding edge crossings
         face_graph, face_positions, virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
         non_empty_virtual_edges = {k: v for k, v in virtual_edges.items() if v}
         virtual_edge_map.update(non_empty_virtual_edges)
@@ -1134,7 +1142,7 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
     # If the hypothetical and observed angle are incompatible, then continue
     if not is_visible:
         return None, None
-
+    # todo: the indexing is being messed up in here somewhere, causing certain vertices and edges to not be checked
     # Find the Closest Intersection of the extended line with edges not incident to joint or connecting vertex
     extended_line = (positions[joint_vertex], closest_intersection_to_joint)
     candidate_edges = [edge for edge in edges if not set(edge).intersection((joint_vertex, connecting_vertex))]
