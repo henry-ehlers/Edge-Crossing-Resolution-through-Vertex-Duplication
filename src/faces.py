@@ -228,7 +228,7 @@ def find_outer_face(ordered_face_edges, graph):
     # Find edges which only map to a single face
     # min_face_count = min(faces_per_edge.values())
     faces = set([frozenset(edge) for edge in faces_per_edge.keys() if faces_per_edge[edge] == 1])
-    print(f"singleton edges: {faces}")
+
     find_vertex_sets_from_edges(faces)
 
     # Return unique vertex sets from the found singleton edges
@@ -434,7 +434,7 @@ def add_boundary_to_graph(bounds, graph, positions, offset=0.2):
         new_position = np.array(bounds[index]) - np.sign(np.array(bounds[index])) * np.array([offset, offset])
         positions[bound_vertices[index]] = new_position
     graph.add_nodes_from(bound_vertices)
-    graph.add_edges_from(bound_edges)
+    graph.add_edges_from(bound_edges, real=1)
     # Return the added vertex labels and edges
     return bound_vertices, bound_edges
 
@@ -493,6 +493,8 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
 
 
 def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
+    # TODO: a bisected REAL edge will not be extended since we are looking up the original edge sets, whcih don't
+    # TODO: exist anymore, i think. look at (7, 14) and (14, 8) not being extended in 1.5
 
     bound_vertices, bound_edges = add_boundary_to_graph(bounds, graph, positions)
     all_face_edges = unlist([ordered_face_edges.get(face) for face in selected_faces])
@@ -528,22 +530,20 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
                                                                             positions=positions,
                                                                             bounds=bounds,
                                                                             outer=True)
-        print(f"Added Vertices  {added_vertices}")
+
         face_vertices = face_vertices + added_vertices + list(set(unlist(candidate_edges)))
 
-        print(f"edges before: {graph.edges}")
+
         cells, virtual_edge_map = update_sight_line_graph(edges=candidate_edges,
                                                           face_vertices=face_vertices,
                                                           edge_to_virtual_vertices=edge_to_virtual_vertices,
                                                           graph=graph,
                                                           positions=positions,
                                                           outer=True)
-        print(f"edges after: {graph.edges}")
+
         # Update the map of real to virtual edge maps
         deep_update_of_virtual_edge_map(face_edge_map, virtual_edge_map)
 
-        # TEST ----------------------------------------------------------------------------------
-        print ("--------------------------------------------------------------------------------------------------")
         for other_face in selected_faces:
             if other_face == face:
                 continue
@@ -551,7 +551,7 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
             # Replace original edges with their virtual counter parts
             candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
 
-            print(f"candidate edges: {candidate_edges}")
+
             # todo: we can skip those vertices in the other face that are not 'real' since the are not border defining
             other_face_edges = unlist([face_edge_map.get(edge) for edge in ordered_face_edges[other_face]])
             other_face_vertices = get_sorted_face_vertices(other_face_edges, is_sorted=True)
@@ -578,18 +578,16 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
                                                                                       positions,
                                                                                       bounds,
                                                                                       outer=True)
-            print(f"Added Vertices in face-face {added_vertices}")
+
             face_vertices = face_vertices + added_vertices + list(set(unlist(candidate_edges)))
-            print(f"\nFace vertices: {face_vertices}\n")
-            print(f"\nface map: {face_edge_map}\n")
-            print(f"edges before: {graph.edges}")
+
             cells, virtual_edge_map = update_sight_line_graph(edges=candidate_edges,
                                                               face_vertices=face_vertices,
                                                               edge_to_virtual_vertices=edge_to_virtual_vertices,
                                                               graph=graph,
                                                               positions=positions,
                                                               outer=True)
-            print(f"edges after: {graph.edges}")
+
             # Update the map of real to virtual edge maps
             deep_update_of_virtual_edge_map(face_edge_map, virtual_edge_map)
 
@@ -753,7 +751,7 @@ def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, grap
 
     # Remove edges which have been intersected, and replace them with ordered virtual edges
     virtual_edge_map = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
-    print(f"removed {edge_to_virtual_vertices.keys()}")
+
     remove_edges(graph, edge_to_virtual_vertices.keys())
 
     # Locate Edge Crossings and Faces in Subgraph
@@ -762,9 +760,9 @@ def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, grap
 
     # Find remaining edge crossings (between placed line-segments) and replace them with virtual vertices
     face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
-    print("\nRemoving Edge Crossings")
-    [print(f"{crossing} - {face_edge_crossings[crossing]}") for crossing in face_edge_crossings]
-    if len(face_edge_crossings) > 1:
+
+    if face_edge_crossings:
+
         # todo: this is update is not adding edge crossings
         face_graph, face_positions, virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
         non_empty_virtual_edges = {k: v for k, v in virtual_edges.items() if v}
@@ -890,12 +888,15 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
     # if so, merge the two in the "sight_cells" object and delete the common edge
     # also delete one of the vertices that formed the edge in question
     # recurse back into the same function if at least one thing was merged, else return sight cells
-
+    print(f"\n{cell_incidences}")
     # Iterate over all cell pairs
     for cell_index_a in range(0, len(cells)):
-        for cell_index_b in range(cell_index_a + 1, len(cells)):
-            cell_a, cell_b = cells[cell_index_a], cells[cell_index_b]
 
+        for cell_index_b in range(cell_index_a + 1, len(cells)):
+
+            cell_a, cell_b = cells[cell_index_a], cells[cell_index_b]
+            print(f"\ncell a {cell_a} with incidence {cell_incidences[cell_a]}")
+            print(f"cell b {cell_b} with incidence {cell_incidences[cell_b]}")
             # Attempt to merge the two cells, return a boolean for success and a (possibly empty) vertex ID
             merge_successful, removed = try_merge_two_sight_cells(cell_a=cell_a,
                                                                            cell_b=cell_b,
@@ -906,7 +907,7 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
 
             # If the merge was successful, recurse
             if merge_successful:
-
+                print(f"MERGEED")
                 # If a vertex was removed, keep track if its removal
                 if removed:
                     [removed_vertices.append(removed_vertex) for removed_vertex in removed]
@@ -929,9 +930,10 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
 
     # Determine along which the two cells are to be merged and where the cells are located in the list
     merge_edges = cells_edge_list[cell_a].intersection(cells_edge_list[cell_b])
+    print(f"merge edges: {merge_edges}")
     incidence_a, incidence_b = cell_incidences[cell_a], cell_incidences[cell_b]
     non_overlapping_incidences = incidence_a ^ incidence_b
-
+    print(f"non overlap: {non_overlapping_incidences}")
     if non_overlapping_incidences or len(merge_edges) == 0:
         return False, None
 
@@ -955,6 +957,11 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
     common_vertices = []
     for merge_edge in merge_edges:
         update_merge_sight_cell_graph(merge_edge, graph)
+        # todo: make common vertex merging work
+        # merge_edge = list(merge_edge)
+        # common_vertex = [vertex for vertex in merge_edge[0] if vertex in merge_edge[1] and vertex in merge_edge[0]]
+        # print(f"common vertex: {common_vertex}")
+        # common_vertices.append(common_vertex)
 
     # The merge has successfully occurred
     return True, common_vertices
@@ -1147,15 +1154,16 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
     extended_line = (positions[joint_vertex], closest_intersection_to_joint)
     candidate_edges = [edge for edge in edges if not set(edge).intersection((joint_vertex, connecting_vertex))]
 
-    closest_edge, crossing_point = find_closest_edge_intersection(extended_line, candidate_edges, positions)
+    closest_edge, crossing_point = find_closest_edge_intersection(extended_line, candidate_edges, graph, positions,
+                                                                  must_be_real=True)
 
     # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
     origin_vertex, new_vertex_index = joint_vertex, max(graph.nodes) + 1
     graph.add_node(node_for_adding=new_vertex_index, virtual=1)
-    graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, segment=1)
+    graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, segment=1, real=0)
     positions[new_vertex_index] = np.array(crossing_point)
     if not already_connected:
-        graph.add_edge(u_of_edge=joint_vertex, v_of_edge=connecting_vertex, segment=1)
+        graph.add_edge(u_of_edge=joint_vertex, v_of_edge=connecting_vertex, segment=1, real=0)
 
     # Return a list of added vertices and a map of edges to newly placed virtual vertices
     return closest_edge, new_vertex_index

@@ -81,6 +81,7 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
     # Iterate over all edges in the graph
     for edge in edge_to_virtual_vertex.keys():
 
+        edge_data = graph.get_edge_data(v=edge[0], u=edge[1], default=0)
         # Skip edge if it does not have any edge crossings
         if len(edge_to_virtual_vertex[edge]) == 0:
             continue
@@ -93,8 +94,10 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
         for index in range(1, len(sorted_vertex_targets)):
             vertex_a, vertex_b = sorted_vertex_targets[index-1], sorted_vertex_targets[index]
             virtual_edge_set[edge].append((vertex_a, vertex_b))
-            graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, virtual=1, target=0, segment=0)
-
+            graph.add_edge(u_of_edge=vertex_a,
+                           v_of_edge=vertex_b,
+                           virtual=1,
+                           real=edge_data.get("real", 0))
     return virtual_edge_set
 
 
@@ -127,6 +130,7 @@ def planarize_graph(graph, positions, edge_crossings):
             [edges_to_be_removed.add(edge) for edge in [edge_a, edge_b]]
 
     # Remove original edge set and add virtual edge set
+
     virtual_edge_set = add_virtual_edges(planar_graph, planar_positions, edge_to_virtual_vertex)
     remove_edges(planar_graph, list(edges_to_be_removed))
 
@@ -138,7 +142,7 @@ def locate_edge_crossings(graph, positions):
 
     # Create object of edges for easier use
     edges = list(graph.edges)
-    print(f"edges in graph: {edges}")
+
     # Initialize vector and edge crossing containers
     vertex_crossings = {vertex: 0 for vertex in graph.nodes()}
     edge_crossings = dict()
@@ -186,10 +190,22 @@ def squared_distance(point_a, point_b):
     return (x2 - x1) ** 2 + (y2 - y1) ** 2
 
 
-def find_closest_edge_intersection(edge_points, other_edges, positions):
+def find_closest_edge_intersection(edge_points, other_edges, graph, positions, must_be_real=False):
     intersections, distances = dict(), dict()
     point_a, point_b = edge_points
+
     for edge in other_edges:
+
+        # Check whether the intersection is with a real edge
+        if must_be_real:
+            fields = graph.get_edge_data(v=edge[0], u=edge[1], default=None)
+            if fields:
+                if fields.get("real", 0) == 0:
+                    continue
+            else:
+                print(f"fields of edge {edge[0], edge[1]}: {fields}")  # todo: certain edges don't have data, which shouldn't happen
+
+        # Find
         point_c, point_d = positions[edge[0]], positions[edge[1]]
         intersection = line_intersection(point_a, point_b, point_c, point_d)
         if intersection is None: continue

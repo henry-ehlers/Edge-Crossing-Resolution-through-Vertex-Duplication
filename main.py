@@ -53,8 +53,11 @@ if __name__ == '__main__':
     for vertex in more_vertices:
         print(vertex)
         graph.add_node(vertex, target=1 if vertex in target_vertices else 0)
-    graph.add_edges_from(edges)
-    graph.add_edges_from(more_edges)
+
+    for edge in edges:
+        graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
+    for edge in more_edges:
+        graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
     positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
     positions.update({more_vertices[index]: np.array(more_coordinates[index]) for index in range(0, len(more_vertices))})
 
@@ -93,7 +96,7 @@ if __name__ == '__main__':
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.5.png")
-    sys.exit()
+
 
     outer_sight_cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=outer_cells,
                                                                        target_vertices=target_vertices,
