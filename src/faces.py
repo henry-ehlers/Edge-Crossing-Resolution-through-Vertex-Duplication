@@ -210,7 +210,11 @@ def close_closed_face(convex_face_edge_list, graph):
 
 
 def find_outer_face(ordered_face_edges, graph):
+
+    # Initialize a dictionary which maps edges to the number of faces they are in
     faces_per_edge = dict.fromkeys(list(graph.edges()), 0)
+
+    # Iterate over all faces and increment counts of edges within them
     for face in ordered_face_edges.keys():
         for edge in ordered_face_edges[face]:
             edge_a, edge_b = (edge[0], edge[1]), (edge[1], edge[0])
@@ -221,9 +225,31 @@ def find_outer_face(ordered_face_edges, graph):
             else:
                 sys.exit("Shit's fucked")
 
-    min_face_count = min(faces_per_edge.values())
-    outer_face = [edge for edge in faces_per_edge.keys() if faces_per_edge[edge] == min_face_count]
-    return outer_face
+    # Find edges which only map to a single face
+    # min_face_count = min(faces_per_edge.values())
+    edge_set = set([frozenset(edge) for edge in faces_per_edge.keys() if faces_per_edge[edge] == 1])
+
+    # Return unique vertex sets from the found singleton edges
+    return find_vertex_sets_from_edges(edge_set)
+
+
+def find_vertex_sets_from_edges(edge_sets):
+    print(f"\nedge sets: {edge_sets}")
+    for edge_set_a in edge_sets:
+        print(f"Edge Set A: {edge_set_a}")
+        for edge_set_b in edge_sets:
+            print(f"Edge Set b: {edge_set_b}")
+            if edge_set_a == edge_set_b:
+                print("Continue")
+                continue
+
+            if edge_set_a.intersection(edge_set_b):
+                print("Merge")
+                edge_sets.add(edge_set_a.union(edge_set_b))
+                edge_sets.remove(edge_set_a)
+                edge_sets.remove(edge_set_b)
+                return find_vertex_sets_from_edges(edge_sets)
+
 
 
 def build_face_to_edge_map(graph, faces):
