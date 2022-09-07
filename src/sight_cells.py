@@ -69,6 +69,7 @@ def project_face_sight_lines(edges, vertices, inner_angles, graph, positions, bo
 
     return edge_to_virtual_vertices, added_vertices
 
+
 def get_faces_sight_cell_incidences(sight_cells, target_vertices, face_edges, face_edge_map, positions):
 
     # Initialize an empty map of sight cell to incidence
