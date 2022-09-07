@@ -290,7 +290,27 @@ def find_face_vertex_incidence(faces, target_vertices):
     return face_incidences
 
 
-def get_maximally_incident_faces(face_incidences):
+def find_outer_face_vertex_incidence(outer_face, inner_faces, target_vertices):
+
+    # Initialize an empty dictionary (using sets as keys) to store vertex incidence sets
+    outer_face_incidences = {outer_face: {}}  # face_incidences = {face: dict() for face in faces}
+    outer_face_incidence = outer_face.intersection(target_vertices)
+
+    # Initialize set of vertex set as list, and target vertices as set
+    target_vertex_set = set(target_vertices)
+
+    # Iterate over all faces
+    for inner_face in inner_faces:
+
+        # Determine how many target vertices are incident and left over
+        inner_face_incidence = inner_face.intersection(target_vertex_set)
+        outer_face_incidences[outer_face][inner_face] = outer_face_incidence.union(inner_face_incidence)
+
+    # Return Dictionary of face vertex incidence
+    return outer_face_incidences
+
+
+def get_maximally_incident_faces(face_incidences, outer_faces=None):
     max_incidence = float("-inf")
     selected_faces = []
     for face_a in face_incidences.keys():

@@ -15,51 +15,117 @@ from src.sight_cells import *
 from src.faces import *
 
 
+def select_embedding_faces(p_graph, p_positions, target_vertices):
+
+    # Identify the graph's faces and their incidences
+    faces = find_all_faces(p_graph, p_positions)
+    print(f"faces: {faces}")
+    face_edge_map = build_face_to_edge_map(p_graph, faces)
+    face_incidences = find_face_vertex_incidence(faces, target_vertices)
+    print(f"face incidences: {face_incidences}")
+    ordered_face_edges = get_ordered_face_edges(faces, p_graph)
+
+    # Find Outer Face
+    outer_faces = find_outer_face(ordered_face_edges, p_graph)
+    print(f"outer face: {outer_faces}")
+    outer_face_identifier = frozenset(set.union(*[set(outer_face) for outer_face in outer_faces]))
+    print(f"outer face identifier: {outer_face_identifier}")
+    # outer_face_sorted_edges = [get_face_vertex_sequence(outer_face, p_graph) for outer_face in outer_faces]
+    # print(f"outer face sorted edges: {outer_face_sorted_edges}")
+    # outer_face_sorted_vertices = [get_sorted_face_vertices(edge, is_sorted=True) for edge in outer_face_sorted_edges]
+    # print(f"outer face vertices: {outer_face_sorted_vertices}")
+    outer_face_incidences = find_outer_face_vertex_incidence(outer_face_identifier, faces, target_vertices)
+    # TODO: organize data structure for outer and inner incidences
+    # TODO: rank said data structure
+    # TODO: figure out who to pass on the sight cell part -> needs to know in what direction to extend sight lines
+    print(f"outer face incidences: {outer_face_incidences}")
+
+    max_incidence, selected_faces = get_maximally_incident_faces(face_incidences)
+
+    return None
+
+
+def identify_target_vertex(graph, positions):
+    """
+
+    :param graph:
+    :param positions:
+    :return:
+    """
+
+    # Locate all edge crossings and rank all vertices accordingly
+    edge_crossings, vertex_crossings = locate_edge_crossings(graph=graph, positions=positions)
+    target_vertex = get_target_vertex(vertex_crossings=vertex_crossings, graph=graph)
+    target_vertex_adjacency = list(graph.neighbors(target_vertex))
+
+    # Remove the target vertex and identify all remaining edge crossings
+    remaining_graph, remaining_positions = remove_target_vertex(graph=graph,
+                                                                positions=positions,
+                                                                target_vertex=target_vertex)
+    remaining_edge_crossings = get_remaining_edge_crossings(graph=graph,
+                                                            edge_crossings=edge_crossings,
+                                                            target_vertex=target_vertex)
+
+    return target_vertex, target_vertex_adjacency, remaining_graph, remaining_positions, remaining_edge_crossings
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
     # Command Line Arguments
     cmd_args = sys.argv
+    n_vertices, m_edges, seed = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
 
     # Define Input Parameters
     embedding = "kamada_kawai"
-    n_vertices = int(sys.argv[1])
-    m_edges = int(sys.argv[2])
-    seed = int(sys.argv[3])
 
     # Diagnostics Files
     diagnostics_directory = "./output/diagnostics"
-    diagnostics_file=f"barabasi_albert_{n_vertices}_{m_edges}_{seed}"
+    diagnostics_file = f"barabasi_albert_{n_vertices}_{m_edges}_{seed}"
 
     # TESTS ------------------------------------------------------------------------------------------------------------
 
-    # Specify vertices and edges
-    # todo: the example below causes floating point crashes as all their x and y points are identical
-    coordinates = [(0, 2), (1, 0), (2, 1), (3, 0), (4, 2), (2, 4)]
-    target_vertices = [1, 3]
-    vertices = range(0, len(coordinates))
-    edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
-
-    # Create Graph
-    graph = nx.Graph()
-    for vertex in vertices:
-        graph.add_node(vertex, target=1 if vertex in target_vertices else 0)
-    for edge in edges:
-        graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
-    positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
-
     # Create Output Directory
-    output_directory = "./drawings/tests/inner_face_tests"
+    output_directory = "./drawings/tests/testing_combination"
     Path(output_directory).mkdir(parents=True, exist_ok=True)
+
+    # Create or Load simulated graph
+    print("\nCreation and Embedding of Graph")
+    graph = create_barabasi_albert_graph(n=n_vertices, m=m_edges, seed=seed)
+    positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
 
     # Draw Initial Embedding
     draw_graph(graph=graph, positions=positions)
-    save_drawn_graph(f"{output_directory}/sight_cell_line_segments_0.png")
+    save_drawn_graph(f"{output_directory}/graph_0.png")
 
-    # Planarize Graph
-    edge_crossings, vertex_crossings = locate_edge_crossings(graph, positions)
-    plane_graph, plane_positions, virtual_edge_set = planarize_graph(
-        graph=graph, positions=positions, edge_crossings=edge_crossings)
+    # Identify Target and Remove it from the embedding
+    print("\nIdentify Target Vertex and Remove it from the Embedding")
+    target_vertex, target_adjacency, r_graph, r_positions, r_crossings = identify_target_vertex(graph=graph,
+                                                                                                positions=positions)
+
+    # Draw the remaining graph
+    draw_graph(graph=r_graph, positions=r_positions)
+    save_drawn_graph(f"{output_directory}/graph_1.png")
+
+    # Planarize Graph after removal of target vertex
+    print("\nPlanarize Remaining Graph after target removal")
+    p_graph, p_positions, virtual_edge_set = planarize_graph(graph=r_graph,
+                                                             positions=r_positions,
+                                                             edge_crossings=r_crossings)
+
+    # Draw the planarized graph
+    draw_graph(graph=p_graph, positions=p_positions)
+    save_drawn_graph(f"{output_directory}/graph_2.png")
+
+    # Select the faces within which to embed the split vertices
+    print("\nSelect Face")
+    select_embedding_faces(p_graph=p_graph,
+                           p_positions=p_positions,
+                           target_vertices=target_adjacency)
+
+    sys.exit()
+
+
 
     # # Locate faces and best two for target face
     # TODO: find outer face

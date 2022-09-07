@@ -31,7 +31,7 @@ def embed_graph(graph, embedding, n_iter=None, seed=None):
     if embedding == "kamada_kawai":
         return nx.kamada_kawai_layout(G=graph)
     elif embedding == "fruchterman-reingold":
-        return nx.spring_layout(G=graph, iterations=5000, seed=24)
+        return nx.spring_layout(G=graph, iterations=n_iter, seed=seed)
 
 
 def get_graph_entity_data(entity_dictionary, entity_key, data_key, default_value):
