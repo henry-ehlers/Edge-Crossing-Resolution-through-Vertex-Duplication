@@ -506,10 +506,12 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
     # Iterate over all faces
     selected_face_list = list(selected_faces)
     for face_index, face in enumerate(selected_face_list):
+        print(f"\nFace: {face}")
+
         # Add additional candidate edges if we are dealing with the outer face
         other_faces = copy.copy(selected_faces)
         other_faces.remove(face)
-
+        print(f"other faces: {other_faces}")
         # Get Vertices and ensure they are listed in counter-clockwise order
         face_edges = unlist([face_edge_map.get(edge) for edge in ordered_face_edges[face]])
         face_vertices = get_sorted_face_vertices(face_edges, is_sorted=True)
@@ -518,7 +520,8 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
 
         # Calculate Inner Angles to check convexity
         face_angles = calculate_face_outer_angles(face_vertices, positions)
-
+        print(f"face vertices: {face_vertices}")
+        print(f"face angles: {face_angles}")
         # Replace original edges with their virtual counter parts
         candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
 
@@ -532,7 +535,7 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
                                                                             outer=True)
 
         face_vertices = face_vertices + added_vertices + list(set(unlist(candidate_edges)))
-
+        print(f"face Vertices: {face_vertices}")
 
         cells, virtual_edge_map = update_sight_line_graph(edges=candidate_edges,
                                                           face_vertices=face_vertices,
@@ -562,6 +565,7 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
             # Get Vertices and ensure they are listed in counter-clockwise order
             face_edges = unlist([face_edge_map.get(edge) for edge in ordered_face_edges[face]])
             face_vertices = get_sorted_face_vertices(face_edges, is_sorted=True)
+            print(f"face Vertices: {face_vertices}")
 
             if calculate_face_signed_area(face_vertices, positions) < 0:
                 face_vertices = list(reversed(face_vertices))
@@ -631,11 +635,11 @@ def are_vertices_adjacent(vertex_a, vertex_b, graph):
     if not adjacent:
         return adjacent
     fields = graph.get_edge_data(vertex_a, vertex_b, default=0)
+    print(f"Edge ({vertex_a}, {vertex_b}) - {fields}")
     if not fields:
         return True
-    for field in fields.keys():
-        if (field == "segment" or field == "virtual") and fields[field] == 1:
-            return False
+    if not(fields.get("real", 0) == 1):
+        return False
     return adjacent
 
 
@@ -698,14 +702,19 @@ def project_face_sight_lines(edges, vertices, inner_angles, graph, positions, bo
     # Consider only those vertices whose angle is greater than 180 degrees
     bend_vertices = [key for key in inner_angles.keys() if inner_angles[key] > 180]
 
+    print(f"joints: {bend_vertices}")
+
     for joint_vertex in bend_vertices:
         for connecting_vertex in vertices:
+            print(f"Connection: {connecting_vertex}")
 
             # Skip any vertex pair that is a) consists of the same vertex, or b) has already been investigated
             if connecting_vertex == joint_vertex:
                 continue
 
             # Check whether bend and other vertex can 'see' each other
+            are_adjacent = are_vertices_adjacent(joint_vertex, connecting_vertex, graph)
+            print(f"are_adjacent: {are_adjacent}")
             is_visible = True if are_vertices_adjacent(joint_vertex, connecting_vertex, graph) \
                 else is_vertex_visible(joint_vertex=joint_vertex,
                                        connecting_vertex=connecting_vertex,
@@ -719,7 +728,7 @@ def project_face_sight_lines(edges, vertices, inner_angles, graph, positions, bo
             # If they cannot see each other, skip to the next pair
             if not is_visible:
                 continue
-
+            print(f"Joint {joint_vertex} and Connection {connecting_vertex} are extended")
             # Extend the sight-line, producing a
             bisected_edge, new_vertex = extend_sight_line(joint_vertex=joint_vertex,
                                                           connecting_vertex=connecting_vertex,
@@ -888,15 +897,15 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
     # if so, merge the two in the "sight_cells" object and delete the common edge
     # also delete one of the vertices that formed the edge in question
     # recurse back into the same function if at least one thing was merged, else return sight cells
-    print(f"\n{cell_incidences}")
+    # print(f"\n{cell_incidences}")
     # Iterate over all cell pairs
     for cell_index_a in range(0, len(cells)):
 
         for cell_index_b in range(cell_index_a + 1, len(cells)):
 
             cell_a, cell_b = cells[cell_index_a], cells[cell_index_b]
-            print(f"\ncell a {cell_a} with incidence {cell_incidences[cell_a]}")
-            print(f"cell b {cell_b} with incidence {cell_incidences[cell_b]}")
+            # print(f"\ncell a {cell_a} with incidence {cell_incidences[cell_a]}")
+            # print(f"cell b {cell_b} with incidence {cell_incidences[cell_b]}")
             # Attempt to merge the two cells, return a boolean for success and a (possibly empty) vertex ID
             merge_successful, removed = try_merge_two_sight_cells(cell_a=cell_a,
                                                                            cell_b=cell_b,
@@ -907,7 +916,7 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
 
             # If the merge was successful, recurse
             if merge_successful:
-                print(f"MERGEED")
+                # print(f"MERGED")
                 # If a vertex was removed, keep track if its removal
                 if removed:
                     [removed_vertices.append(removed_vertex) for removed_vertex in removed]
@@ -930,10 +939,10 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
 
     # Determine along which the two cells are to be merged and where the cells are located in the list
     merge_edges = cells_edge_list[cell_a].intersection(cells_edge_list[cell_b])
-    print(f"merge edges: {merge_edges}")
+    # print(f"merge edges: {merge_edges}")
     incidence_a, incidence_b = cell_incidences[cell_a], cell_incidences[cell_b]
     non_overlapping_incidences = incidence_a ^ incidence_b
-    print(f"non overlap: {non_overlapping_incidences}")
+    # print(f"non overlap: {non_overlapping_incidences}")
     if non_overlapping_incidences or len(merge_edges) == 0:
         return False, None
 
