@@ -11,6 +11,7 @@ from src.edge_crossings import *
 from src.diagnostics import *
 from src.line_segments import *
 from src.vertex_splitting import *
+from src.sight_cells import *
 from src.faces import *
 
 
@@ -103,10 +104,6 @@ if __name__ == '__main__':
                                                                        face_edges=ordered_face_edges,
                                                                        face_edge_map=outer_edge_map,
                                                                        positions=plane_positions)
-
-    # Draw and Save Planar rGraph
-    draw_graph(graph=plane_graph, positions=plane_positions)
-    save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.95.png")
 
     outer_sight_cell_edges = get_sight_cell_edges(outer_cells, plane_graph)
 
