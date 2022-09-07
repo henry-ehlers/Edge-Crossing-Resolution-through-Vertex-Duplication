@@ -36,7 +36,7 @@ if __name__ == '__main__':
     # Specify vertices and edges
     # todo: the example below causes floating point crashes as all their x and y points are identical
     coordinates = [(0, 2), (1, 0), (2, 1), (3, 0), (4, 2), (2, 4)]
-    target_vertices = [0, 2, 7]
+    target_vertices = [1, 3]
     vertices = range(0, len(coordinates))
     edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
 
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
 
     # Create Output Directory
-    output_directory = "./drawings/tests/complex_outer_face"
+    output_directory = "./drawings/tests/inner_face_tests"
     Path(output_directory).mkdir(parents=True, exist_ok=True)
 
     # Draw Initial Embedding
@@ -64,19 +64,34 @@ if __name__ == '__main__':
     # # Locate faces and best two for target face
     # TODO: find outer face
     faces = find_all_faces(plane_graph, plane_positions)
+    print(f"faces: {faces}")
     face_edge_map = build_face_to_edge_map(plane_graph, faces)
+    print(f"face edge map: {face_edge_map}")
     face_incidences = find_face_vertex_incidence(faces, target_vertices)
+    print(f"face incidences: {face_incidences}")
     ordered_face_edges = get_ordered_face_edges(faces, plane_graph)
-
-    # Outer Face
-    # TODO: sight cells
+    print(f"ordered_face_edges: {ordered_face_edges}")
+    # Get Sight Cells FOR A SELECTION OF TWO FACES
+    sight_cells, edge_map = get_face_sight_cells(selected_faces=faces,
+                                                 ordered_face_edges=ordered_face_edges,
+                                                 graph=plane_graph,
+                                                 positions=plane_positions,
+                                                 bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)))
+    print("--------------------------------------------------------------------")
+    print(f"sight cells: {sight_cells}")
+    print(f"edge map: {edge_map}")
 
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.5.png")
 
-    # TODO: sight cell incidence
-
+    sight_cell_incidences = get_faces_sight_cell_incidences(sight_cells=sight_cells,
+                                                            target_vertices=target_vertices,
+                                                            face_edges=ordered_face_edges,
+                                                            face_edge_map=edge_map,
+                                                            positions=plane_positions)
+    print("----------------------------------------------------------------------")
+    print(f"sight cell incidences: {sight_cell_incidences}")
     # TODO: merge sight cells
     # TODO: sight cell edge sets (ordered)
 
@@ -84,28 +99,16 @@ if __name__ == '__main__':
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.75.png")
 
-    sys.exit()
 
-    # Get Sight Cells FOR A SELECTION OF TWO FACES
-    sight_cells, edge_map = get_face_sight_cells(selected_faces=faces,
-                                                 ordered_face_edges=ordered_face_edges,
-                                                 graph=plane_graph,
-                                                 positions=plane_positions,
-                                                 bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)))
 
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.png")
 
-
+    sys.exit()
 
     #
-    sight_cell_incidences = get_face_sight_cell_incidences(sight_cells=sight_cells,
-                                                           face_incidences=face_incidences,
-                                                           target_vertices=target_vertices,
-                                                           face_edges=ordered_face_edges,
-                                                           face_edge_map=edge_map,
-                                                           positions=plane_positions)
+
 
     #
     sight_cell_edges = get_sight_cells_edge_sets(sight_cells, plane_graph)
