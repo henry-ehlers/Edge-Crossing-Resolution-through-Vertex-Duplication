@@ -35,21 +35,6 @@ def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
     return subfaces
 
 
-def get_sight_cells_edge_sets(face_sight_cells, graph):
-    sight_cell_edge_list = {face: {} for face in face_sight_cells.keys()}
-    for face in face_sight_cells.keys():
-        sight_cell_edge_list[face].update(get_sight_cell_edges(face_sight_cells[face], graph))
-    return sight_cell_edge_list
-
-
-def get_sight_cell_edges(sight_cells, graph):
-    edge_set = {cell: set() for cell in sight_cells}
-    for cell in sight_cells:
-        cell_edges = get_face_vertex_sequence(cell, graph)
-        [edge_set[cell].add(frozenset(edge)) for edge in cell_edges]
-    return edge_set
-
-
 def get_ordered_face_edges(faces, graph):
     ordered_face_edges = dict.fromkeys(faces)
     for face in faces:

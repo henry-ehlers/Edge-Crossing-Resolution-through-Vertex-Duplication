@@ -10,6 +10,21 @@ import copy
 import sys
 
 
+def get_sight_cells_edge_sets(face_sight_cells, graph):
+    sight_cell_edge_list = {face: {} for face in face_sight_cells.keys()}
+    for face in face_sight_cells.keys():
+        sight_cell_edge_list[face].update(get_sight_cell_edges(face_sight_cells[face], graph))
+    return sight_cell_edge_list
+
+
+def get_sight_cell_edges(sight_cells, graph):
+    edge_set = {cell: set() for cell in sight_cells}
+    for cell in sight_cells:
+        cell_edges = get_face_vertex_sequence(cell, graph)
+        [edge_set[cell].add(frozenset(edge)) for edge in cell_edges]
+    return edge_set
+
+
 def project_face_sight_lines(edges, vertices, inner_angles, graph, positions, bounds, outer):
 
     # Keep track of the added vertices, and in which edges they were added
@@ -514,6 +529,10 @@ def check_vertex_visibility_by_crossing(vertex_a, vertex_b, candidate_edges, pos
 
 def merge_cells_wrapper(face_sight_cells, cells_edge_list, cell_incidences, graph):
 
+    print(f"\nface sight cells: {face_sight_cells}")
+    print(f"cells edge list:  {cells_edge_list}")
+    print(f"edge incidence:   {cell_incidences}")
+
     # Try Merging Cells in non-convex face
     removed_vertices = merge_face_sight_cells(cells=list(face_sight_cells),
                                               cells_edge_list=cells_edge_list,
@@ -529,17 +548,18 @@ def merge_cells_wrapper(face_sight_cells, cells_edge_list, cell_incidences, grap
 
 
 def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, graph):
-
+    print(f"face_cell_edge_map: {face_cell_edge_map}")
     # Iterate over all faces, and attempt to merge their faces
     for face in face_sight_cells.keys():
-
+        print(f"face: {face}")
         # Skip convex faces
+
         if len(face_sight_cells[face]) == 1:
             continue
 
-        merge_cells_wrapper(face_sight_cells=face_sight_cells[face],
-                            cells_edge_list=face_cell_edge_map[face],
-                            cell_incidences=cell_incidences,
+        merge_cells_wrapper(face_sight_cells=face_sight_cells.get(face, None),
+                            cells_edge_list=face_cell_edge_map.get(face, None),
+                            cell_incidences=cell_incidences.get(face, None),
                             graph=graph)
 
 

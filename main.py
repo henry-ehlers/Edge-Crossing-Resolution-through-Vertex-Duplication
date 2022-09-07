@@ -77,7 +77,7 @@ if __name__ == '__main__':
                                                  graph=plane_graph,
                                                  positions=plane_positions,
                                                  bounds=((-6, -6), (-6, 6), (6, 6), (6, -6)))
-    print("--------------------------------------------------------------------")
+    print("---------------------------------------------------------------------")
     print(f"sight cells: {sight_cells}")
     print(f"edge map: {edge_map}")
 
@@ -92,18 +92,16 @@ if __name__ == '__main__':
                                                             positions=plane_positions)
     print("----------------------------------------------------------------------")
     print(f"sight cell incidences: {sight_cell_incidences}")
-    # TODO: merge sight cells
-    # TODO: sight cell edge sets (ordered)
+
+    print("-----------------------------------------------------------------------")
+    # Get the edge of all identified sight cells and merge sets with identical incidences
+    sight_cell_edges = get_sight_cells_edge_sets(sight_cells, plane_graph)
+    print(f"sight cell edges: {sight_cell_edges}")
+    merge_all_face_cells(sight_cells, sight_cell_edges, sight_cell_incidences, plane_graph)
 
     # Draw and Save Planar rGraph
     draw_graph(graph=plane_graph, positions=plane_positions)
     save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.75.png")
-
-
-
-    # Draw and Save Planar rGraph
-    draw_graph(graph=plane_graph, positions=plane_positions)
-    save_drawn_graph(f"{output_directory}/sight_cell_line_segments_1.png")
 
     sys.exit()
 
@@ -113,7 +111,7 @@ if __name__ == '__main__':
     #
     sight_cell_edges = get_sight_cells_edge_sets(sight_cells, plane_graph)
 
-    merge_all_face_cells(sight_cells, sight_cell_edges, sight_cell_incidences, plane_graph)
+
     print(f"\nSight Cells: {sight_cells}")
     print(f"\nSight Edges: {sight_cell_edges}")
     print(f"\nIncidences:  {sight_cell_incidences}")
