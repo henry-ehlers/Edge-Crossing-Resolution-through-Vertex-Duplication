@@ -18,15 +18,15 @@ from src.faces import *
 def select_embedding_faces(p_graph, p_positions, target_vertices):
 
     # Identify the graph's faces and their incidences
-    faces = find_all_faces(p_graph, p_positions)
-    print(f"faces: {faces}")
-    face_edge_map = build_face_to_edge_map(p_graph, faces)
-    face_incidences = find_face_vertex_incidence(faces, target_vertices)
-    print(f"face incidences: {face_incidences}")
-    ordered_face_edges = get_ordered_face_edges(faces, p_graph)
+    inner_faces = find_all_faces(p_graph, p_positions)
+    print(f"faces: {inner_faces}")
+    inner_face_edge_map = build_face_to_edge_map(p_graph, inner_faces)
+    inner_face_incidences = find_face_vertex_incidence(inner_faces, target_vertices)
+    print(f"face incidences: {inner_face_incidences}")
+    ordered_inner_face_edges = get_ordered_face_edges(inner_faces, p_graph)
 
     # Find Outer Face
-    outer_faces = find_outer_face(ordered_face_edges, p_graph)
+    outer_faces = find_outer_face(ordered_inner_face_edges, p_graph)
     print(f"outer face: {outer_faces}")
     outer_face_identifier = frozenset(set.union(*[set(outer_face) for outer_face in outer_faces]))
     print(f"outer face identifier: {outer_face_identifier}")
@@ -34,14 +34,16 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
     # print(f"outer face sorted edges: {outer_face_sorted_edges}")
     # outer_face_sorted_vertices = [get_sorted_face_vertices(edge, is_sorted=True) for edge in outer_face_sorted_edges]
     # print(f"outer face vertices: {outer_face_sorted_vertices}")
-    outer_face_incidences = find_outer_face_vertex_incidence(outer_face_identifier, faces, target_vertices)
+    outer_face_incidences = find_outer_face_vertex_incidence(outer_face_identifier, inner_faces, target_vertices)
     # TODO: organize data structure for outer and inner incidences
     # TODO: rank said data structure
     # TODO: figure out who to pass on the sight cell part -> needs to know in what direction to extend sight lines
     print(f"outer face incidences: {outer_face_incidences}")
 
-    max_incidence, selected_faces = get_maximally_incident_faces(face_incidences)
-
+    complete_incidence = {'outer': outer_face_incidences, 'inner': inner_face_incidences}
+    selected_faces = get_maximally_incident_faces(inner_face_incidences=inner_face_incidences,
+                                                  outer_face_incidences=outer_face_incidences)
+    print(selected_faces)
     return None
 
 

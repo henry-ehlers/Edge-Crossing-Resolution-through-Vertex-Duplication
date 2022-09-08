@@ -3,6 +3,7 @@ from src.edges import *
 import matplotlib.path as mpltPath
 import networkx as nx
 import itertools as it
+import pandas as pd
 import numpy as np
 import copy
 import sys
@@ -310,19 +311,33 @@ def find_outer_face_vertex_incidence(outer_face, inner_faces, target_vertices):
     return outer_face_incidences
 
 
-def get_maximally_incident_faces(face_incidences, outer_faces=None):
-    max_incidence = float("-inf")
-    selected_faces = []
-    for face_a in face_incidences.keys():
-        for face_b in face_incidences[face_a].keys():
-            vertex_incidence = len(face_incidences[face_a][face_b])
-            if vertex_incidence > max_incidence:
-                max_incidence = vertex_incidence
-                selected_faces = [[face_a, face_b]]
-            elif vertex_incidence == max_incidence:
-                selected_faces.append([face_a, face_b])
+def get_maximally_incident_faces(inner_face_incidences, outer_face_incidences=None):
 
-    return max_incidence, selected_faces
+    # Initialize list of faces and incidences to grow
+    face_incidences = []
+
+    # Iterate over all inner faces and collect their numbers of incident vertices
+    [face_incidences.append( (False, face_a, face_b, len(inner_face_incidences[face_a][face_b])) )
+     for face_a in inner_face_incidences.keys() for face_b in inner_face_incidences[face_a].keys()]
+
+    # Iterate over all outer faces and collect their numbers of incident vertices
+    if outer_face_incidences:
+        [face_incidences.append((True, face_a, face_b, len(outer_face_incidences[face_a][face_b])))
+         for face_a in outer_face_incidences.keys() for face_b in outer_face_incidences[face_a].keys()]
+
+    # Create Pandas Dataframe from collected incidence data and sort according to incidences
+    face_incidences = pd.DataFrame(data=face_incidences, columns=['outer', 'face_a', 'face_b', 'incidence'])
+    face_incidences.sort_values(by="incidence", axis='index', ascending=False, inplace=True, ignore_index=True)
+
+    # Select best row (i.e. combination of faces)
+    # TODO 1: use ILP to select best face. will require
+    #  a) turning data structure into matrix, and
+    #  b) keeping track of which matrix indices corresponding to outer face
+    # TODO 2: break ties meaningfully
+    selected_row = face_incidences.loc[0]
+
+    # Return two best faces and boolean indicating wether they are an outer face or not
+    return (selected_row.at["outer"], selected_row.at["face_a"]), (False, selected_row.at["face_b"])
 
 
 def cross_product(vector_a, vector_b):
