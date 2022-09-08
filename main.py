@@ -55,10 +55,12 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
         else:
             print(f"outer face: {outer_faces}")
             print(f"sorted outer edges: {sorted_outer_edges}")
-            outer_sight_cells, outer_edge_map = get_outer_face_sight_cells(outer_faces,
-                                                                           sorted_outer_edges,
-                                                                           p_graph,
-                                                                           p_positions)
+            outer_bounds = get_embedding_square(p_graph, p_positions, scaler=2)
+            outer_sight_cells, outer_edge_map = get_outer_face_sight_cells(selected_faces=outer_faces,
+                                                                           ordered_face_edges=sorted_outer_edges,
+                                                                           graph=p_graph,
+                                                                           positions=p_positions,
+                                                                           bounds=outer_bounds)
             pass
 
     return None
@@ -141,6 +143,10 @@ if __name__ == '__main__':
     select_embedding_faces(p_graph=p_graph,
                            p_positions=p_positions,
                            target_vertices=target_adjacency)
+
+    # Draw the sight cell cut graph
+    draw_graph(graph=p_graph, positions=p_positions)
+    save_drawn_graph(f"{output_directory}/graph_3.png")
 
     sys.exit()
 

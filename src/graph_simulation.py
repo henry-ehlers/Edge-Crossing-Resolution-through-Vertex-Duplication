@@ -23,17 +23,8 @@ def create_barabasi_albert_graph(n, m, seed, root_dir="data/simulated"):
         np.savetxt(fname=file_path, X=nx.to_numpy_matrix(graph).astype(int), fmt='%i', delimiter=",")
 
     # Set Edge Attributes
-    nx.set_edge_attributes(graph, 0, "virtual")
-    nx.set_edge_attributes(graph, 0, "target")
-    nx.set_edge_attributes(graph, 0, "segment")
+    nx.set_edge_attributes(graph, 1, "real")
 
-    # Append the 'split' field to the graph object
-    for vertex in graph:
-        graph.nodes[vertex]["split"] = 0
-        graph.nodes[vertex]["target"] = 0
-        graph.nodes[vertex]["virtual"] = 0
-        graph.nodes[vertex]["boundary"] = 0
-        graph.nodes[vertex]["segment"] = 0
     # Return graph object
     return graph
 

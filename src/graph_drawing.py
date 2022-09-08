@@ -3,6 +3,17 @@ from pathlib import Path
 import networkx as nx
 
 
+def get_embedding_square(graph, positions, scaler=1):
+    maximum = float("-inf")
+    for vertex in graph.nodes:
+        largest_node_coordinate = max(abs(positions[vertex]))
+        if largest_node_coordinate <= maximum:
+            continue
+        maximum = largest_node_coordinate
+    maximum *= scaler
+    return (-maximum, -maximum), (-maximum, maximum), (maximum, maximum), (maximum, -maximum)
+
+
 def find_embedding_rectangle(graph, positions):
 
     # Initialize minimum and maximum coordinates using first (arbitrary) selected vertex

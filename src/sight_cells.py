@@ -731,7 +731,8 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
     return sight_cells, face_edge_map
 
 
-def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positions, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
+def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
+                               bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
     # TODO: a bisected REAL edge will not be extended since we are looking up the original edge sets, whcih don't
     # TODO: exist anymore, i think. look at (7, 14) and (14, 8) not being extended in 1.5
 

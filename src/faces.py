@@ -190,6 +190,7 @@ def close_closed_face(convex_face_edge_list, graph):
 
 def find_outer_face(ordered_face_edges, graph):
 
+    # TODO: also find singleton vertices that are located in the outer face
     # Initialize a dictionary which maps edges to the number of faces they are in
     faces_per_edge = dict.fromkeys(list(graph.edges()), 0)
 
