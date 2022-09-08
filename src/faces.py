@@ -205,13 +205,24 @@ def find_outer_face(ordered_face_edges, graph):
                 sys.exit("Shit's fucked")
 
     # Find edges which only map to a single face
-    # min_face_count = min(faces_per_edge.values())
-    faces = set([frozenset(edge) for edge in faces_per_edge.keys() if faces_per_edge[edge] == 1])
+    edges = set([frozenset(edge) for edge in faces_per_edge.keys() if faces_per_edge[edge] == 1])
+    print(f"face edges: {edges}")
 
+    # Identify Unique sets of edges to find faces
+    faces = copy.deepcopy(edges)
     find_vertex_sets_from_edges(faces)
 
+    # Map edges to faces
+    face_edge_sets = find_face_edge_sets(faces, edges)
+
     # Return unique vertex sets from the found singleton edges
-    return faces
+    return faces, face_edge_sets
+
+
+def find_face_edge_sets(faces, edges):
+    face_edge_sets = {face: set() for face in faces}
+    [face_edge_sets[face].add(edge) for edge in edges for face in faces if len(edge.intersection(face)) == 2]
+    return face_edge_sets
 
 
 def find_vertex_sets_from_edges(edge_sets):
@@ -311,7 +322,7 @@ def find_outer_face_vertex_incidence(outer_face, inner_faces, target_vertices):
     return outer_face_incidences
 
 
-def get_maximally_incident_faces(inner_face_incidences, outer_face_incidences=None):
+def get_face_incidence_table(inner_face_incidences, outer_face_incidences=None):
 
     # Initialize list of faces and incidences to grow
     face_incidences = []
@@ -329,12 +340,18 @@ def get_maximally_incident_faces(inner_face_incidences, outer_face_incidences=No
     face_incidences = pd.DataFrame(data=face_incidences, columns=['outer', 'face_a', 'face_b', 'incidence'])
     face_incidences.sort_values(by="incidence", axis='index', ascending=False, inplace=True, ignore_index=True)
 
+    # Return data table
+    return face_incidences
+
+
+def get_maximally_incident_faces(face_incidence_table):
+
     # Select best row (i.e. combination of faces)
     # TODO 1: use ILP to select best face. will require
     #  a) turning data structure into matrix, and
     #  b) keeping track of which matrix indices corresponding to outer face
     # TODO 2: break ties meaningfully
-    selected_row = face_incidences.loc[0]
+    selected_row = face_incidence_table.loc[0]
 
     # Return two best faces and boolean indicating wether they are an outer face or not
     return (selected_row.at["outer"], selected_row.at["face_a"]), (False, selected_row.at["face_b"])
@@ -435,3 +452,8 @@ def calculate_face_inner_angles(counter_clockwise_face_vertices, positions):
     # Return all inner angles
     return inner_angles
 
+
+def is_inner_face_convex(ordered_face_edges, positions):
+    face_vertices = get_sorted_face_vertices(ordered_face_edges, is_sorted=True)
+    face_angles = calculate_face_inner_angles(face_vertices, positions)
+    return all([angle <= 180 for angle in face_angles])

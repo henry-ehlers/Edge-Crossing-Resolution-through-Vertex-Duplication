@@ -18,19 +18,17 @@ from src.faces import *
 def select_embedding_faces(p_graph, p_positions, target_vertices):
 
     # Identify the graph's faces and their incidences
+    print(f"\t>Get Inner Faces")
     inner_faces = find_all_faces(p_graph, p_positions)
-    print(f"faces: {inner_faces}")
     inner_face_edge_map = build_face_to_edge_map(p_graph, inner_faces)
     inner_face_incidences = find_face_vertex_incidence(inner_faces, target_vertices)
-    print(f"face incidences: {inner_face_incidences}")
     ordered_inner_face_edges = get_ordered_face_edges(inner_faces, p_graph)
 
     # Find Outer Face
+    print(f"\t>Get Outer Face")
     outer_faces = find_outer_face(ordered_inner_face_edges, p_graph)
-    print(f"outer face: {outer_faces}")
     outer_face_identifier = frozenset(set.union(*[set(outer_face) for outer_face in outer_faces]))
-    print(f"outer face identifier: {outer_face_identifier}")
-    # outer_face_sorted_edges = [get_face_vertex_sequence(outer_face, p_graph) for outer_face in outer_faces]
+    outer_face_sorted_edges = [get_face_vertex_sequence(outer_face, p_graph) for outer_face in outer_faces]
     # print(f"outer face sorted edges: {outer_face_sorted_edges}")
     # outer_face_sorted_vertices = [get_sorted_face_vertices(edge, is_sorted=True) for edge in outer_face_sorted_edges]
     # print(f"outer face vertices: {outer_face_sorted_vertices}")
@@ -38,12 +36,27 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
     # TODO: organize data structure for outer and inner incidences
     # TODO: rank said data structure
     # TODO: figure out who to pass on the sight cell part -> needs to know in what direction to extend sight lines
-    print(f"outer face incidences: {outer_face_incidences}")
 
-    complete_incidence = {'outer': outer_face_incidences, 'inner': inner_face_incidences}
-    selected_faces = get_maximally_incident_faces(inner_face_incidences=inner_face_incidences,
-                                                  outer_face_incidences=outer_face_incidences)
-    print(selected_faces)
+    # Combine face incidences and select top set
+    print(f"\t>Get Face Incidence Table and Select Top Set")
+    face_incidence_table = get_face_incidence_table(inner_face_incidences=inner_face_incidences,
+                                                    outer_face_incidences=outer_face_incidences)
+    selected_faces = get_maximally_incident_faces(face_incidence_table)
+
+    # Check for convexity
+    print(f"\t>Check convexity")
+    for selected_face in selected_faces:
+        print(f"selected face: {selected_face}")
+        is_outer, face = selected_face[0], selected_face[1]
+        if not is_outer:
+            face_edges = ordered_inner_face_edges[selected_face[1]]
+            if is_inner_face_convex(face_edges, p_positions):
+                # make inner face convex
+                pass
+        else:
+            # test = get_outer_face_sight_cells(face, )
+            pass
+
     return None
 
 
