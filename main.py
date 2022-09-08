@@ -26,7 +26,7 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
 
     # Find Outer Face
     print(f"\t>Get Outer Face")
-    outer_faces, outer_face_edges = find_outer_face(ordered_inner_face_edges, p_graph)
+    outer_faces, outer_face_edges = find_outer_face(ordered_inner_face_edges, p_graph, p_positions)
     outer_face_identifier = frozenset(set.union(*[set(outer_face) for outer_face in outer_faces]))
     sorted_outer_edges = {outer_face: sort_face_edges(outer_face_edges[outer_face]) for outer_face in outer_faces}
     # outer_face_sorted_vertices = [get_sorted_face_vertices(edge, is_sorted=True) for edge in outer_face_sorted_edges]
@@ -53,6 +53,8 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
                 # make inner face convex
                 pass
         else:
+
+            # Calculate the Outer Bounds
             outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=2)
 
             # Identify all sight cells in the outer face
