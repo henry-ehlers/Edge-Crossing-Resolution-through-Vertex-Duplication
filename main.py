@@ -27,6 +27,9 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
     # Find Outer Face
     print(f"\t>Get Outer Face")
     outer_faces, outer_face_edges = find_outer_face(ordered_inner_face_edges, p_graph, p_positions)
+    print(f"outer faces: {outer_faces}")
+    print(f"outer face edges: {outer_face_edges}")
+    # TODO: edges are busted because they expect a {face} -> {edge} entry in the dict
     outer_face_identifier = frozenset(set.union(*[set(outer_face) for outer_face in outer_faces]))
     sorted_outer_edges = {outer_face: sort_face_edges(outer_face_edges[outer_face]) for outer_face in outer_faces}
     # outer_face_sorted_vertices = [get_sorted_face_vertices(edge, is_sorted=True) for edge in outer_face_sorted_edges]

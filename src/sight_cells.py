@@ -727,12 +727,16 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
     # Iterate over all faces
     selected_face_list = list(selected_faces)
     for face_index, face in enumerate(selected_face_list):
+        print(f"Face: {face}")
+        if len(face) == 1:
+            print("SKIP")
+            continue
 
         # Add additional candidate edges if we are dealing with the outer face
         other_faces = copy.copy(selected_faces)
         other_faces.remove(face)
         # Get Vertices and ensure they are listed in counter-clockwise order
-        face_edges = unlist([face_edge_map.get(edge) for edge in ordered_face_edges[face]])
+        face_edges = unlist([face_edge_map.get(edge) for edge in ordered_face_edges[face]]) # TODO: edges busted
         face_vertices = get_sorted_face_vertices(face_edges, is_sorted=True)
         if calculate_face_signed_area(face_vertices, positions) < 0:
             face_vertices = list(reversed(face_vertices))

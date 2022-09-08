@@ -206,7 +206,6 @@ def find_outer_face(ordered_face_edges, graph, positions):
 
     # Find edges which only map to a single face
     edges = set([frozenset(edge) for edge in faces_per_edge.keys() if faces_per_edge[edge] == 1])
-    print(f"face edges: {edges}")
 
     # Identify Unique sets of edges to find faces
     faces = copy.deepcopy(edges)
@@ -215,30 +214,17 @@ def find_outer_face(ordered_face_edges, graph, positions):
     # Map edges to faces
     face_edge_sets = find_face_edge_sets(faces, edges)
 
-    # Find singleton vertices
+    # Find singleton vertices and Check whether singleton falls outside for
     vertices = [vertex for vertex in graph.nodes if len(graph.edges(vertex)) == 0]
-    print(f"vertices: {vertices}")
-
-    # Check whether singleton falls outside for
     for face in faces:
-        print(f"face: {face}")
-        print(f"edges: {face_edge_sets[face]}")
         sorted_vertices = get_sorted_face_vertices([tuple(edge) for edge in face_edge_sets[face]], is_sorted=False)
-        print(f"sorted vertices: {sorted_vertices}")
         cycle_coordinates = [positions[vertex] for vertex in sorted_vertices]
-        print(f"path: {cycle_coordinates}")
         cycle_path = mpltPath.Path(cycle_coordinates[0:-1])
-        print(f"cycle path: {cycle_path}")
-        print(f"positions: {positions[3]}")
-        print(f"contains: {cycle_path.contains_points([positions[3]])}")
         [vertices.remove(v) for v in copy.copy(vertices) if cycle_path.contains_points([positions[v]])]
 
-    # Get positions from polygon of ordered points of current cycle
-    vertices = set([frozenset([vertex]) for vertex in vertices])
-    print(f"vertices: {vertices}")
-
     # Update Edges Sets and Face with Singletons in the outer face
-    {face_edge_sets.update({singleton: set()}) for singleton in vertices}
+    vertices = set([frozenset([vertex]) for vertex in vertices])
+    #{face_edge_sets.update({singleton: set()}) for singleton in vertices}
     faces = faces.union(vertices)
 
     # Return unique vertex sets from the found singleton edges
