@@ -837,7 +837,6 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
     outer_face_vertices = list(set(unlist(unlist(list(face_edge_map.values())))))
     face_graph = nx.Graph(graph.subgraph(nodes=outer_face_vertices))
     sight_cells = find_all_faces(face_graph, positions=positions)
-    #[print(sight_cell) for sight_cell in sight_cells]
 
     # Remove the original set of faces that defined the outer face
     [sight_cells.remove(cell) for cell in copy.copy(sight_cells) for face in selected_faces if face.issubset(cell)]
