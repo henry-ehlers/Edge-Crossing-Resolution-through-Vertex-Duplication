@@ -53,15 +53,30 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
                 # make inner face convex
                 pass
         else:
-            print(f"outer face: {outer_faces}")
-            print(f"sorted outer edges: {sorted_outer_edges}")
-            outer_bounds = get_embedding_square(p_graph, p_positions, scaler=2)
+            outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=2)
+
+            # Identify all sight cells in the outer face
             outer_sight_cells, outer_edge_map = get_outer_face_sight_cells(selected_faces=outer_faces,
                                                                            ordered_face_edges=sorted_outer_edges,
                                                                            graph=p_graph,
                                                                            positions=p_positions,
                                                                            bounds=outer_bounds)
-            pass
+
+            # Calculate the incidence of all sight cells
+            outer_sight_cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=outer_sight_cells,
+                                                                               target_vertices=target_vertices,
+                                                                               face_edges=sorted_outer_edges,
+                                                                               face_edge_map=outer_edge_map,
+                                                                               positions=p_positions)
+
+            # Find the edges of all sight cells
+            outer_sight_cell_edges = get_sight_cell_edges(outer_sight_cells, p_graph)
+
+            # Merge Outer Sight Cells with identical incidences
+            merge_cells_wrapper(face_sight_cells=outer_sight_cells,
+                                cells_edge_list=outer_sight_cell_edges,
+                                cell_incidences=outer_sight_cell_incidences,
+                                graph=p_graph)
 
     return None
 
