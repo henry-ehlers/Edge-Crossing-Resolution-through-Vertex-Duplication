@@ -549,6 +549,8 @@ def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, 
 
 def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, graph, positions, outer=False):
 
+    print(f"edge to virtual: {edge_to_virtual_vertices}")
+
     # Remove edges which have been intersected, and replace them with ordered virtual edges
     virtual_edge_map = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
 
@@ -563,7 +565,6 @@ def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, grap
 
     if face_edge_crossings:
 
-        # todo: this is update is not adding edge crossings
         face_graph, face_positions, virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
         non_empty_virtual_edges = {k: v for k, v in virtual_edges.items() if v}
         virtual_edge_map.update(non_empty_virtual_edges)
@@ -851,17 +852,22 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
 
         # Iterate over all other faces that form the outer face
         for other_face in selected_faces:
+            print(f"OTHER FACE: {other_face}")
             if other_face == face:
                 continue
-
-            # TODO: if length(outer_face) == 1 -> only project single vertex
-            # TODO: if other face is not a cycle -> special visiblility checking of ONLY edge intersections (not angles)
-            # TODO: if other face is a cycle -> as currently implemented
 
             # Check if the Other face is a cycle or not -> check angle visibilities + edge crossing visibilities
             if is_cycle[other_face]:
                 edge_to_virtual_vertices, added_vertices = project_outer_face_against_another_face(
                     face, other_face, face_edge_map, ordered_face_edges, positions, graph, bounds)
+            elif not is_cycle[other_face] and len(other_face) > 1:
+                # TODO: if other face is not a cycle -> special visiblility checking of ONLY edge intersections
+                continue
+            elif not is_cycle[other_face] and len(other_face) == 1:
+                # TODO: if length(outer_face) == 1 -> only project single vertex
+                continue
+            else:
+                sys.exit("Non Accounted for Constellation of face!")
 
             # Update Graph and Virtual Edge Map with New added vertices
             update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,

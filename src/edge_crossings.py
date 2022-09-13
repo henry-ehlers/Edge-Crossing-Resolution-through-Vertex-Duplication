@@ -81,7 +81,8 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
     # Iterate over all edges in the graph
     for edge in edge_to_virtual_vertex.keys():
 
-        edge_data = graph.get_edge_data(v=edge[0], u=edge[1], default=0)
+        edge_data = graph.get_edge_data(v=edge[0], u=edge[1], default={})
+        print(f"edge data of edge ({edge}): {edge_data}")
         # Skip edge if it does not have any edge crossings
         if len(edge_to_virtual_vertex[edge]) == 0:
             continue
