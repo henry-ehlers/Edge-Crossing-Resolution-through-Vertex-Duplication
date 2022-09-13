@@ -184,13 +184,7 @@ def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edg
 
 def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vertices, graph):
     # todo: outer face also contains all faces INSIDE of the graph
-    # iterate over all pairs of sight cells
-    # for each pair check if incidence is the same, and they have an edge in common
-    # if so, merge the two in the "sight_cells" object and delete the common edge
-    # also delete one of the vertices that formed the edge in question
-    # recurse back into the same function if at least one thing was merged, else return sight cells
-    # print(f"\n{cell_incidences}")
-    # Iterate over all cell pairs
+
     for cell_index_a in range(0, len(cells)):
 
         for cell_index_b in range(cell_index_a + 1, len(cells)):
@@ -583,10 +577,6 @@ def unlist(nested_list):
     return list(it.chain.from_iterable(nested_list))
 
 
-def project_single_sight_line():
-    pass
-
-
 def project_additional_sight_lines(edges, origin_vertices, origin_angles, target_vertices, target_angles, graph,
                                    positions, bounds, outer=True):
 
@@ -775,8 +765,8 @@ def project_face_against_self(face, ordered_face_edges, face_edge_map, graph, po
 
 
 def project_outer_face_against_singleton():
+    # extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, edges, graph, positions, bounds, outer)
     pass
-
 
 def project_outer_face_against_non_face():
     pass

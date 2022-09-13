@@ -19,7 +19,7 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
 
     # Identify the graph's faces and their incidences
     print(f"\t>Get Inner Faces")
-    inner_faces = find_all_faces(p_graph, p_positions)
+    inner_faces = find_inner_faces(graph=p_graph, positions=p_positions)
     inner_face_edge_map = build_face_to_edge_map(p_graph, inner_faces)
     inner_face_incidences = find_face_vertex_incidence(inner_faces, target_vertices)
     ordered_inner_face_edges = get_ordered_face_edges(inner_faces, p_graph)
@@ -132,13 +132,51 @@ if __name__ == '__main__':
     # TESTS ------------------------------------------------------------------------------------------------------------
 
     # Create Output Directory
-    output_directory = "./drawings/tests/testing_combination"
+    output_directory = "./drawings/tests/test_test"
     Path(output_directory).mkdir(parents=True, exist_ok=True)
 
     # Create or Load simulated graph
     print("\nCreation and Embedding of Graph")
-    graph = create_barabasi_albert_graph(n=n_vertices, m=m_edges, seed=seed)
-    positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
+    # graph = create_barabasi_albert_graph(n=n_vertices, m=m_edges, seed=seed)
+    # positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
+    # Specify vertices and edges
+    # todo: the example below causes floating point crashes as all their x and y points are identical
+    # coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
+    coordinates = [(0, 2), (1, 0), (2, 1), (3, 0), (4, 2), (2, 4)]
+
+    vertices = range(0, len(coordinates))
+    edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
+
+    more_coordinates = [(-2, 1.5), (-1, 1.5), (-1, 0.5)]
+    more_vertices = range(len(coordinates), len(coordinates) + len(more_coordinates))
+
+    more_edges = ((more_vertices[index], more_vertices[(index + 1) % len(more_vertices)])
+                  for index in range(0, len(more_vertices)))
+
+
+    # Create Graph
+    graph = nx.Graph()
+    for vertex in vertices:
+        graph.add_node(vertex)
+    for vertex in more_vertices:
+        graph.add_node(vertex)
+    v_index = max(graph.nodes) + 1
+    graph.add_node(v_index)
+    for vertex in range(0, v_index):
+        graph.add_edge(u_of_edge=vertex, v_of_edge=v_index, real=1)
+
+
+    for edge in edges:
+        print(f"edge: {edge}")
+        graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
+    for edge in more_edges:
+        print(f"edge: {edge}")
+        graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
+    positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
+    positions.update(
+        {more_vertices[index]: np.array(more_coordinates[index]) for index in range(0, len(more_vertices))})
+    positions.update({v_index: np.array((0.0, 1.0))})
+    print(graph.edges)
 
     # Draw Initial Embedding
     draw_graph(graph=graph, positions=positions)
@@ -146,8 +184,8 @@ if __name__ == '__main__':
 
     # Identify Target and Remove it from the embedding
     print("\nIdentify Target Vertex and Remove it from the Embedding")
-    target_vertex, target_adjacency, r_graph, r_positions, r_crossings = identify_target_vertex(graph=graph,
-                                                                                                positions=positions)
+    target_vertex, target_adjacency, r_graph, r_positions, r_crossings = identify_target_vertex(
+        graph=graph, positions=positions)
 
     # Draw the remaining graph
     draw_graph(graph=r_graph, positions=r_positions)
