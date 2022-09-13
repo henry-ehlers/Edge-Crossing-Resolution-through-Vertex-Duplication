@@ -1,6 +1,7 @@
 from src.line_segments import *
 from src.edge_crossings import *
 from src.vertex_splitting import calculate_face_centroid
+from src.graph_drawing import *
 from src.faces import *
 
 import networkx as nx
@@ -25,40 +26,42 @@ def get_sight_cell_edges(sight_cells, graph):
     return edge_set
 
 
-def project_face_sight_lines(edges, vertices, inner_angles, graph, positions, bounds, outer):
-
+def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, positions, bounds, outer):
     # Keep track of the added vertices, and in which edges they were added
     added_vertices, edge_to_virtual_vertices = [], {}
     # Consider only those vertices whose angle is greater than 180 degrees
     bend_vertices = [key for key in inner_angles.keys() if inner_angles[key] > 180]
 
     for joint_vertex in bend_vertices:
+        print(f"JOINT: {joint_vertex}")
         for connecting_vertex in vertices:
+            print(f"connecting: {connecting_vertex}")
 
             # Skip any vertex pair that is a) consists of the same vertex, or b) has already been investigated
             if connecting_vertex == joint_vertex:
                 continue
 
             # Check whether bend and other vertex can 'see' each other
-            are_adjacent = are_vertices_adjacent(joint_vertex, connecting_vertex, graph)
-            is_visible = True if are_vertices_adjacent(joint_vertex, connecting_vertex, graph) \
-                else is_vertex_visible(joint_vertex=joint_vertex,
-                                       connecting_vertex=connecting_vertex,
-                                       inner_angles=inner_angles,
-                                       graph=graph,
-                                       vertices=vertices,
-                                       edges=edges,
-                                       positions=positions,
-                                       outer=outer)
+            is_visible = is_vertex_visible(joint_vertex=joint_vertex,
+                                           connecting_vertex=connecting_vertex,
+                                           inner_angles=inner_angles,
+                                           edge_map=edge_map,
+                                           graph=graph,
+                                           vertices=vertices,
+                                           edges=edges,
+                                           positions=positions,
+                                           outer=outer)
 
             # If they cannot see each other, skip to the next pair
             if not is_visible:
+                print("NOT VISIBLE")
                 continue
 
             # Extend the sight-line, producing a
             bisected_edge, new_vertex = extend_sight_line(joint_vertex=joint_vertex,
                                                           connecting_vertex=connecting_vertex,
                                                           inner_angles=inner_angles,
+                                                          edge_map=edge_map,
                                                           vertices=vertices,
                                                           edges=edges,
                                                           graph=graph,
@@ -68,7 +71,10 @@ def project_face_sight_lines(edges, vertices, inner_angles, graph, positions, bo
 
             # Vertices can see one-another, but not produce a legal extension.
             if bisected_edge is None:
+                print("NO BISECTION")
                 continue
+
+            print(f"bisected {bisected_edge} with vertex {new_vertex}")
 
             # Keep track of what has been added
             added_vertices.append(new_vertex)
@@ -83,13 +89,11 @@ def project_face_sight_lines(edges, vertices, inner_angles, graph, positions, bo
 
 
 def get_faces_sight_cell_incidences(sight_cells, target_vertices, face_edges, face_edge_map, positions):
-
     # Initialize an empty map of sight cell to incidence
     sight_cell_incidences = {sight_cell: {} for sight_cell in sight_cells}
 
     # Iterate over all faces in the graph
     for face in sight_cells.keys():
-
         # Extract all edges in the face, i.e. the virtual edges formed by virtual edge bisection
         face_edge_list = unlist([face_edge_map[edge] for edge in face_edges[face]])
 
@@ -104,7 +108,6 @@ def get_faces_sight_cell_incidences(sight_cells, target_vertices, face_edges, fa
 
 
 def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edges, face_edge_map, positions):
-
     # Initialize an empty map of sight cell to incidence
     sight_cell_incidences = {sight_cell: set() for sight_cell in sight_cells}
 
@@ -113,7 +116,6 @@ def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edge
         visibility = [None] * len(face_edges.keys())
 
         for face_index, face in enumerate(face_edges.keys()):
-
             # Extract all edges in the face, i.e. the virtual edges formed by virtual edge bisection
             face_edge_list = unlist([face_edge_map[edge] for edge in face_edges[face]])
 
@@ -130,7 +132,6 @@ def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edge
 
 
 def get_face_sight_cells_incidences(face_sight_cells, face_edge_list, target_vertices, positions):
-
     # If the original face is convex, the sight cell is equivalent
     if len(face_sight_cells) == 1:
         return {face_sight_cells: target_vertices.intersection(get_sorted_face_vertices(face_edge_list))}
@@ -146,7 +147,6 @@ def get_face_sight_cells_incidences(face_sight_cells, face_edge_list, target_ver
 
 
 def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edges, positions):
-
     # Check what targets are already in the current sight cell
     targets_in_cell = sight_cell_vertices.intersection(target_vertices)
     remaining_targets = set(target_vertices) - targets_in_cell
@@ -194,11 +194,11 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
             # print(f"cell b {cell_b} with incidence {cell_incidences[cell_b]}")
             # Attempt to merge the two cells, return a boolean for success and a (possibly empty) vertex ID
             merge_successful, removed = try_merge_two_sight_cells(cell_a=cell_a,
-                                                                           cell_b=cell_b,
-                                                                           cells=cells,
-                                                                           cells_edge_list=cells_edge_list,
-                                                                           cell_incidences=cell_incidences,
-                                                                           graph=graph)
+                                                                  cell_b=cell_b,
+                                                                  cells=cells,
+                                                                  cells_edge_list=cells_edge_list,
+                                                                  cell_incidences=cell_incidences,
+                                                                  graph=graph)
 
             # If the merge was successful, recurse
             if merge_successful:
@@ -222,7 +222,6 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
 
 
 def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incidences, graph):
-
     # Determine along which the two cells are to be merged and where the cells are located in the list
     merge_edges = cells_edge_list[cell_a].intersection(cells_edge_list[cell_b])
     # print(f"merge edges: {merge_edges}")
@@ -263,7 +262,6 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
 
 
 def update_merge_sight_cell_graph(merge_edge, graph):
-
     merge_edge = list(merge_edge)
     graph.remove_edge(u=merge_edge[0], v=merge_edge[1])
 
@@ -364,7 +362,6 @@ def select_sight_cells(sight_cells, sight_cell_incidence):
 
 
 def match_cell_and_face_incidence(face_incidences, selected_sight_cell_incidences):
-
     # Indicator whether faces must be reranked (i.e if incidences did not match)
     rerank_faces = False
 
@@ -376,7 +373,6 @@ def match_cell_and_face_incidence(face_incidences, selected_sight_cell_incidence
 
         # If the number of cells is greater than 1, than no single face contains the target incidence set
         if len(cell_incidences) > 1:
-
             # Replace the original face with its sight cells
             face_incidences.pop(face)
             face_incidences.update(cell_incidences)
@@ -389,25 +385,31 @@ def match_cell_and_face_incidence(face_incidences, selected_sight_cell_incidence
     return rerank_faces
 
 
-def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, edges, graph, positions, bounds, outer):
+def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, edge_map, vertices, edges,
+                      graph, positions, bounds, outer):
+
+    print(f"Joint Vertex: {joint_vertex}")
+    print(f"Connecting Vertex: {connecting_vertex}")
 
     # Calculate intersections of extended line with boundaries in both directions
     bound_intersections = extend_line(positions[joint_vertex], positions[connecting_vertex], bounds)
     closest_intersection_to_joint = bound_intersections[0]
-    test_edges = graph.edges(data=True)
+    print(f"closest intersection: {closest_intersection_to_joint}")
 
     # If vertices are adjacent, they can see one-another; otherwise we must check explicitly
-    already_connected = are_vertices_adjacent(joint_vertex, connecting_vertex, graph)
+    already_connected = are_vertices_adjacent(joint_vertex, connecting_vertex, graph) \
+        or are_vertices_adjacent_virtually(joint_vertex, connecting_vertex, edge_map)
+    print(f"already connected? -> {already_connected}")
 
-    is_visible = True \
-        if already_connected \
-        else check_vertex_visibility_by_angle(joint_vertex=joint_vertex,
-                                              inner_angles=inner_angles,
-                                              edges=edges,
-                                              vertices=vertices,
-                                              positions=positions,
-                                              connecting_position=closest_intersection_to_joint,
-                                              outer=outer)
+    print(f"inner angles: {inner_angles}")
+    is_visible = check_vertex_visibility_by_angle(joint_vertex=joint_vertex,
+                                                  inner_angles=inner_angles,
+                                                  edges=edges,
+                                                  vertices=vertices,
+                                                  positions=positions,
+                                                  connecting_position=closest_intersection_to_joint,
+                                                  outer=outer)
+    print(f"is visible -> {is_visible}")
 
     # If the hypothetical and observed angle are incompatible, then continue
     if not is_visible:
@@ -415,16 +417,23 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
 
     # Find the Closest Intersection of the extended line with edges not incident to joint or connecting vertex
     extended_line = (positions[joint_vertex], closest_intersection_to_joint)
+    # TODO: check also whether edge is part of virtual map => block all those as well
     candidate_edges = [edge for edge in edges if not set(edge).intersection((joint_vertex, connecting_vertex))]
+    print(f"candidate edges: {candidate_edges}")
 
     closest_edge, crossing_point = find_closest_edge_intersection(extended_line, candidate_edges, graph, positions,
                                                                   must_be_real=True)
+    print(f"cloest intersecting edge: {closest_edge} @ {crossing_point}")
 
     # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
     origin_vertex, new_vertex_index = joint_vertex, max(graph.nodes) + 1
+    print(f"Edge between {origin_vertex} and {new_vertex_index}")
+
     graph.add_node(node_for_adding=new_vertex_index, virtual=1)
     graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, segment=1, real=0)
     positions[new_vertex_index] = np.array(crossing_point)
+
+    # Also add edge between two vertices that were extended (if they do not already have an edge)
     if not already_connected:
         graph.add_edge(u_of_edge=joint_vertex, v_of_edge=connecting_vertex, segment=1, real=0)
 
@@ -432,10 +441,11 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, e
     return closest_edge, new_vertex_index
 
 
-def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, graph, vertices, edges, positions, outer):
-
+def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, edge_map, graph, vertices, edges, positions,
+                      outer):
     # If vertices are neighbors, they can see one-another
-    if are_vertices_adjacent(joint_vertex, connecting_vertex, graph):
+    if are_vertices_adjacent(joint_vertex, connecting_vertex, graph) or \
+            are_vertices_adjacent_virtually(joint_vertex, connecting_vertex, edge_map):
         return True
 
     # Check Angle around the Joint Vertex allows for visibility to the connecting vertex
@@ -449,6 +459,7 @@ def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, graph, vert
 
     # If the angle does not allow for visibility, return False
     if not angle_visibility:
+        print("is not angle visible")
         return angle_visibility
 
     # If the angle (hypothetically) allows for visibility, now check all possible edges that could be in the way
@@ -460,6 +471,7 @@ def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, graph, vert
 
     # If the line segment between joint and connecting vertex crosses and edge, return False
     if not crossing_visibility:
+        print("is not corring visible")
         return crossing_visibility
 
     # All Conditions met for Visibility, so return True
@@ -473,12 +485,12 @@ def check_vertex_visibility_by_angle(joint_vertex, inner_angles, edges, vertices
     assert (connecting_vertex is not None) or (connecting_position is not None), \
         "Specify a Connecting Point when checking its visibility by angle"
 
-
     # Get points for new angle calculation
     joint_index = [index for index in range(0, len(vertices)) if vertices[index] == joint_vertex][0]
     ref_vertex_a, ref_vertex_b = vertices[(joint_index + 1) % len(vertices)], vertices[joint_index - 1]
     debug_angle = calculate_outer_angle(positions[ref_vertex_a], positions[joint_vertex], positions[ref_vertex_b]) \
         if outer else calculate_inner_angle(positions[ref_vertex_a], positions[joint_vertex], positions[ref_vertex_b])
+
     # Get the Angle of the Joint against which we are comparing the new incoming angle:
     observed_angle = inner_angles[joint_vertex]
     assert observed_angle == debug_angle, \
@@ -488,13 +500,14 @@ def check_vertex_visibility_by_angle(joint_vertex, inner_angles, edges, vertices
     connecting_position = connecting_position if (connecting_position is not None) else positions[connecting_vertex]
     hypothetical_angle = calculate_outer_angle(positions[ref_vertex_a], positions[joint_vertex], connecting_position) \
         if outer else calculate_inner_angle(positions[ref_vertex_a], positions[joint_vertex], connecting_position)
+    print(f"Hypothetical Angle between ({ref_vertex_a} {joint_vertex} {connecting_position}):")
+    print(f"{hypothetical_angle}")
 
     # If the angle between Vertex A and B is larger than between Vertex A and its neighbors, Vertex B is not visible
     return hypothetical_angle < observed_angle
 
 
 def check_vertex_visibility_by_crossing(vertex_a, vertex_b, candidate_edges, positions):
-
     # Get Points of Vertices A and B
     point_a, point_b = positions[vertex_a], positions[vertex_b]
 
@@ -527,7 +540,6 @@ def merge_cells_wrapper(face_sight_cells, cells_edge_list, cell_incidences, grap
 
 
 def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, graph):
-
     # Iterate over all faces, and attempt to merge their faces
     for face in face_sight_cells.keys():
 
@@ -543,10 +555,12 @@ def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, 
 
 def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, graph, positions, outer=False):
 
+    print(f"\n=========================================================================================")
     print(f"edge to virtual: {edge_to_virtual_vertices}")
 
     # Remove edges which have been intersected, and replace them with ordered virtual edges
     virtual_edge_map = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
+    print(f"virtual_edge_map -  {virtual_edge_map}")
 
     remove_edges(graph, edge_to_virtual_vertices.keys())
 
@@ -558,7 +572,6 @@ def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, grap
     face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
 
     if face_edge_crossings:
-
         face_graph, face_positions, virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
         non_empty_virtual_edges = {k: v for k, v in virtual_edges.items() if v}
         virtual_edge_map.update(non_empty_virtual_edges)
@@ -567,7 +580,7 @@ def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, grap
         [graph.remove_edge(u=edge[0], v=edge[1]) for edge in virtual_edges.keys() if virtual_edges[edge]]
 
     # Define Sight Cells, i.e. faces
-    sight_cells = find_all_faces(face_graph, positions=positions) if not outer else None
+    sight_cells = find_inner_faces(face_graph, positions=positions) if not outer else None
 
     # Return Sight Cells
     return sight_cells, virtual_edge_map
@@ -577,8 +590,8 @@ def unlist(nested_list):
     return list(it.chain.from_iterable(nested_list))
 
 
-def project_additional_sight_lines(edges, origin_vertices, origin_angles, target_vertices, target_angles, graph,
-                                   positions, bounds, outer=True):
+def project_additional_sight_lines(edges, origin_vertices, origin_angles, target_vertices, target_angles, edge_map,
+                                   graph, positions, bounds, outer=True):
 
     # Keep track of the added vertices, and in which edges they were added
     added_vertices, edge_to_virtual_vertices = [], {}
@@ -588,27 +601,32 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
     target_joint_vertices = [key for key in target_angles.keys() if target_angles[key] > 180]
 
     for joint_vertex in origin_joint_vertices:
+        print(f"\nJoint: {joint_vertex}")
         for target_vertex in target_joint_vertices:
+            print(f"target vertex: {target_vertex}")
 
             # Check whether bend and other vertex can 'see' each other
             is_visible = is_vertex_visible(joint_vertex=joint_vertex,
-                                          connecting_vertex=target_vertex,
-                                          inner_angles=origin_angles,
-                                          graph=graph,
-                                          vertices=origin_vertices,
-                                          edges=edges,
-                                          positions=positions,
-                                          outer=outer)
+                                           connecting_vertex=target_vertex,
+                                           inner_angles=origin_angles,
+                                           edge_map=edge_map,
+                                           graph=graph,
+                                           vertices=origin_vertices,
+                                           edges=edges,
+                                           positions=positions,
+                                           outer=outer)
 
             # If they cannot see each other, skip to the next pair
             if not is_visible:
+                print(f'NOT VISIBLE')
                 continue
+            print("IS VISIBLE")
 
-            print(f"\t\t\t Normal Extensions")
             # Extend the sight-line, producing a
             bisected_edge, new_vertex = extend_sight_line(joint_vertex=target_vertex,
                                                           connecting_vertex=joint_vertex,
                                                           inner_angles=target_angles,
+                                                          edge_map=edge_map,
                                                           vertices=target_vertices,
                                                           edges=edges,
                                                           graph=graph,
@@ -619,6 +637,7 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
             # Vertices can see one-another, but not produce a legal extension.
             if bisected_edge is None:
                 continue
+            print(f"BISECTED EDGE: {bisected_edge} with {new_vertex}")
 
             # Keep track of what has been added
             added_vertices.append(new_vertex)
@@ -633,7 +652,6 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
 
 
 def add_boundary_to_graph(bounds, graph, positions, offset=0.2):
-
     # Define the labels of vertices and their edges
     bound_vertices = list(range(max(graph.nodes) + 1, max(graph.nodes) + 1 + len(bounds)))
     bound_edges = [(bound_vertices[ind], bound_vertices[(ind + 1) % len(bounds)]) for ind in range(0, len(bounds))]
@@ -651,7 +669,6 @@ def add_boundary_to_graph(bounds, graph, positions, offset=0.2):
 def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
                          bounds=((-1, -1), (-1, 1), (1, 1), (1, -1)),
                          outer=False):
-
     #
     all_face_edges = unlist([ordered_face_edges.get(face) for face in selected_faces])
     face_edge_map = {edge: [edge] for edge in all_face_edges}
@@ -659,11 +676,6 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
 
     # Iterate over all faces
     for face in selected_faces:
-
-        # Add additional candidate edges if we are dealing with the outer face
-        other_faces = copy.copy(selected_faces)
-        other_faces.remove(face)
-        other_face_edges = unlist([ordered_face_edges.get(other_face) for other_face in other_faces]) if outer else []
 
         # Get Vertices and ensure they are listed in counter-clockwise order
         face_edges = ordered_face_edges[face]
@@ -683,47 +695,40 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
         # Otherwise, split into sight cells and return set of frozen sets of vertices per sight-cell
         else:
 
-            # Define all edges that could intersect sight-lines
-            candidate_edges = face_edges + other_face_edges
-
             # Project sight lines if possible
-            edge_to_virtual_vertices, added_vertices = project_face_sight_lines(edges=candidate_edges,
-                                                                                vertices=face_vertices,
-                                                                                inner_angles=face_angles,
-                                                                                graph=graph,
-                                                                                positions=positions,
-                                                                                bounds=bounds,
-                                                                                outer=outer)
+            edge_to_virtual_vertices, added_vertices = project_face_against_self(
+                face, ordered_face_edges, face_edge_map, graph, positions, bounds, outer=False)
 
-            # Update the graph and find cells
-            cells, virtual_edge_map = update_sight_line_graph(edges=candidate_edges,
-                                                              face_vertices=face_vertices + added_vertices,
-                                                              edge_to_virtual_vertices=edge_to_virtual_vertices,
-                                                              graph=graph,
-                                                              positions=positions,
-                                                              outer=outer)
+            # Update Graph and Edge Map
+            cells = update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
+                                                      edge_to_virtual_vertices, graph, positions, outer=False)
 
-            # Update the map of real to virtual edge maps
-            deep_update_of_virtual_edge_map(face_edge_map, virtual_edge_map)
+            # Log Identified Sight Cells
             sight_cells[face] = cells
 
     # Return dictionary of sight cells per face and a map of edges to virtual edges
     return sight_cells, face_edge_map
 
 
-def get_face_vertices(face, ordered_face_edges, face_edge_map):
-    face_edges = unlist([face_edge_map.get(edge) for edge in ordered_face_edges[face]])  # TODO: edges busted
+def get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positions, original=False):
+    if not original:
+        face_edges = unlist([face_edge_map.get(edge) for edge in ordered_face_edges[face]])  # TODO: edges busted
+    else:
+        face_edges = [edge for edge in ordered_face_edges[face]]
     face_vertices = get_sorted_face_vertices(face_edges, is_sorted=True)
+    if calculate_face_signed_area(face_vertices, positions) < 0:
+        face_vertices = list(reversed(face_vertices))
     return face_vertices
 
 
 def update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
                                       edge_to_virtual_vertices, graph, positions, outer=False):
-
     # Update List of Vertices with added vertices and the set of edges which define the face
-    face_vertices = get_face_vertices(face, ordered_face_edges, face_edge_map)
+    face_vertices = get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positions)
+    print(f"face vertices: {face_vertices}")
     candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
     face_vertices = face_vertices + added_vertices + list(set(unlist(candidate_edges)))
+    print(f"all vertices: {face_vertices}")
 
     # Update the Graph and Its Positions
     cells, virtual_edge_map = update_sight_line_graph(edges=candidate_edges,
@@ -736,30 +741,34 @@ def update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, 
     # Update the map of real to virtual edge maps
     deep_update_of_virtual_edge_map(face_edge_map, virtual_edge_map)
 
+    return cells
+
 
 def project_face_against_self(face, ordered_face_edges, face_edge_map, graph, positions, bounds, outer=False):
-
     # Get the set of vertices which define the current face
-    face_vertices = get_face_vertices(face, ordered_face_edges, face_edge_map)
-
-    # Reverse Order of Face Vertices if their signed area not above 0
-    if calculate_face_signed_area(face_vertices, positions) < 0:
-        face_vertices = list(reversed(face_vertices))
+    face_vertices = get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positions, original=True)
 
     # Calculate Inner Angles to identify joint vertices
     face_angles = calculate_face_outer_angles(face_vertices, positions)
+    print(f'face vertices {face_vertices} with angles {face_angles}')
 
     # Replace original edges with their virtual counterparts
+    print(f"face Edge Map: {face_edge_map}")
+
     candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
 
     # Extend all sight lines, add new vertices where necessary, and keep track of edge bisection
     edge_to_virtual_vertices, added_vertices = project_face_sight_lines(edges=candidate_edges,
                                                                         vertices=face_vertices,
                                                                         inner_angles=face_angles,
+                                                                        edge_map=face_edge_map,
                                                                         graph=graph,
                                                                         positions=positions,
                                                                         bounds=bounds,
                                                                         outer=outer)
+
+    print(f"added vertices: {added_vertices}")
+    print(f"edge to virtual: {edge_to_virtual_vertices}")
 
     return edge_to_virtual_vertices, added_vertices
 
@@ -768,40 +777,35 @@ def project_outer_face_against_singleton():
     # extend_sight_line(joint_vertex, connecting_vertex, inner_angles, vertices, edges, graph, positions, bounds, outer)
     pass
 
+
 def project_outer_face_against_non_face():
     pass
 
 
 def project_outer_face_against_another_face(face, other_face, edge_map, ordered_face_edges, positions, graph, bounds):
 
-    # Replace original edges with their virtual counter parts
+    # Replace original edges with their virtual counterparts
     candidate_edges = unlist([edge_map.get(edge) for edge in edge_map.keys()])
-
-    other_face_edges = unlist([edge_map.get(edge) for edge in ordered_face_edges[other_face]])
-    print(f"Outer Face ({other_face})'s edges: ")
-    other_face_vertices = get_sorted_face_vertices(other_face_edges, is_sorted=True)
-    if calculate_face_signed_area(other_face_vertices, positions) < 0:
-        other_face_vertices = list(reversed(other_face_vertices))
+    other_face_vertices = get_clockwise_face_vertices(
+        other_face, ordered_face_edges, edge_map, positions, original=True)
     other_face_angles = calculate_face_outer_angles(other_face_vertices, positions)
+    print(f"other face angles: {other_face_angles}")
 
     # Get Vertices and ensure they are listed in counter-clockwise order
-    face_edges = unlist([edge_map.get(edge) for edge in ordered_face_edges[face]])
-    face_vertices = get_sorted_face_vertices(face_edges, is_sorted=True)
-
-    if calculate_face_signed_area(face_vertices, positions) < 0:
-        face_vertices = list(reversed(face_vertices))
-
-    # Calculate Inner Angles to check convexity
+    face_vertices = get_clockwise_face_vertices(face, ordered_face_edges, edge_map, positions, original=True)
     face_angles = calculate_face_outer_angles(face_vertices, positions)
+    print(f"face angles: {face_angles}")
 
-    edge_to_virtual_vertices, added_vertices = project_additional_sight_lines(candidate_edges,
-                                                                              face_vertices,
-                                                                              face_angles,
-                                                                              other_face_vertices,
-                                                                              other_face_angles,
-                                                                              graph,
-                                                                              positions,
-                                                                              bounds,
+    #
+    edge_to_virtual_vertices, added_vertices = project_additional_sight_lines(edges=candidate_edges,
+                                                                              origin_vertices=face_vertices,
+                                                                              origin_angles=face_angles,
+                                                                              target_vertices=other_face_vertices,
+                                                                              edge_map=edge_map,
+                                                                              target_angles=other_face_angles,
+                                                                              graph=graph,
+                                                                              positions=positions,
+                                                                              bounds=bounds,
                                                                               outer=True)
 
     return edge_to_virtual_vertices, added_vertices
@@ -822,8 +826,8 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
     # Iterate over all faces
     selected_face_list = list(selected_faces)
     for face_index, face in enumerate(selected_face_list):
-        print(f"Face: {face}")
-
+        print(f"\nFace: {face}")
+        print(graph.edges)
         if not is_cycle[face]:
             print("SKIP BECAUSE FACE DOES NOT HAVE EDGES")
             continue
@@ -840,10 +844,15 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
         update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
                                           edge_to_virtual_vertices, graph, positions, outer=True)
 
+        # DEBUG: Draw Initial Embedding
+        draw_graph(graph=graph, positions=positions)
+        save_drawn_graph(f"./graph_{face}.png")
+
         # Iterate over all other faces that form the outer face
         for other_face in selected_faces:
-            print(f"OTHER FACE: {other_face}")
+            print(f"\nFACE {face} AGAINST OTHER FACE: {other_face}")
             if other_face == face:
+                print("SKIPPED BECAUSE IDENTICAL")
                 continue
 
             # Check if the Other face is a cycle or not -> check angle visibilities + edge crossing visibilities
@@ -860,12 +869,17 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positi
                 sys.exit("Non Accounted for Constellation of face!")
 
             # Update Graph and Virtual Edge Map with New added vertices
+            print(f"\n added vertices: {added_vertices}")
             update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
                                               edge_to_virtual_vertices, graph, positions, outer=True)
 
+            # Draw Initial Embedding
+            draw_graph(graph=graph, positions=positions)
+            save_drawn_graph(f"./graph_{face}+{other_face}.png")
+
     # Identify all faces (i.e. sight cells in outer face)
     face_graph = nx.Graph(graph.subgraph(nodes=list(set(unlist(unlist(list(face_edge_map.values())))))))
-    sight_cells = find_all_faces(face_graph, positions=positions)
+    sight_cells = find_inner_faces(face_graph, positions=positions)
 
     # Remove the original set of faces that defined the outer face
     [sight_cells.remove(cell) for cell in copy.copy(sight_cells) for face in selected_faces if face.issubset(cell)]
@@ -904,12 +918,10 @@ def are_vertices_adjacent(vertex_a, vertex_b, graph):
     fields = graph.get_edge_data(vertex_a, vertex_b, default=0)
     if not fields:
         return True
-    if not(fields.get("real", 0) == 1):
+    if not (fields.get("real", 0) == 1):
         return False
     return adjacent
 
 
-
-
-
-
+def are_vertices_adjacent_virtually(vertex_a, vertex_b, edge_map):
+    return ((vertex_a, vertex_b) in edge_map.keys()) or ((vertex_b, vertex_a) in edge_map.keys())

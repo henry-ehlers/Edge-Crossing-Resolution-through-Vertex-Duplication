@@ -14,23 +14,24 @@ def sort_vertices_along_edge(edge, vertex_set, positions):
     start_point, end_point = positions[start_vertex], positions[end_vertex]
 
     # Initialize container for magnitudes from edge start-point
-    projections = np.empty(len(vertex_set)+2)
+    projections = np.empty(len(vertex_set))
 
     # Iterate over all vertices, including start and end points of the edge
-    vertices_to_sort = list(vertex_set) + [start_vertex, end_vertex]
-    for index, vertex in enumerate(vertices_to_sort):
+    # vertices_to_sort = list(vertex_set) + [start_vertex, end_vertex]
+    for index, vertex in enumerate(vertex_set):
         projections[index] = project_point_onto_line(positions[vertex], start_point, end_point)
 
     # Sort indices of projections and sort vertex indices
     sorted_indices = np.argsort(projections)
-    sorted_vertices = [vertices_to_sort[i] for i in sorted_indices]
+    sorted_vertices = [vertex_set[i] for i in sorted_indices]
 
     # Ensure Start and End-Points sorted correctly (i.e first and last)
     # TODO: NUMERICAL ERROR FOR LARGE GRAPHS (WITH SMALL DIFFERENCES BETWEEN POINTS)
     # TODO: EITHER FORCE POSITIONS OR MERGE VERY CLOSELY LOCATED NODES (SEGMENT-INDUCED ONES)
     # TODO: BUILD A WHILE LOOP WHICH ITERATIVELY MERGES THE TWO CLOSEST VERTICES (PRESERVING TERMINI) UNTIL ORDER IS OK
-    assert sorted_indices[0] == (len(vertices_to_sort)-2) and sorted_indices[-1] == (len(vertices_to_sort)-1), \
-        "Start and End Points of vector did not sort as expected"
+    # assert sorted_indices[0] == (len(vertices_to_sort)-2) and sorted_indices[-1] == (len(vertices_to_sort)-1), \
+    #     "Start and End Points of vector did not sort as expected"
+    sorted_vertices = [start_vertex] + sorted_vertices + [end_vertex]
 
     # Return sorted vertex indices
     return sorted_vertices
@@ -82,7 +83,6 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
     for edge in edge_to_virtual_vertex.keys():
 
         edge_data = graph.get_edge_data(v=edge[0], u=edge[1], default={})
-        print(f"edge data of edge ({edge}): {edge_data}")
         # Skip edge if it does not have any edge crossings
         if len(edge_to_virtual_vertex[edge]) == 0:
             continue
@@ -103,7 +103,8 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
 
 
 def planarize_graph(graph, positions, edge_crossings):
-
+    print(f"edge crossings: {edge_crossings}")
+    print(f"n crossings: {len(edge_crossings)}")
     # Extract basic properties of graph
     index = max(list(graph.nodes()))
     edges = list(graph.edges)  # create list for easier indexing
@@ -121,6 +122,7 @@ def planarize_graph(graph, positions, edge_crossings):
 
             # Update index
             index += 1
+            print(f"adding new virtual node {index} at crossing of {edge_a} and {edge_b}")
 
             # Add new vertex to graph and drawing's locations
             planar_graph.add_node(node_for_adding=index, split=0, target=0, virtual=1, boundary=0, segment=0)
@@ -233,17 +235,20 @@ def line_intersection(p1, p2, p3, p4):
     x4, y4 = float(p4[0]), float(p4[1])
 
     denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+    # print(f"denominator: {denominator}")
     if denominator == 0:  # parallel
         return None
     ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
+    # print(f"ua: {ua}")
 
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
-    if ua < 0 or ua >= 1:
+    if ua <= 0 or ua >= 1:
         return None
     ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
+    # print(f"ub: {ub}")
 
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
-    if ub < 0 or ub >= 1:
+    if ub <= 0 or ub >= 1:
         return None
     x = x1 + ua * (x2 - x1)
     y = y1 + ua * (y2 - y1)

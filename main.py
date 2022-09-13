@@ -30,15 +30,17 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
     print(f"\t\tface is cycle: {is_cycle}")
     print(f"\t\touter faces: {outer_faces}")
     print(f"\t\touter face edges: {outer_face_edges}")
-    # TODO: edges are busted because they expect a {face} -> {edge} entry in the dict
+
+    #
     outer_face_identifier = frozenset(set.union(*[set(outer_face) for outer_face in outer_faces]))
     print(f"\t\tOuter Face Identifier: {outer_face_identifier}")
     sorted_outer_edges = {outer_face: sort_face_edges(outer_face_edges[outer_face])
                           for outer_face in outer_faces if is_cycle[outer_face]}
     print(f"\t\tSorted Outer Edge: {sorted_outer_edges}")
-    # outer_face_sorted_vertices = [get_sorted_face_vertices(edge, is_sorted=True) for edge in outer_face_sorted_edges]
-    # print(f"outer face vertices: {outer_face_sorted_vertices}")
+
+    # Get the incidences of the outer face
     outer_face_incidences = find_outer_face_vertex_incidence(outer_face_identifier, inner_faces, target_vertices)
+    print(f"\t\touter face incidences: {outer_face_incidences}")
     # TODO: organize data structure for outer and inner incidences
     # TODO: rank said data structure
     # TODO: figure out who to pass on the sight cell part -> needs to know in what direction to extend sight lines
@@ -47,7 +49,12 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
     print(f"\t>Get Face Incidence Table and Select Top Set")
     face_incidence_table = get_face_incidence_table(inner_face_incidences=inner_face_incidences,
                                                     outer_face_incidences=outer_face_incidences)
+    print(face_incidence_table)
     selected_faces = get_maximally_incident_faces(face_incidence_table)
+    print(f"selected faces: {selected_faces}")
+
+    artificial_selection = face_incidence_table.loc[1]
+    selected_faces = (artificial_selection.at["outer"], artificial_selection.at["face_a"]), (False, artificial_selection.at["face_b"])
 
     # Check for convexity
     print(f"\t>Check convexity")
@@ -60,17 +67,18 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
                 # make inner face convex
                 pass
         else:
-
-            # Calculate the Outer Bounds
-            outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=2)
+            print(f"IS OUTER")
 
             # Identify all sight cells in the outer face
+            outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=3)
             outer_sight_cells, outer_edge_map = get_outer_face_sight_cells(selected_faces=outer_faces,
                                                                            ordered_face_edges=sorted_outer_edges,
                                                                            graph=p_graph,
                                                                            positions=p_positions,
                                                                            is_cycle=is_cycle,
                                                                            bounds=outer_bounds)
+            print(f"\n outer sight cells:")
+            [print(cell) for cell in outer_sight_cells]
 
             # Calculate the incidence of all sight cells
             outer_sight_cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=outer_sight_cells,
@@ -78,6 +86,8 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
                                                                                face_edges=sorted_outer_edges,
                                                                                face_edge_map=outer_edge_map,
                                                                                positions=p_positions)
+            print(f"\n outer sight cell incidences:")
+            [print(f"{cell} - {outer_sight_cell_incidences[cell]}") for cell in outer_sight_cell_incidences.keys()]
 
             # Find the edges of all sight cells
             outer_sight_cell_edges = get_sight_cell_edges(outer_sight_cells, p_graph)
@@ -178,6 +188,8 @@ if __name__ == '__main__':
     positions.update({v_index: np.array((0.0, 1.0))})
     print(graph.edges)
 
+    # MAIN -------------------------------------------------------------------------------------------------------------
+
     # Draw Initial Embedding
     draw_graph(graph=graph, positions=positions)
     save_drawn_graph(f"{output_directory}/graph_0.png")
@@ -212,8 +224,6 @@ if __name__ == '__main__':
     save_drawn_graph(f"{output_directory}/graph_3.png")
 
     sys.exit()
-
-
 
     # # Locate faces and best two for target face
     # TODO: find outer face
