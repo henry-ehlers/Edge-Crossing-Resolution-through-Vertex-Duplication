@@ -189,7 +189,7 @@ def close_closed_face(convex_face_edge_list, graph):
 
 
 def find_outer_face(ordered_face_edges, graph, positions):
-
+    # TODO: identify "faces" which consist of non-cycles, i.e. disconnected "lines" of vertices
     # Initialize a dictionary which maps edges to the number of faces they are in
     faces_per_edge = dict.fromkeys(list(graph.edges()), 0)
 
@@ -202,7 +202,8 @@ def find_outer_face(ordered_face_edges, graph, positions):
             elif edge_b in faces_per_edge.keys():
                 faces_per_edge[edge_b] += 1
             else:
-                sys.exit("Shit's fucked")
+                # TODO: see above todo!
+                sys.exit(f"Edge ({edge_a}, {edge_b}) did not map to a face.")
 
     # Find edges which only map to a single face
     edges = set([frozenset(edge) for edge in faces_per_edge.keys() if faces_per_edge[edge] == 1])
@@ -210,6 +211,9 @@ def find_outer_face(ordered_face_edges, graph, positions):
     # Identify Unique sets of edges to find faces
     faces = copy.deepcopy(edges)
     find_vertex_sets_from_edges(faces)
+
+    # Map whether face is a cycle or not
+    face_is_cycle = {face: True for face in faces}
 
     # Map edges to faces
     face_edge_sets = find_face_edge_sets(faces, edges)
@@ -224,11 +228,11 @@ def find_outer_face(ordered_face_edges, graph, positions):
 
     # Update Edges Sets and Face with Singletons in the outer face
     vertices = set([frozenset([vertex]) for vertex in vertices])
-    #{face_edge_sets.update({singleton: set()}) for singleton in vertices}
     faces = faces.union(vertices)
+    [face_is_cycle.update({vertex: False}) for vertex in vertices]
 
     # Return unique vertex sets from the found singleton edges
-    return faces, face_edge_sets
+    return faces, face_edge_sets, face_is_cycle
 
 
 def find_face_edge_sets(faces, edges):
