@@ -526,11 +526,13 @@ def check_vertex_visibility_by_crossing(vertex_a, vertex_b, candidate_edges, pos
 def merge_cells_wrapper(face_sight_cells, cells_edge_list, cell_incidences, graph):
 
     # Try Merging Cells in non-convex face
+    # TODO: t
     removed_vertices = merge_face_sight_cells(cells=list(face_sight_cells),
                                               cells_edge_list=cells_edge_list,
                                               cell_incidences=cell_incidences,
                                               removed_vertices=[],
                                               graph=graph)
+    print(f"removed vertices: {removed_vertices}")
 
     # Update the face's cells, their incidents, and edges based on deleted vertices
     update_merged_sight_cell_data(face_cells=face_sight_cells,
@@ -811,15 +813,29 @@ def project_outer_face_against_another_face(face, other_face, edge_map, ordered_
     return edge_to_virtual_vertices, added_vertices
 
 
-def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positions, is_cycle,
+def get_subgraph(nodes, edges, graph, positions):
+    sub_graph, sub_positions = copy.deepcopy(graph), copy.deepcopy(positions)
+    sub_graph.remove_nodes_from([n for n in graph if n not in set(nodes)])
+    [sub_positions.pop(n, None) for n in graph if n not in nodes]
+    sub_graph.remove_edges_from([e for e in sub_graph.edges if set(e) not in [set(edge) for edge in edges]])
+    return sub_graph, sub_positions
+
+
+
+def get_outer_face_sight_cells(selected_faces, ordered_face_edges, p_graph, p_positions, is_cycle,
                                bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
     # TODO: a bisected REAL edge will not be extended since we are looking up the original edge sets, whcih don't
     # TODO: exist anymore, i think. look at (7, 14) and (14, 8) not being extended in 1.5
 
-    bound_vertices, bound_edges = add_boundary_to_graph(bounds, graph, positions)
+    # Create lists of vertices and edges that define the outer face
     all_face_edges = unlist([ordered_face_edges.get(face) for face in selected_faces if len(face) > 1])
+    outer_face_vertices = list(set(unlist(all_face_edges)))
 
-    #
+    # Create A graph consisting only of outer-face defining vertices and edges
+    graph, positions = get_subgraph(outer_face_vertices, all_face_edges, p_graph, p_positions)
+
+    # Define the embedding boundary and the face edge map
+    bound_vertices, bound_edges = add_boundary_to_graph(bounds, graph, positions)
     face_edge_map = {edge: [edge] for edge in all_face_edges + bound_edges}
     # TODO: change face_edge_map to work with frozensets instead of edge tuples -> maybe a problem later
 

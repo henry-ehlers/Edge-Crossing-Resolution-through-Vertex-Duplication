@@ -73,8 +73,8 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
             outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=3)
             outer_sight_cells, outer_edge_map = get_outer_face_sight_cells(selected_faces=outer_faces,
                                                                            ordered_face_edges=sorted_outer_edges,
-                                                                           graph=p_graph,
-                                                                           positions=p_positions,
+                                                                           p_graph=p_graph,
+                                                                           p_positions=p_positions,
                                                                            is_cycle=is_cycle,
                                                                            bounds=outer_bounds)
             print(f"\n outer sight cells:")
@@ -93,10 +93,15 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
             outer_sight_cell_edges = get_sight_cell_edges(outer_sight_cells, p_graph)
 
             # Merge Outer Sight Cells with identical incidences
+            # TODO: merging busted - creates a new vertex where should be none, and also (currently) doesnt use the
+            # newly created outer_graph from the get_outer_face_sight_cells() function!
             merge_cells_wrapper(face_sight_cells=outer_sight_cells,
                                 cells_edge_list=outer_sight_cell_edges,
                                 cell_incidences=outer_sight_cell_incidences,
                                 graph=p_graph)
+
+            print(f"\n merged outer sight cell incidences:")
+            [print(f"{cell} - {outer_sight_cell_incidences[cell]}") for cell in outer_sight_cell_incidences.keys()]
 
     return None
 
@@ -162,7 +167,8 @@ if __name__ == '__main__':
 
     more_edges = ((more_vertices[index], more_vertices[(index + 1) % len(more_vertices)])
                   for index in range(0, len(more_vertices)))
-
+    custom_edges = [(2, 5), (0, 4), (2, 0)]
+    target_edges = [(9, 6), (9, 4), (9, 2), (9, 5)]
 
     # Create Graph
     graph = nx.Graph()
@@ -172,14 +178,17 @@ if __name__ == '__main__':
         graph.add_node(vertex)
     v_index = max(graph.nodes) + 1
     graph.add_node(v_index)
-    for vertex in range(0, v_index):
-        graph.add_edge(u_of_edge=vertex, v_of_edge=v_index, real=1)
+    for edge in target_edges:
+        graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
 
 
     for edge in edges:
         print(f"edge: {edge}")
         graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
     for edge in more_edges:
+        print(f"edge: {edge}")
+        graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
+    for edge in custom_edges:
         print(f"edge: {edge}")
         graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
     positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
