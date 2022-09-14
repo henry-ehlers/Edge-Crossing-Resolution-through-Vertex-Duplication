@@ -92,21 +92,18 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
             print(f"\n outer sight cell incidences:")
             [print(f"{cell} - {outer_sight_cell_incidences[cell]}") for cell in outer_sight_cell_incidences.keys()]
 
-            # Find the edges of all sight cells
-            outer_sight_cell_edges = get_sight_cell_edges(outer_sight_cells, p_graph)
-
             # Merge Outer Sight Cells with identical incidences
             # TODO: merging busted - creates a new vertex where should be none, and also (currently) doesnt use the
-            # newly created outer_graph from the get_outer_face_sight_cells() function!
+            outer_sight_cell_edges = get_sight_cell_edges(outer_sight_cells, outer_graph)
             merge_cells_wrapper(face_sight_cells=outer_sight_cells,
                                 cells_edge_list=outer_sight_cell_edges,
                                 cell_incidences=outer_sight_cell_incidences,
-                                graph=p_graph)
+                                graph=outer_graph)
 
             print(f"\n merged outer sight cell incidences:")
             [print(f"{cell} - {outer_sight_cell_incidences[cell]}") for cell in outer_sight_cell_incidences.keys()]
 
-    return None
+    return outer_graph, outer_positions
 
 
 def identify_target_vertex(graph, positions):
@@ -227,12 +224,12 @@ if __name__ == '__main__':
 
     # Select the faces within which to embed the split vertices
     print("\nSelect Face")
-    select_embedding_faces(p_graph=p_graph,
-                           p_positions=p_positions,
-                           target_vertices=target_adjacency)
+    outer_graph, outer_positions = select_embedding_faces(p_graph=p_graph,
+                                                          p_positions=p_positions,
+                                                          target_vertices=target_adjacency)
 
     # Draw the sight cell cut graph
-    draw_graph(graph=p_graph, positions=p_positions)
+    draw_graph(graph=outer_graph, positions=outer_positions)
     save_drawn_graph(f"{output_directory}/graph_3.png")
 
     sys.exit()
