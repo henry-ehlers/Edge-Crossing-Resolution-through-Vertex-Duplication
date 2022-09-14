@@ -597,7 +597,8 @@ def update_sight_cell_graph(sight_cells, edge_map, graph, positions):
 
     print(f"\nsight cells:")
     [print(cell) for cell in sight_cells]
-
+    print(f"\nedge map:")
+    [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]  # TODO: THERE ARE REMAINING EDGES DANGLING
 
 def remove_edges_with_vertex(vertex, edge_map):
     for mapped_edge in list(edge_map.keys()):
