@@ -6,6 +6,7 @@ from src.faces import *
 
 import networkx as nx
 import itertools as it
+import pandas as pd
 import numpy as np
 import copy
 import sys
@@ -355,12 +356,43 @@ def find_minimal_sight_cell_set(cell_incidences):
     return {cell: cell_incidences[cell] for cell in selected_cells}
 
 
-def select_sight_cells(sight_cells, sight_cell_incidence):
-    minimal_cell_set = {face: {} for face in sight_cells.keys()}
-    for face in sight_cells.keys():
-        face_cell_incidences = {cell: sight_cell_incidence[cell] for cell in sight_cells[face]}
-        minimal_cell_set[face].update(find_minimal_sight_cell_set(face_cell_incidences))
-    return minimal_cell_set
+def get_sorted_sight_cell_incidence_table(sight_cell_incidences):
+
+    # Collect list of cells and theirincidence
+    incidence_table = []
+    [incidence_table.append((cell, sight_cell_incidences.get(cell, None))) for cell in sight_cell_incidences.keys()]
+
+    # Transform list into pandas dataframe
+    incidence_table = pd.DataFrame(data=incidence_table, columns=['sight_cell', 'incidence'])
+    incidence_table["n_incidence"] = [len(incidence) for incidence in incidence_table["incidence"]]
+
+    # Sort incidence table by the number of vertices incident to each cell
+    incidence_table.sort_values(by='n_incidence', ascending=False, inplace=True, ignore_index=True)
+
+    # Return the table
+    return incidence_table
+
+
+def select_sight_cells(cell_incidences, target_vertices):
+
+    # Get the incidence table
+    incidence_table = get_sorted_sight_cell_incidence_table(cell_incidences)
+
+    # Iterate over all cells and their incidences
+    selected_cells, remaining_targets = {}, set(target_vertices)
+    for index, row in incidence_table.iterrows():
+
+        # If no targets remain, return the selection
+        if len(remaining_targets) == 0:
+            return selected_cells
+
+        # If the current cell's incidence is not yet selected, select it
+        if remaining_targets.intersection(row['incidence']):
+            remaining_targets -= row['incidence']
+            selected_cells.update({row['sight_cell']:  row['incidence']})
+
+    # TODO: we should never return here; maybe cover this case somehow?
+    return selected_cells
 
 
 def match_cell_and_face_incidence(face_incidences, selected_sight_cell_incidences):

@@ -30,7 +30,7 @@ def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
 
         # Keep only vertices pertaining to current subgraph and search for cycle basis within
         subgraph = copy.deepcopy(graph).subgraph(list(vertices_to_keep))
-        subfaces[target_face] = find_all_faces(subgraph)  # todo: also pass positions?
+        subfaces[target_face] = find_inner_faces(subgraph)  # todo: also pass positions?
 
     # Return all subfaces for each target face
     return subfaces
@@ -345,7 +345,7 @@ def get_face_incidence_table(inner_face_incidences, outer_face_incidences=None):
     face_incidences = []
 
     # Iterate over all inner faces and collect their numbers of incident vertices
-    [face_incidences.append( (False, face_a, face_b, len(inner_face_incidences[face_a][face_b])) )
+    [face_incidences.append((False, face_a, face_b, len(inner_face_incidences[face_a][face_b])))
      for face_a in inner_face_incidences.keys() for face_b in inner_face_incidences[face_a].keys()]
 
     # Iterate over all outer faces and collect their numbers of incident vertices

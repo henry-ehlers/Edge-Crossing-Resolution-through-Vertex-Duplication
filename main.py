@@ -75,6 +75,9 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
                                                                          graph=p_graph,
                                                                          positions=p_positions)
 
+    # TODO: check whether sight cell incidences coincide with those of face
+    # TODO: return rerun selection if needed
+
     return outer_graph, outer_positions
 
 
@@ -105,6 +108,10 @@ def select_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, tar
                         cells_edge_list=outer_sight_cell_edges,
                         cell_incidences=outer_sight_cell_incidences,
                         graph=outer_graph)
+
+    # Select Sight Cells which (Together)
+    selected_outer_sight_cells = select_sight_cells(cell_incidences=outer_sight_cell_incidences,
+                                                    target_vertices=outer_target_vertices)
 
     # Return
     return outer_graph, outer_positions
