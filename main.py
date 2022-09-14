@@ -139,15 +139,18 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
 
     # Merge Outer Sight Cells with identical incidences
     outer_sight_cell_edges = get_sight_cell_edges(outer_sight_cells, outer_graph)
-    merge_cells_wrapper(face_sight_cells=outer_sight_cells,
-                        cells_edge_list=outer_sight_cell_edges,
-                        cell_incidences=outer_sight_cell_incidences,
-                        graph=outer_graph)
+    outer_sight_cells = merge_cells_wrapper(face_sight_cells=outer_sight_cells,
+                                            cells_edge_list=outer_sight_cell_edges,
+                                            cell_incidences=outer_sight_cell_incidences,
+                                            graph=outer_graph)
 
     # TODO: UPDATE THE GRAPH BY REMOVING DISCONNECTED, AND VIRTUAL VERTICES WHICH ARE CONNECTED TO ONLY VIRTUALS
     print(f"\nouter edge map: {outer_edge_map}")
     print(f"\nouter edge list: {outer_sight_cell_edges}")
-    update_sight_cell_graph(outer_sight_cells, outer_graph, outer_positions)
+    update_sight_cell_graph(sight_cells=outer_sight_cells,
+                            edge_map=outer_edge_map,
+                            graph=outer_graph,
+                            positions=outer_positions)
 
     # Draw Merged Embedding
     draw_graph(graph=outer_graph, positions=outer_positions)

@@ -219,6 +219,7 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
     merge_edges = cells_edge_list[cell_a].intersection(cells_edge_list[cell_b])
     incidence_a, incidence_b = cell_incidences[cell_a], cell_incidences[cell_b]
     non_overlapping_incidences = incidence_a ^ incidence_b
+
     if non_overlapping_incidences or len(merge_edges) == 0:
         return False, None
 
@@ -534,20 +535,25 @@ def check_vertex_visibility_by_crossing(vertex_a, vertex_b, candidate_edges, pos
 def merge_cells_wrapper(face_sight_cells, cells_edge_list, cell_incidences, graph):
 
     # Try Merging Cells in non-convex face
-    removed_vertices = merge_face_sight_cells(cells=list(face_sight_cells),
+    face_sight_cells = list(face_sight_cells) # todo: this is does not work
+    removed_vertices = merge_face_sight_cells(cells=face_sight_cells,
                                               cells_edge_list=cells_edge_list,
                                               cell_incidences=cell_incidences,
                                               removed_vertices=[],
                                               graph=graph)
-
+    print(face_sight_cells)
     # Update the face's cells, their incidents, and edges based on deleted vertices
-    update_merged_sight_cell_data(face_cells=face_sight_cells,
-                                  face_cell_incidences=cell_incidences,
-                                  face_cell_edges=cells_edge_list,
-                                  deleted_vertices=frozenset(removed_vertices))
+    # TODO: replace with update_sight_cell_graph()
+    # update_merged_sight_cell_data(face_cells=face_sight_cells,
+    #                               face_cell_incidences=cell_incidences,
+    #                               face_cell_edges=cells_edge_list,
+    #                               deleted_vertices=frozenset(removed_vertices))
+    return set(face_sight_cells)
 
 
-def update_sight_cell_graph(sight_cells, graph, positions):
+def update_sight_cell_graph(sight_cells, edge_map, graph, positions):
+    print(f"\nsight cells:")
+    [print(cell) for cell in sight_cells]
 
     # Replace all vertices which are virtual, have a degree of 2, and connected only to virtual vertices
     virtual_nodes = nx.get_node_attributes(graph, "virtual")
@@ -557,9 +563,13 @@ def update_sight_cell_graph(sight_cells, graph, positions):
 
         # Get the current node's edges
         node_edges = list(graph.edges(node))
+        print(f"\nnode: {node} with edges {node_edges}")
 
         # If the vertex is disconnected, remove it
         if len(node_edges) == 0:
+            print("SINGLETON")
+            remove_vertex_from_sight_cell(vertex=node, sight_cells=sight_cells)
+            remove_edges_with_vertex(vertex=node, edge_map=edge_map)
             graph.remove_node(node)
             continue
 
@@ -573,11 +583,68 @@ def update_sight_cell_graph(sight_cells, graph, positions):
 
         # Get vertices adjacent to current node and connect them with a new edge
         vertex_a, vertex_b = set(node_edges[0]) - {node}, set(node_edges[1]) - {node}
-        graph.add_edge(u_of_edge=vertex_a.pop(), v_of_edge=vertex_b.pop())
+        new_edge = (vertex_a.pop(), vertex_b.pop())
+        graph.add_edge(u_of_edge=new_edge[0], v_of_edge=new_edge[1])
 
-        # Remove the original vertex and its edges
+        # Remove the original vertex, its position, and its edges
         graph.remove_edges_from(node_edges)
         graph.remove_node(node)
+        positions.pop(node)
+
+        # Remove Edge from edge map and vertex from sight cell
+        replace_edges_with_replacement(edges=node_edges, replacement=new_edge, edge_map=edge_map)
+        remove_vertex_from_sight_cell(vertex=node, sight_cells=sight_cells)
+
+    print(f"\nsight cells:")
+    [print(cell) for cell in sight_cells]
+
+
+def remove_edges_with_vertex(vertex, edge_map):
+    for mapped_edge in list(edge_map.keys()):
+        if vertex in mapped_edge:
+            edge_map.pop(mapped_edge)
+            continue
+        for sub_edge in list(edge_map[mapped_edge]):
+            if vertex not in sub_edge:
+                continue
+            edge_map[mapped_edge].remove(sub_edge)
+
+
+def replace_edges_with_replacement(edges, replacement, edge_map):
+
+    # Iterate over all edges in the map
+    for mapped_edge in edge_map.keys():
+
+        # Turn all edges into frozensets and lists thereof into sets
+        mapped_edge_set = set([frozenset(list(edge)) for edge in edge_map[mapped_edge]])
+        remaining_edge_sets = [frozenset(list(edge)) for edge in edges]
+
+        # If both edges (and they should) are in a mapped edge's edge set, replcae it
+        if all([edge in mapped_edge_set for edge in remaining_edge_sets]):
+
+            # Remove the found edges from the mapped edge's edge set
+            [mapped_edge_set.remove(edge) for edge in remaining_edge_sets]
+
+            # Add the replacement edge
+            mapped_edge_set.add(replacement)
+
+            # Replace the mapped edge's edge list with the altered set
+            edge_map[mapped_edge] = [tuple(edge) for edge in mapped_edge_set]
+            print(f"replaced at {mapped_edge} -> {edge_map[mapped_edge]}")
+            return
+
+
+def remove_vertex_from_sight_cell(vertex, sight_cells):
+    for sight_cell in copy.deepcopy(sight_cells):
+        if not sight_cell.intersection({vertex}):
+            continue
+
+        sight_cells.remove(sight_cell)
+        new_cell = set(sight_cell)
+        new_cell.remove(vertex)
+        new_cell = frozenset(new_cell)
+        print(f"found {vertex} in {sight_cell} and replaced with {new_cell}")
+        sight_cells.add(new_cell)
 
 
 def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, graph):
@@ -754,6 +821,7 @@ def get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positio
 
 def update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
                                       edge_to_virtual_vertices, graph, positions, outer=False):
+
     # Update List of Vertices with added vertices and the set of edges which define the face
     face_vertices = get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positions)
     candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
@@ -768,7 +836,8 @@ def update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, 
                                                       outer=outer)
 
     # Update the map of real to virtual edge maps
-    deep_update_of_virtual_edge_map(face_edge_map, virtual_edge_map)
+    deep_update_of_virtual_edge_map(complete_map=face_edge_map,
+                                    new_map=virtual_edge_map)
 
     return cells
 
@@ -855,7 +924,6 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
     # Define the embedding boundary and the face edge map
     bound_vertices, bound_edges = add_boundary_to_graph(bounds, outer_graph, outer_positions)
     face_edge_map = {edge: [edge] for edge in all_face_edges + bound_edges}
-    # TODO: change face_edge_map to work with frozensets instead of edge tuples -> maybe a problem later
 
     # Iterate over all faces
     selected_face_list = list(selected_faces)
@@ -917,13 +985,20 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
 
 
 def deep_update_of_virtual_edge_map(complete_map, new_map):
+
+    # TODO: edges must be frozensets -> mapping of (x, y) does not work for (y, x)
+    #  maybe revamp this whole framework to just work on frozensets instead of tuples?
     for virtual_edge in new_map.keys():
-        mapped = [real_edge for real_edge in complete_map.keys() if virtual_edge in complete_map[real_edge]]
+        is_mapped = lambda edge, edge_list: frozenset(list(edge)) in [frozenset(e) for e in edge_list]
+        mapped = [real_edge for real_edge in complete_map.keys() if is_mapped(virtual_edge, complete_map[real_edge])]
+
         if len(mapped) == 1:
             real_edge = mapped[0]
-            index = complete_map[real_edge].index(virtual_edge)
-            complete_map[real_edge][index:index] = new_map[virtual_edge]
-            complete_map[real_edge].remove(virtual_edge)
+            real_edge_set_map = [frozenset(edge) for edge in complete_map[real_edge]]
+            index = real_edge_set_map.index(frozenset(virtual_edge))
+            real_edge_set_map[index:index] = new_map[virtual_edge]
+            real_edge_set_map.remove(frozenset(virtual_edge))
+            complete_map[real_edge] = [tuple(edge) for edge in real_edge_set_map]
         elif len(mapped) > 1:
             sys.exit("SHIT'S FUCKED")
         else:
