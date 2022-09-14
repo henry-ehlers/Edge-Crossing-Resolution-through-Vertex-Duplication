@@ -120,11 +120,12 @@ def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edge
             face_edge_list = unlist([face_edge_map[edge] for edge in face_edges[face]])
 
             # Get Incidences of sight cells in current face
-            # target_vertices_in_face = face.intersection(target_vertices)
-            visibility[face_index] = get_sight_cell_incidence(cell,
-                                                              target_vertices,
-                                                              face_edge_list,
-                                                              positions)
+            #target_vertices_in_face = face.intersection(target_vertices)
+            # print(f"target vertices {target_vertices} in search: {target_vertices_in_face}")
+            visibility[face_index] = get_sight_cell_incidence(sight_cell_vertices=cell,
+                                                              target_vertices=target_vertices,
+                                                              real_face_edges=face_edge_list,
+                                                              positions=positions)
         sight_cell_incidences[cell] = set.intersection(*visibility)
 
     # Return a
@@ -147,6 +148,7 @@ def get_face_sight_cells_incidences(face_sight_cells, face_edge_list, target_ver
 
 
 def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edges, positions):
+    """"""
     # Check what targets are already in the current sight cell
     targets_in_cell = sight_cell_vertices.intersection(target_vertices)
     remaining_targets = set(target_vertices) - targets_in_cell
@@ -821,8 +823,7 @@ def get_subgraph(nodes, edges, graph, positions):
     return sub_graph, sub_positions
 
 
-
-def get_outer_face_sight_cells(selected_faces, ordered_face_edges, p_graph, p_positions, is_cycle,
+def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positions, is_cycle,
                                bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
     # TODO: a bisected REAL edge will not be extended since we are looking up the original edge sets, whcih don't
     # TODO: exist anymore, i think. look at (7, 14) and (14, 8) not being extended in 1.5
@@ -832,10 +833,10 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, p_graph, p_po
     outer_face_vertices = list(set(unlist(all_face_edges)))
 
     # Create A graph consisting only of outer-face defining vertices and edges
-    graph, positions = get_subgraph(outer_face_vertices, all_face_edges, p_graph, p_positions)
+    outer_graph, outer_positions = get_subgraph(outer_face_vertices, all_face_edges, graph, positions)
 
     # Define the embedding boundary and the face edge map
-    bound_vertices, bound_edges = add_boundary_to_graph(bounds, graph, positions)
+    bound_vertices, bound_edges = add_boundary_to_graph(bounds, outer_graph, outer_positions)
     face_edge_map = {edge: [edge] for edge in all_face_edges + bound_edges}
     # TODO: change face_edge_map to work with frozensets instead of edge tuples -> maybe a problem later
 
@@ -843,7 +844,7 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, p_graph, p_po
     selected_face_list = list(selected_faces)
     for face_index, face in enumerate(selected_face_list):
         print(f"\nFace: {face}")
-        print(graph.edges)
+        print(outer_graph.edges)
         if not is_cycle[face]:
             print("SKIP BECAUSE FACE DOES NOT HAVE EDGES")
             continue
@@ -854,14 +855,14 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, p_graph, p_po
 
         # Project sight-lines within the currently selected face against itself
         edge_to_virtual_vertices, added_vertices = project_face_against_self(
-            face, ordered_face_edges, face_edge_map, graph, positions, bounds, outer=True)
+            face, ordered_face_edges, face_edge_map, outer_graph, outer_positions, bounds, outer=True)
 
         # Update Graph and Virtual Edge Map with New added vertices
         update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
-                                          edge_to_virtual_vertices, graph, positions, outer=True)
+                                          edge_to_virtual_vertices, outer_graph, outer_positions, outer=True)
 
         # DEBUG: Draw Initial Embedding
-        draw_graph(graph=graph, positions=positions)
+        draw_graph(graph=outer_graph, positions=outer_positions)
         save_drawn_graph(f"./graph_{face}.png")
 
         # Iterate over all other faces that form the outer face
@@ -874,7 +875,7 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, p_graph, p_po
             # Check if the Other face is a cycle or not -> check angle visibilities + edge crossing visibilities
             if is_cycle[other_face]:
                 edge_to_virtual_vertices, added_vertices = project_outer_face_against_another_face(
-                    face, other_face, face_edge_map, ordered_face_edges, positions, graph, bounds)
+                    face, other_face, face_edge_map, ordered_face_edges, outer_positions, outer_graph, bounds)
             elif not is_cycle[other_face] and len(other_face) > 1:
                 # TODO: if other face is not a cycle -> special visiblility checking of ONLY edge intersections
                 continue
@@ -887,21 +888,21 @@ def get_outer_face_sight_cells(selected_faces, ordered_face_edges, p_graph, p_po
             # Update Graph and Virtual Edge Map with New added vertices
             print(f"\n added vertices: {added_vertices}")
             update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
-                                              edge_to_virtual_vertices, graph, positions, outer=True)
+                                              edge_to_virtual_vertices, outer_graph, outer_positions, outer=True)
 
             # Draw Initial Embedding
-            draw_graph(graph=graph, positions=positions)
+            draw_graph(graph=outer_graph, positions=outer_positions)
             save_drawn_graph(f"./graph_{face}+{other_face}.png")
 
     # Identify all faces (i.e. sight cells in outer face)
-    face_graph = nx.Graph(graph.subgraph(nodes=list(set(unlist(unlist(list(face_edge_map.values())))))))
-    sight_cells = find_inner_faces(face_graph, positions=positions)
+    face_graph = nx.Graph(outer_graph.subgraph(nodes=list(set(unlist(unlist(list(face_edge_map.values())))))))
+    sight_cells = find_inner_faces(face_graph, positions=outer_positions)
 
     # Remove the original set of faces that defined the outer face
     [sight_cells.remove(cell) for cell in copy.copy(sight_cells) for face in selected_faces if face.issubset(cell)]
 
-    # Return the identified sight cells
-    return sight_cells, face_edge_map
+    # Return the identified sight cells and the subgraph
+    return sight_cells, face_edge_map, outer_graph, outer_positions
 
 
 def deep_update_of_virtual_edge_map(complete_map, new_map):

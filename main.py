@@ -71,21 +71,24 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
 
             # Identify all sight cells in the outer face
             outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=3)
-            outer_sight_cells, outer_edge_map = get_outer_face_sight_cells(selected_faces=outer_faces,
-                                                                           ordered_face_edges=sorted_outer_edges,
-                                                                           p_graph=p_graph,
-                                                                           p_positions=p_positions,
-                                                                           is_cycle=is_cycle,
-                                                                           bounds=outer_bounds)
+            outer_sight_cells, outer_edge_map, outer_graph, outer_positions = get_outer_face_sight_cells(
+                selected_faces=outer_faces,
+                ordered_face_edges=sorted_outer_edges,
+                graph=p_graph,
+                positions=p_positions,
+                is_cycle=is_cycle,
+                bounds=outer_bounds)
+
             print(f"\n outer sight cells:")
             [print(cell) for cell in outer_sight_cells]
 
-            # Calculate the incidence of all sight cells
+            # Calculate the incidence of all sight cells to the outer face's target incident vertices
+            outer_target_vertices = face.intersection(target_vertices)
             outer_sight_cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=outer_sight_cells,
-                                                                               target_vertices=target_vertices,
+                                                                               target_vertices=outer_target_vertices,
                                                                                face_edges=sorted_outer_edges,
                                                                                face_edge_map=outer_edge_map,
-                                                                               positions=p_positions)
+                                                                               positions=outer_positions)
             print(f"\n outer sight cell incidences:")
             [print(f"{cell} - {outer_sight_cell_incidences[cell]}") for cell in outer_sight_cell_incidences.keys()]
 
