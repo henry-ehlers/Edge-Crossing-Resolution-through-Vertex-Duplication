@@ -534,7 +534,6 @@ def check_vertex_visibility_by_crossing(vertex_a, vertex_b, candidate_edges, pos
 def merge_cells_wrapper(face_sight_cells, cells_edge_list, cell_incidences, graph):
 
     # Try Merging Cells in non-convex face
-    # TODO: t
     removed_vertices = merge_face_sight_cells(cells=list(face_sight_cells),
                                               cells_edge_list=cells_edge_list,
                                               cell_incidences=cell_incidences,
@@ -546,6 +545,39 @@ def merge_cells_wrapper(face_sight_cells, cells_edge_list, cell_incidences, grap
                                   face_cell_incidences=cell_incidences,
                                   face_cell_edges=cells_edge_list,
                                   deleted_vertices=frozenset(removed_vertices))
+
+
+def update_sight_cell_graph(sight_cells, graph, positions):
+
+    # Replace all vertices which are virtual, have a degree of 2, and connected only to virtual vertices
+    virtual_nodes = nx.get_node_attributes(graph, "virtual")
+
+    # Iterate over all vertices to determine whether it must be removed
+    for node in list(graph.nodes()):
+
+        # Get the current node's edges
+        node_edges = list(graph.edges(node))
+
+        # If the vertex is disconnected, remove it
+        if len(node_edges) == 0:
+            graph.remove_node(node)
+            continue
+
+        # If the node has a degree of more than 2, it must remain
+        if len(node_edges) > 2 or len(node_edges) == 1:
+            continue
+
+        # If the node is not virtual, do not consider it
+        if node not in virtual_nodes:
+            continue
+
+        # Get vertices adjacent to current node and connect them with a new edge
+        vertex_a, vertex_b = set(node_edges[0]) - {node}, set(node_edges[1]) - {node}
+        graph.add_edge(u_of_edge=vertex_a.pop(), v_of_edge=vertex_b.pop())
+
+        # Remove the original vertex and its edges
+        graph.remove_edges_from(node_edges)
+        graph.remove_node(node)
 
 
 def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, graph):
