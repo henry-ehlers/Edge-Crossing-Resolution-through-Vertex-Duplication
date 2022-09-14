@@ -103,8 +103,7 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
 
 
 def planarize_graph(graph, positions, edge_crossings):
-    print(f"edge crossings: {edge_crossings}")
-    print(f"n crossings: {len(edge_crossings)}")
+
     # Extract basic properties of graph
     index = max(list(graph.nodes()))
     edges = list(graph.edges)  # create list for easier indexing
@@ -122,7 +121,6 @@ def planarize_graph(graph, positions, edge_crossings):
 
             # Update index
             index += 1
-            print(f"adding new virtual node {index} at crossing of {edge_a} and {edge_b}")
 
             # Add new vertex to graph and drawing's locations
             planar_graph.add_node(node_for_adding=index, split=0, target=0, virtual=1, boundary=0, segment=0)
@@ -235,17 +233,14 @@ def line_intersection(p1, p2, p3, p4):
     x4, y4 = float(p4[0]), float(p4[1])
 
     denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-    # print(f"denominator: {denominator}")
     if denominator == 0:  # parallel
         return None
     ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
-    # print(f"ua: {ua}")
 
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
     if ua <= 0 or ua >= 1:
         return None
     ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
-    # print(f"ub: {ub}")
 
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
     if ub <= 0 or ub >= 1:

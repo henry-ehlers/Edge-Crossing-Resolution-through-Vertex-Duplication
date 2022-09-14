@@ -125,11 +125,9 @@ def find_singleton_cycles(cycles, graph, as_set=True):
 def find_inner_faces(graph, positions=None, as_set=True):
 
     # TODO: in all subsequent functions which use the face dictionary, check the length of the face (no singletons)
-    print(graph.edges)
     # Identify the minimum cycle basis of the graph
     cycles = nx.minimum_cycle_basis(G=graph)
     cycles = set([frozenset(cycle) for cycle in cycles]) if as_set else [set(cycle) for cycle in cycles]
-    print(f"cycles: {cycles}")
 
     # Check for and add Singleton edges as singleton cycles
     find_singleton_cycles(cycles, graph, as_set)
