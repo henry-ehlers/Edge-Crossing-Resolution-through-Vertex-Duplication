@@ -68,41 +68,45 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
                 pass
         else:
             print(f"IS OUTER")
+            outer_graph, outer_positions = select_outer_face_sight_cells(outer_faces=outer_faces,
+                                                                         sorted_outer_edges=sorted_outer_edges,
+                                                                         is_cycle=is_cycle,
+                                                                         target_vertices=target_vertices,
+                                                                         graph=p_graph,
+                                                                         positions=p_positions)
 
-            # Identify all sight cells in the outer face
-            outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=3)
-            outer_sight_cells, outer_edge_map, outer_graph, outer_positions = get_outer_face_sight_cells(
-                selected_faces=outer_faces,
-                ordered_face_edges=sorted_outer_edges,
-                graph=p_graph,
-                positions=p_positions,
-                is_cycle=is_cycle,
-                bounds=outer_bounds)
+    return outer_graph, outer_positions
 
-            print(f"\n outer sight cells:")
-            [print(cell) for cell in outer_sight_cells]
 
-            # Calculate the incidence of all sight cells to the outer face's target incident vertices
-            outer_target_vertices = face.intersection(target_vertices)
-            outer_sight_cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=outer_sight_cells,
-                                                                               target_vertices=outer_target_vertices,
-                                                                               face_edges=sorted_outer_edges,
-                                                                               face_edge_map=outer_edge_map,
-                                                                               positions=outer_positions)
-            print(f"\n outer sight cell incidences:")
-            [print(f"{cell} - {outer_sight_cell_incidences[cell]}") for cell in outer_sight_cell_incidences.keys()]
+def select_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target_vertices, graph, positions):
 
-            # Merge Outer Sight Cells with identical incidences
-            # TODO: merging busted - creates a new vertex where should be none, and also (currently) doesnt use the
-            outer_sight_cell_edges = get_sight_cell_edges(outer_sight_cells, outer_graph)
-            merge_cells_wrapper(face_sight_cells=outer_sight_cells,
-                                cells_edge_list=outer_sight_cell_edges,
-                                cell_incidences=outer_sight_cell_incidences,
-                                graph=outer_graph)
+    # Identify all sight cells in the outer face
+    outer_bounds = get_embedding_square(graph=graph, positions=positions, scaler=3)
+    outer_sight_cells, outer_edge_map, outer_graph, outer_positions = get_outer_face_sight_cells(
+        selected_faces=outer_faces,
+        ordered_face_edges=sorted_outer_edges,
+        graph=graph,
+        positions=positions,
+        is_cycle=is_cycle,
+        bounds=outer_bounds)
 
-            print(f"\n merged outer sight cell incidences:")
-            [print(f"{cell} - {outer_sight_cell_incidences[cell]}") for cell in outer_sight_cell_incidences.keys()]
+    # Calculate the incidence of all sight cells to the outer face's target incident vertices
+    outer_face = set().union(*outer_faces)
+    outer_target_vertices = outer_face.intersection(target_vertices)
+    outer_sight_cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=outer_sight_cells,
+                                                                       target_vertices=outer_target_vertices,
+                                                                       face_edges=sorted_outer_edges,
+                                                                       face_edge_map=outer_edge_map,
+                                                                       positions=outer_positions)
 
+    # Merge Outer Sight Cells with identical incidences
+    outer_sight_cell_edges = get_sight_cell_edges(outer_sight_cells, outer_graph)
+    merge_cells_wrapper(face_sight_cells=outer_sight_cells,
+                        cells_edge_list=outer_sight_cell_edges,
+                        cell_incidences=outer_sight_cell_incidences,
+                        graph=outer_graph)
+
+    # Return
     return outer_graph, outer_positions
 
 
