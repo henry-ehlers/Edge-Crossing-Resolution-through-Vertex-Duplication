@@ -362,10 +362,12 @@ def get_sorted_sight_cell_incidence_table(sight_cell_incidences):
 
 
 def select_sight_cells(cell_incidences, target_vertices):
+    """"""
 
     # Get the incidence table
     incidence_table = get_sorted_sight_cell_incidence_table(cell_incidences)
     print(incidence_table)
+
     # Iterate over all cells and their incidences
     selected_cells, remaining_targets = {}, set(target_vertices)
     for index, row in incidence_table.iterrows():
@@ -807,8 +809,7 @@ def get_subgraph(nodes, edges, graph, positions):
     return sub_graph, sub_positions
 
 
-def get_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positions, is_cycle,
-                               bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
+def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positions, is_cycle, bounds):
     # TODO: a bisected REAL edge will not be extended since we are looking up the original edge sets, whcih don't
     # TODO: exist anymore, i think. look at (7, 14) and (14, 8) not being extended in 1.5
 

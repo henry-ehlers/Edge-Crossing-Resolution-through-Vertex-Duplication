@@ -41,7 +41,10 @@ def get_sight_cells(face_selection, target_vertices,
 
         # Get Sight Cells of Outer Face
         else:
-            cell_selection, cell_graph, cell_positions = select_outer_face_sight_cells(
+            # TODO: do selection AFTER cell getting -> if one is incident to all things, keep, otherwise keep all cells
+            # TODO: don't deepcopy the input-graph, instead update the graph iteratively (for each face)
+            #  HOWEVER: THE FACE'S NEED TO BE UPDATED AS A FUNCTION OF THE NEW VIRTUAL VERTICES
+            cell_selection, cell_graph, cell_positions = get_outer_face_sight_cells(
                 outer_faces=outer_faces,
                 sorted_outer_edges=sorted_outer_face_edges,
                 is_cycle=outer_cycles,
@@ -112,11 +115,12 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
     return
 
 
-def select_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target_vertices, graph, positions):
+def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target_vertices, graph, positions):
 
     # Identify all sight cells in the outer face
     outer_bounds = get_embedding_square(graph=graph, positions=positions, scaler=3)
-    outer_sight_cells, outer_edge_map, outer_graph, outer_positions = get_outer_face_sight_cells(
+    # TODO: DO NOT CREATE NEW GRAPHS
+    outer_sight_cells, outer_edge_map, outer_graph, outer_positions = find_outer_face_sight_cells(
         selected_faces=outer_faces,
         ordered_face_edges=sorted_outer_edges,
         graph=graph,
@@ -140,16 +144,20 @@ def select_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, tar
                         cell_incidences=outer_sight_cell_incidences,
                         graph=outer_graph)
 
+    # TODO: UPDATE THE GRAPH BY REMOVING DISCONNECTED, AND VIRTUAL VERTICES WHICH ARE CONNECTED TO ONLY VIRTUALS
+
     # Draw Merged Embedding
     draw_graph(graph=outer_graph, positions=outer_positions)
     save_drawn_graph(f"./graph_outer_merged.png")
 
     # Select Sight Cells which (Together)
+    # TODO: maybe return ALL unique merged cells -> allow for better reselection?
     selected_outer_sight_cells = select_sight_cells(cell_incidences=outer_sight_cell_incidences,
                                                     target_vertices=outer_target_vertices)
     print(f"selected cells: {selected_outer_sight_cells}")
 
     # Return the selected sight cells and the created graph
+    # TODO: return edge-map to update the whole graph's face set?
     return selected_outer_sight_cells, outer_graph, outer_positions
 
 
