@@ -667,7 +667,7 @@ def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, grap
     face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
 
     if face_edge_crossings:
-        face_graph, face_positions, virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
+        virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
         non_empty_virtual_edges = {k: v for k, v in virtual_edges.items() if v}
         virtual_edge_map.update(non_empty_virtual_edges)
         graph.update(face_graph)
@@ -741,9 +741,12 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
     return edge_to_virtual_vertices, added_vertices
 
 
-def add_boundary_to_graph(bounds, graph, positions, offset=0.2):
+def add_boundary_to_graph(bounds, graph, positions, offset=0.2, largest_index=None):
+
+    start_index = largest_index + 1 if largest_index is not None else max(graph.nodes) + 1
+
     # Define the labels of vertices and their edges
-    bound_vertices = list(range(max(graph.nodes) + 1, max(graph.nodes) + 1 + len(bounds)))
+    bound_vertices = list(range(start_index, start_index + len(bounds)))
     bound_edges = [(bound_vertices[ind], bound_vertices[(ind + 1) % len(bounds)]) for ind in range(0, len(bounds))]
 
     # Update Graph, Edges, and Vertex Positions
@@ -914,7 +917,8 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
     outer_graph, outer_positions = get_subgraph(outer_face_vertices, all_face_edges, graph, positions)
 
     # Define the embedding boundary and the face edge map
-    bound_vertices, bound_edges = add_boundary_to_graph(bounds, outer_graph, outer_positions)
+    bound_vertices, bound_edges = add_boundary_to_graph(bounds, outer_graph, outer_positions,
+                                                        largest_index=max(graph.nodes))
     face_edge_map = {edge: [edge] for edge in all_face_edges + bound_edges}
 
     # Iterate over all faces

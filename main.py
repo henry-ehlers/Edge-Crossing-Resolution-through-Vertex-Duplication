@@ -138,7 +138,6 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
     return incidence_table, [sight_cells, cell_incidences, edge_map, o_graph, o_positions]
 
 
-
 def identify_target_vertex(graph, positions):
     """
 
@@ -198,6 +197,23 @@ def decompose_outer_face(target_vertices, graph, positions):
     return cell_incidence_table, new_graph_object
 
 
+def update_graph_with_sight_cells(graph, positions, cell_graph, cell_positions, new_edge_map):
+    print(f'\nOld Edges: {graph.edges()}')
+    print(f"Old Nodes: {graph.nodes()}")
+
+    print(f'\nNew Edges: {cell_graph.edges()}')
+    print(f"New Nodes: {cell_graph.nodes()}")
+
+    # Remove edges replaced with sets of virtual edges, should they already exist in the graph
+    [graph.remove_edge(u=e[0], v=e[1]) for e in new_edge_map.keys() if graph.has_edge(u=e[0], v=e[1])]
+
+    # Update the position list of vertices (i.e. add new ones; old ones do not change)
+    positions.update(cell_positions)
+
+    # Update the graph with the vertices and virtual edges
+    graph.update(cell_graph)
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
@@ -249,7 +265,6 @@ if __name__ == '__main__':
     for edge in target_edges:
         graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
 
-
     for edge in edges:
         print(f"edge: {edge}")
         graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
@@ -282,22 +297,31 @@ if __name__ == '__main__':
 
     # Planarize Graph after removal of target vertex
     print("\nPlanarize Remaining Graph after target removal")
-    p_graph, p_positions, virtual_edge_set = planarize_graph(graph=r_graph,
-                                                             positions=r_positions,
-                                                             edge_crossings=r_crossings)
+    print(f"largest vertex index: {max(graph.nodes)}")
+    p_graph, p_positions = copy.deepcopy(r_graph), copy.deepcopy(r_positions)
+    virtual_edge_set = planarize_graph(graph=p_graph,
+                                       positions=p_positions,
+                                       edge_crossings=r_crossings,
+                                       largest_index=30)
 
     # Draw the planarized graph
     draw_graph(graph=p_graph, positions=p_positions)
     save_drawn_graph(f"{output_directory}/graph_2.png")
 
     # Select the faces within which to embed the split vertices
-    print("\nSelect Face")
-    # select_embedding_faces(p_graph=p_graph,
-    #                        p_positions=p_positions,
-    #                        target_vertices=target_adjacency)
+    print("\nDecompose The Outer Face")
+    d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
+    incidence_table, cell_graph_object = decompose_outer_face(graph=p_graph,
+                                                              positions=p_positions,
+                                                              target_vertices=target_adjacency)
+    update_graph_with_sight_cells(graph=d_graph,
+                                  positions=d_positions,
+                                  cell_graph=cell_graph_object[3],
+                                  cell_positions=cell_graph_object[4],
+                                  new_edge_map=cell_graph_object[2])
 
-    decompose_outer_face(graph=p_graph, positions=p_positions, target_vertices=target_adjacency)
-
+    draw_graph(graph=d_graph, positions=d_positions)
+    save_drawn_graph(f"{output_directory}/graph_3.png")
 
     sys.exit()
 

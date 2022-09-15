@@ -102,15 +102,13 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
     return virtual_edge_set
 
 
-def planarize_graph(graph, positions, edge_crossings):
+def planarize_graph(graph, positions, edge_crossings, largest_index=None):
 
     # Extract basic properties of graph
-    index = max(list(graph.nodes()))
+    # TODO: THIS INDEX BREAK EVERYTHING SOMEHOW
+    index = largest_index if largest_index is not None else max(graph.nodes)
+    print(f"starting index: {index}")
     edges = list(graph.edges)  # create list for easier indexing
-
-    # Initialize new, planar graph
-    planar_graph = copy.deepcopy(graph)
-    planar_positions = copy.deepcopy(positions)
 
     edge_to_virtual_vertex = {edge: set() for edge in edges}  # have to ensure
     edges_to_be_removed = set()  # could be initialized using size of dictionary 'edge_crossings'
@@ -123,8 +121,8 @@ def planarize_graph(graph, positions, edge_crossings):
             index += 1
 
             # Add new vertex to graph and drawing's locations
-            planar_graph.add_node(node_for_adding=index, split=0, target=0, virtual=1, boundary=0, segment=0)
-            planar_positions[index] = np.asarray(edge_crossings[edge_a][edge_b])
+            graph.add_node(node_for_adding=index, split=0, target=0, virtual=1, boundary=0, segment=0)
+            positions[index] = np.asarray(edge_crossings[edge_a][edge_b])
 
             # Log connections to new virtual vertex to be added and original (real) edges to be removed
             [edge_to_virtual_vertex[edge].add(index) for edge in [edge_a, edge_b]]
@@ -132,11 +130,11 @@ def planarize_graph(graph, positions, edge_crossings):
 
     # Remove original edge set and add virtual edge set
 
-    virtual_edge_set = add_virtual_edges(planar_graph, planar_positions, edge_to_virtual_vertex)
-    remove_edges(planar_graph, list(edges_to_be_removed))
+    virtual_edge_set = add_virtual_edges(graph, positions, edge_to_virtual_vertex)
+    remove_edges(graph, list(edges_to_be_removed))
 
     #  return some new graph and new vertex positions
-    return planar_graph, planar_positions, virtual_edge_set
+    return virtual_edge_set
 
 
 def locate_edge_crossings(graph, positions):
