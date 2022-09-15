@@ -128,9 +128,11 @@ def find_inner_faces(graph, positions=None, as_set=True):
     # Identify the minimum cycle basis of the graph
     cycles = nx.minimum_cycle_basis(G=graph)
     cycles = set([frozenset(cycle) for cycle in cycles]) if as_set else [set(cycle) for cycle in cycles]
+    print(f"\ncycles: {cycles}")
 
     # Check for and add Singleton edges as singleton cycles
     find_singleton_cycles(cycles, graph, as_set)
+    print(f"\nsingleton: {cycles}")
 
     # If no positions are given with which to check the validity of the cycles, return the cycles as faces
     if positions is None:
@@ -146,6 +148,8 @@ def find_inner_faces(graph, positions=None, as_set=True):
                      sorted_edges=cycle_ordered_edges,
                      graph=graph,
                      positions=positions)
+
+    print(f"\nshrunk: {cycles}")
 
     # Return set of faces (frozen sets of vertices)
     return faces

@@ -47,6 +47,9 @@ def remove_target_vertex(graph, positions, target_vertex):
     remaining_graph = copy.deepcopy(graph)
     remaining_graph.remove_node(target_vertex)
 
+    # Remove all edges attached to vertex (not necessary)
+    remaining_graph.remove_edges_from(graph.edges(target_vertex))
+
     # Return copies of graph and positions without target
     return remaining_graph, remaining_positions
 
@@ -102,10 +105,10 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
     return virtual_edge_set
 
 
-def planarize_graph(graph, positions, edge_crossings):
+def planarize_graph(graph, positions, edge_crossings, index=None):
 
     # Extract basic properties of graph
-    index = max(list(graph.nodes()))
+    index = index if index is not None else max(list(graph.nodes()))
     edges = list(graph.edges)  # create list for easier indexing
 
     # Initialize new, planar graph
