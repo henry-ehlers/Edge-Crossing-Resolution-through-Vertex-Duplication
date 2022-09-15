@@ -139,22 +139,28 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
 
     # Merge Outer Sight Cells with identical incidences
     outer_sight_cell_edges = get_sight_cell_edges(outer_sight_cells, outer_graph)
-    outer_sight_cells = merge_cells_wrapper(face_sight_cells=outer_sight_cells,
-                                            cells_edge_list=outer_sight_cell_edges,
-                                            cell_incidences=outer_sight_cell_incidences,
-                                            graph=outer_graph)
-
-    # TODO: UPDATE THE GRAPH BY REMOVING DISCONNECTED, AND VIRTUAL VERTICES WHICH ARE CONNECTED TO ONLY VIRTUALS
-    print(f"\nouter edge map: {outer_edge_map}")
-    print(f"\nouter edge list: {outer_sight_cell_edges}")
-    update_sight_cell_graph(sight_cells=outer_sight_cells,
-                            edge_map=outer_edge_map,
-                            graph=outer_graph,
-                            positions=outer_positions)
+    outer_sight_cells, outer_sight_cell_incidences = merge_cells_wrapper(face_sight_cells=outer_sight_cells,
+                                                                         cell_incidences=outer_sight_cell_incidences,
+                                                                         cells_edge_list=outer_sight_cell_edges,
+                                                                         graph=outer_graph)
 
     # Draw Merged Embedding
     draw_graph(graph=outer_graph, positions=outer_positions)
     save_drawn_graph(f"./graph_outer_merged.png")
+
+    # TODO: UPDATE THE GRAPH BY REMOVING DISCONNECTED, AND VIRTUAL VERTICES WHICH ARE CONNECTED TO ONLY VIRTUALS
+    print(f"\nouter edge map: {outer_edge_map}")
+    print(f"\nouter edge list: {outer_sight_cell_edges}")
+    outer_sight_cells, outer_sight_cell_incidences, outer_edge_map = update_sight_cell_graph(
+        sight_cells=outer_sight_cells,
+        cell_incidences=outer_sight_cell_incidences,
+        edge_map=outer_edge_map,
+        graph=outer_graph,
+        positions=outer_positions)
+
+    # Draw Merged Embedding
+    draw_graph(graph=outer_graph, positions=outer_positions)
+    save_drawn_graph(f"./graph_outer_merged_updated.png")
 
     # Select Sight Cells which (Together)
     # TODO: maybe return ALL unique merged cells -> allow for better reselection?

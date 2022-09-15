@@ -185,32 +185,28 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, removed_vert
             cell_a, cell_b = cells[cell_index_a], cells[cell_index_b]
 
             # Attempt to merge the two cells, return a boolean for success and a (possibly empty) vertex ID
-            merge_successful, removed = try_merge_two_sight_cells(cell_a=cell_a,
-                                                                  cell_b=cell_b,
-                                                                  cells=cells,
-                                                                  cells_edge_list=cells_edge_list,
-                                                                  cell_incidences=cell_incidences,
-                                                                  graph=graph)
+            merge_successful = try_merge_two_sight_cells(cell_a=cell_a,
+                                                         cell_b=cell_b,
+                                                         cells=cells,
+                                                         cells_edge_list=cells_edge_list,
+                                                         cell_incidences=cell_incidences,
+                                                         graph=graph)
 
             # If the merge was successful, recurse
             if merge_successful:
 
-                # If a vertex was removed, keep track if its removal
-                if removed:
-                    [removed_vertices.append(removed_vertex) for removed_vertex in removed]
-
                 # Recurse and repeat merging
-                removed_vertices = merge_face_sight_cells(cells=cells,
-                                                          cells_edge_list=cells_edge_list,
-                                                          cell_incidences=cell_incidences,
-                                                          removed_vertices=removed_vertices,
-                                                          graph=graph)
+                merge_face_sight_cells(cells=cells,
+                                       cells_edge_list=cells_edge_list,
+                                       cell_incidences=cell_incidences,
+                                       removed_vertices=removed_vertices,
+                                       graph=graph)
 
                 # Exit recursion (as the set of cells has changed) and return the removed vertices
-                return removed_vertices
+                return
 
     # Final loop, nothing left to merge, return the removed vertices
-    return removed_vertices
+    return
 
 
 def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incidences, graph):
@@ -221,7 +217,7 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
     non_overlapping_incidences = incidence_a ^ incidence_b
 
     if non_overlapping_incidences or len(merge_edges) == 0:
-        return False, None
+        return False
 
     # Determine the new cell's vertex set and edge list
     new_edge_set = cells_edge_list[cell_a].union(cells_edge_list[cell_b] - merge_edges)
@@ -240,40 +236,12 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
     [cell_incidences.pop(cell_key, None) for cell_key in [cell_a, cell_b]]
 
     # Update the graph
-    common_vertices = []
     for merge_edge in merge_edges:
-        update_merge_sight_cell_graph(merge_edge, graph)
-        # todo: make common vertex merging work
-        # merge_edge = list(merge_edge)
-        # common_vertex = [vertex for vertex in merge_edge[0] if vertex in merge_edge[1] and vertex in merge_edge[0]]
-        # print(f"common vertex: {common_vertex}")
-        # common_vertices.append(common_vertex)
+        merge_edge = list(merge_edge)
+        graph.remove_edge(u=merge_edge[0], v=merge_edge[1])
 
     # The merge has successfully occurred
-    return True, common_vertices
-
-
-def update_merge_sight_cell_graph(merge_edge, graph):
-    merge_edge = list(merge_edge)
-    graph.remove_edge(u=merge_edge[0], v=merge_edge[1])
-
-    # Identify a vertex connected to deleted edge which is couched between virtual edges. Remove vertex and replace edge
-    vertex_edges, common_vertex = unlist([list(graph.edges(v)) for v in merge_edge if len(graph.edges(v)) == 2]), None
-
-    # todo: maybe clean up the graph of non-connected and virtual edges?
-    # if vertex_edges:
-    #     # Define a new edge which skips the now singleton vertex
-    #     new_edge = [vertex for vertex in unlist(vertex_edges) if vertex not in merge_edge]
-    #     real_edge = all([get_graph_entity_data(graph.nodes, vertex, "virtual", 0) for vertex in new_edge])
-    #     graph.add_edge(u_of_edge=new_edge[0], v_of_edge=new_edge[1], virtual=0 if real_edge else 1)
-    #     print(f"Removed Edges {vertex_edges} with {new_edge}")
-    #     # Remove the singleton virtual vertex from the graph and cells
-    #     common_vertex = set(vertex_edges[0]).intersection(set(vertex_edges[1])).pop()
-    #     graph.remove_node(common_vertex)
-    #     print(f"REMOVING VERTEX {common_vertex}")
-    #     return common_vertex
-
-    return None
+    return True
 
 
 def update_merged_sight_cell_data(face_cells, face_cell_incidences, face_cell_edges, deleted_vertices):
@@ -532,26 +500,29 @@ def check_vertex_visibility_by_crossing(vertex_a, vertex_b, candidate_edges, pos
     return True
 
 
-def merge_cells_wrapper(face_sight_cells, cells_edge_list, cell_incidences, graph):
+def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_list, graph):
 
     # Try Merging Cells in non-convex face
     face_sight_cells = list(face_sight_cells) # todo: this is does not work
-    removed_vertices = merge_face_sight_cells(cells=face_sight_cells,
-                                              cells_edge_list=cells_edge_list,
-                                              cell_incidences=cell_incidences,
-                                              removed_vertices=[],
-                                              graph=graph)
-    print(face_sight_cells)
+    merge_face_sight_cells(cells=face_sight_cells,
+                           cells_edge_list=cells_edge_list,
+                           cell_incidences=cell_incidences,
+                           removed_vertices=[],
+                           graph=graph)
+
+    print(f"\nCELL INCIDENCES:")
+    print(cell_incidences)
+
     # Update the face's cells, their incidents, and edges based on deleted vertices
     # TODO: replace with update_sight_cell_graph()
     # update_merged_sight_cell_data(face_cells=face_sight_cells,
     #                               face_cell_incidences=cell_incidences,
     #                               face_cell_edges=cells_edge_list,
     #                               deleted_vertices=frozenset(removed_vertices))
-    return set(face_sight_cells)
+    return set(face_sight_cells), cell_incidences
 
 
-def update_sight_cell_graph(sight_cells, edge_map, graph, positions):
+def update_sight_cell_graph(sight_cells, cell_incidences, edge_map, graph, positions):
     print(f"\nsight cells:")
     [print(cell) for cell in sight_cells]
 
@@ -568,6 +539,7 @@ def update_sight_cell_graph(sight_cells, edge_map, graph, positions):
         # If the vertex is disconnected, remove it
         if len(node_edges) == 0:
             print("SINGLETON")
+            remove_elements_from_dictionary_frozenset_key(element=node, dictionary=cell_incidences)
             remove_vertex_from_sight_cell(vertex=node, sight_cells=sight_cells)
             remove_edges_with_vertex(vertex=node, edge_map=edge_map)
             graph.remove_node(node)
@@ -592,13 +564,35 @@ def update_sight_cell_graph(sight_cells, edge_map, graph, positions):
         positions.pop(node)
 
         # Remove Edge from edge map and vertex from sight cell
+        remove_elements_from_dictionary_frozenset_key(element=node, dictionary=cell_incidences)
         replace_edges_with_replacement(edges=node_edges, replacement=new_edge, edge_map=edge_map)
+        remove_edges_with_vertex(vertex=node, edge_map=edge_map)
         remove_vertex_from_sight_cell(vertex=node, sight_cells=sight_cells)
 
+    # Remove Edges which do not have any virtual maps
+    [edge_map.pop(key_edge) for key_edge in list(edge_map.keys()) if (len(edge_map.get(key_edge)) == 0)]
+
+    print(f"\nCELL incidences:")
+    [print(f"{key} - {cell_incidences[key]}") for key in cell_incidences.keys()]
     print(f"\nsight cells:")
     [print(cell) for cell in sight_cells]
     print(f"\nedge map:")
     [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]  # TODO: THERE ARE REMAINING EDGES DANGLING
+
+    return sight_cells, cell_incidences, edge_map
+
+
+def remove_elements_from_dictionary_frozenset_key(element, dictionary):
+    print(f"trying to remove {element} from cell incidence dictionary")
+    for key in list(dictionary.keys()):
+        if not key.intersection({element}):
+            continue
+        print(f"mapped to face {key} with values {dictionary[key]}")
+        new_key = set(key)
+        new_key.remove(element)
+        dictionary[frozenset(new_key)] = copy.copy(dictionary[key])
+        dictionary.pop(key)
+
 
 def remove_edges_with_vertex(vertex, edge_map):
     for mapped_edge in list(edge_map.keys()):
