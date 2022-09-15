@@ -1,67 +1,60 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 import itertools as it
+import pandas as pd
 import numpy as np
 import timeit
 import sys
 
-from src.graph_simulation import *
-from src.graph_drawing import *
-from src.edge_crossings import *
-from src.diagnostics import *
-from src.line_segments import *
-from src.vertex_splitting import *
 from src.sight_cells import *
 from src.faces import *
 
 
-def get_sight_cells(face_selection, target_vertices,
-                    inner_faces, outer_faces,
-                    sorted_inner_face_edges, sorted_outer_face_edges,
-                    inner_cycles, outer_cycles,
-                    graph, positions):
+def check_sight_cells(face_incidence_table, target_vertices,
+                      inner_faces, outer_faces,
+                      sorted_inner_face_edges, sorted_outer_face_edges,
+                      inner_cycles, outer_cycles,
+                      graph, positions):
+    # Select the top faces to investigate
+    # face_selection = get_maximally_incident_faces(face_incidence_table)
+    # selected_faces = [selected_face[1] for selected_face in face_selection]
+    print(f"\nsorted outer edges: {sorted_outer_face_edges}")
+    print(f"\nsorted inner edges: {sorted_inner_face_edges}")
 
     # Initialize the objects in which to store each face's selected cells, their graphs, and positions
-    selected_faces = [selected_face[1] for selected_face in face_selection]
-    cell_selections = {face: {} for face in selected_faces}
-    selected_cell_graph = {face: None for face in selected_faces}
-    selected_cell_positions = {face: None for face in selected_faces}
+    face_selection = face_incidence_table.loc[1]
+    selected_faces = (face_selection.at["outer"], face_selection.at["face_a"]), \
+                     (False, face_selection.at["face_b"])
+    print(f"face selection: {face_selection}")
+    print(f"selected faces: {selected_faces}")
 
     # Check for convexity
-    for selected_face in face_selection:
+    for selected_face in selected_faces:
         is_outer, face = selected_face[0], selected_face[1]
+        face_incidence = set(target_vertices).intersection(set(face))
 
         # Get Sight Cells of Inner Face
         if not is_outer:
             face_edges = sorted_inner_face_edges[face]
             if is_inner_face_convex(face_edges, p_positions):
-                cell_selection, cell_graph, cell_positions = {face: face.intersection(target_vertices)}, None, None
+                cell_incidence_table = pd.DataFrame(data={"sight_cell": [tuple(face)],
+                                                          "incidence": [face_incidence],
+                                                          "n_incidence": [len(face_incidence)]})
+                print(cell_incidence_table)
+                new_graph = []
             else:
                 cell_selection, cell_graph, cell_positions = None, None, None
 
         # Get Sight Cells of Outer Face
         else:
-            # TODO: do selection AFTER cell getting -> if one is incident to all things, keep, otherwise keep all cells
-            # TODO: don't deepcopy the input-graph, instead update the graph iteratively (for each face)
-            #  HOWEVER: THE FACE'S NEED TO BE UPDATED AS A FUNCTION OF THE NEW VIRTUAL VERTICES
-            cell_selection, cell_graph, cell_positions = get_outer_face_sight_cells(
-                outer_faces=outer_faces,
-                sorted_outer_edges=sorted_outer_face_edges,
-                is_cycle=outer_cycles,
-                target_vertices=target_vertices,
-                graph=graph,
-                positions=positions)
+            cell_incidence_table, new_graph = get_outer_face_sight_cells(outer_faces=outer_faces,
+                                                                         sorted_outer_edges=sorted_outer_face_edges,
+                                                                         is_cycle=outer_cycles,
+                                                                         target_vertices=target_vertices,
+                                                                         graph=graph,
+                                                                         positions=positions)
 
-        # Store Selected Results
-        selected_cell_graph[face] = cell_graph
-        selected_cell_positions[face] = cell_positions
-        cell_selections[face].update(cell_selection)
-
-    print(f"selected_cell_graphs: {selected_cell_graph}")
-    print(f"selected_cell_positions: {selected_cell_positions}")
-    print(f"cell_selections: {cell_selections}")
-
-    return cell_selections, selected_cell_graph, selected_cell_positions
+    return
 
 
 def select_embedding_faces(p_graph, p_positions, target_vertices):
@@ -77,7 +70,7 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
 
     #
     outer_face_identifier = frozenset(set.union(*[set(outer_face) for outer_face in outer_faces]))
-    sorted_outer_face__edges = {outer_face: sort_face_edges(outer_face_edges[outer_face])
+    sorted_outer_face_edges = {outer_face: sort_face_edges(outer_face_edges[outer_face])
                                 for outer_face in outer_faces if is_cycle[outer_face]}
 
     # Get the incidences of the outer face
@@ -91,19 +84,13 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
                                                     outer_face_incidences=outer_face_incidences)
     print(face_incidence_table)
 
-    # selected_faces = get_maximally_incident_faces(face_incidence_table)
-    artificial_selection = face_incidence_table.loc[1]
-    selected_faces = (artificial_selection.at["outer"], artificial_selection.at["face_a"]),\
-                     (False, artificial_selection.at["face_b"])
-    print(f"selected faces: {selected_faces}")
-
-    cell_selections, selected_cell_graph, selected_cell_positions = get_sight_cells(
-        face_selection=selected_faces,
+    check_sight_cells(
+        face_incidence_table=face_incidence_table,
         target_vertices=target_vertices,
         inner_faces=inner_faces,
         outer_faces=outer_faces,
         sorted_inner_face_edges=sorted_inner_face_edges,
-        sorted_outer_face_edges=sorted_outer_face__edges,
+        sorted_outer_face_edges=sorted_outer_face_edges,
         inner_cycles=None,
         outer_cycles=is_cycle,
         graph=p_graph,
@@ -119,58 +106,37 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
 
     # Identify all sight cells in the outer face
     outer_bounds = get_embedding_square(graph=graph, positions=positions, scaler=3)
-    # TODO: DO NOT CREATE NEW GRAPHS
-    outer_sight_cells, outer_edge_map, outer_graph, outer_positions = find_outer_face_sight_cells(
-        selected_faces=outer_faces,
-        ordered_face_edges=sorted_outer_edges,
-        graph=graph,
-        positions=positions,
-        is_cycle=is_cycle,
-        bounds=outer_bounds)
+    sight_cells, edge_map, o_graph, o_positions = find_outer_face_sight_cells(selected_faces=outer_faces,
+                                                                              ordered_face_edges=sorted_outer_edges,
+                                                                              graph=graph,
+                                                                              positions=positions,
+                                                                              is_cycle=is_cycle,
+                                                                              bounds=outer_bounds)
 
     # Calculate the incidence of all sight cells to the outer face's target incident vertices
     outer_face = set().union(*outer_faces)
     outer_target_vertices = outer_face.intersection(target_vertices)
-    outer_sight_cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=outer_sight_cells,
-                                                                       target_vertices=outer_target_vertices,
-                                                                       face_edges=sorted_outer_edges,
-                                                                       face_edge_map=outer_edge_map,
-                                                                       positions=outer_positions)
+    cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=sight_cells,
+                                                           target_vertices=outer_target_vertices,
+                                                           face_edges=sorted_outer_edges,
+                                                           face_edge_map=edge_map,
+                                                           positions=o_positions)
 
-    # Merge Outer Sight Cells with identical incidences
-    outer_sight_cell_edges = get_sight_cell_edges(outer_sight_cells, outer_graph)
-    outer_sight_cells, outer_sight_cell_incidences = merge_cells_wrapper(face_sight_cells=outer_sight_cells,
-                                                                         cell_incidences=outer_sight_cell_incidences,
-                                                                         cells_edge_list=outer_sight_cell_edges,
-                                                                         graph=outer_graph)
+    # Merge Outer Sight Cells with identical incidences and Update all data structures
+    outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
+    sight_cells, cell_incidences, edge_map = merge_cells_wrapper(face_sight_cells=sight_cells,
+                                                                 cell_incidences=cell_incidences,
+                                                                 cells_edge_map=edge_map,
+                                                                 cells_edge_list=outer_sight_cell_edges,
+                                                                 positions=o_positions,
+                                                                 graph=o_graph)
 
-    # Draw Merged Embedding
-    draw_graph(graph=outer_graph, positions=outer_positions)
-    save_drawn_graph(f"./graph_outer_merged.png")
+    # Get Sorted Incidence Table of sight cells and their incidences
+    incidence_table = get_sorted_sight_cell_incidence_table(cell_incidences)
 
-    # TODO: UPDATE THE GRAPH BY REMOVING DISCONNECTED, AND VIRTUAL VERTICES WHICH ARE CONNECTED TO ONLY VIRTUALS
-    print(f"\nouter edge map: {outer_edge_map}")
-    print(f"\nouter edge list: {outer_sight_cell_edges}")
-    outer_sight_cells, outer_sight_cell_incidences, outer_edge_map = update_sight_cell_graph(
-        sight_cells=outer_sight_cells,
-        cell_incidences=outer_sight_cell_incidences,
-        edge_map=outer_edge_map,
-        graph=outer_graph,
-        positions=outer_positions)
+    # Return Everything if no single sight cell can realize the incidence of the face
+    return incidence_table, [sight_cells, cell_incidences, edge_map, o_graph, o_positions]
 
-    # Draw Merged Embedding
-    draw_graph(graph=outer_graph, positions=outer_positions)
-    save_drawn_graph(f"./graph_outer_merged_updated.png")
-
-    # Select Sight Cells which (Together)
-    # TODO: maybe return ALL unique merged cells -> allow for better reselection?
-    selected_outer_sight_cells = select_sight_cells(cell_incidences=outer_sight_cell_incidences,
-                                                    target_vertices=outer_target_vertices)
-    print(f"selected cells: {selected_outer_sight_cells}")
-
-    # Return the selected sight cells and the created graph
-    # TODO: return edge-map to update the whole graph's face set?
-    return selected_outer_sight_cells, outer_graph, outer_positions
 
 
 def identify_target_vertex(graph, positions):
