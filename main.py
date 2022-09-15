@@ -163,6 +163,32 @@ def identify_target_vertex(graph, positions):
     return target_vertex, target_vertex_adjacency, remaining_graph, remaining_positions, remaining_edge_crossings
 
 
+def decompose_outer_face(target_vertices, graph, positions):
+
+    # Identify the graph's faces and their incidences
+    inner_faces = find_inner_faces(graph=graph, positions=positions)
+    inner_face_edge_map = build_face_to_edge_map(graph, inner_faces)
+    inner_face_incidences = find_face_vertex_incidence(inner_faces, target_vertices)
+    sorted_inner_face_edges = get_ordered_face_edges(inner_faces, graph)
+
+    # Find Outer Face
+    outer_faces, outer_face_edges, is_cycle = find_outer_face(sorted_inner_face_edges, graph, positions)
+
+    #
+    outer_face_identifier = frozenset(set.union(*[set(outer_face) for outer_face in outer_faces]))
+    sorted_outer_face_edges = {outer_face: sort_face_edges(outer_face_edges[outer_face])
+                               for outer_face in outer_faces if is_cycle[outer_face]}
+
+    # Get the incidences of the outer face
+    outer_face_incidences = find_outer_face_vertex_incidence(outer_face_identifier, inner_faces, target_vertices)
+
+    cell_incidence_table, new_graph = get_outer_face_sight_cells(outer_faces=outer_faces,
+                                                                 sorted_outer_edges=sorted_outer_face_edges,
+                                                                 is_cycle=is_cycle,
+                                                                 target_vertices=target_vertices,
+                                                                 graph=graph,
+                                                                 positions=positions)
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
@@ -257,9 +283,12 @@ if __name__ == '__main__':
 
     # Select the faces within which to embed the split vertices
     print("\nSelect Face")
-    select_embedding_faces(p_graph=p_graph,
-                           p_positions=p_positions,
-                           target_vertices=target_adjacency)
+    # select_embedding_faces(p_graph=p_graph,
+    #                        p_positions=p_positions,
+    #                        target_vertices=target_adjacency)
+
+    decompose_outer_face(graph=p_graph, positions=p_positions, target_vertices=target_adjacency)
+
 
     sys.exit()
 
