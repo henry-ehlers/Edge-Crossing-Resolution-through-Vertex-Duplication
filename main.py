@@ -124,7 +124,7 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
         outer_cycles=is_cycle,
         graph=p_graph,
         positions=p_positions,
-        index=max(list(p_graph.nodes())))
+        index=None)
 
     # TODO: check whether sight cell incidences coincide with those of face
     # TODO: return rerun selection if needed
@@ -314,7 +314,7 @@ if __name__ == '__main__':
     p_graph, p_positions, virtual_edge_set = planarize_graph(graph=r_graph,
                                                              positions=r_positions,
                                                              edge_crossings=r_crossings,
-                                                             index=maximum_vertex_index)
+                                                             index=None)
     print(f"planar vertices: {p_graph.nodes()}")
     # Draw the planarized graph
     draw_graph(graph=p_graph, positions=p_positions)

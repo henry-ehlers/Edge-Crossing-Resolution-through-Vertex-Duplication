@@ -715,7 +715,7 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
 def add_boundary_to_graph(bounds, graph, positions, offset=0.2, index=None):
 
     # Define the labels of vertices and their edges
-    start_index = index + 1 if index is not None else max(graph.nodes) + 1
+    start_index = max(graph.nodes) + 1
     bound_vertices = list(range(start_index, start_index + len(bounds)))
     print(f"BOUND VERTICES: {bound_vertices}")
     bound_edges = [(bound_vertices[ind], bound_vertices[(ind + 1) % len(bounds)]) for ind in range(0, len(bounds))]
