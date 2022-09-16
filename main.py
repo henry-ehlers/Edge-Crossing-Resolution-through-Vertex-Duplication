@@ -178,11 +178,7 @@ def get_outer_face(sorted_inner_face_edges, graph, positions):
     return outer_faces, sorted_outer_face_edges, is_cycle
 
 
-def decompose_outer_face(target_vertices, graph, positions):
-
-    # Identify the graph's inner faces to extract their ordered edges
-    inner_faces = find_inner_faces(graph=graph, positions=positions)
-    sorted_inner_face_edges = get_ordered_face_edges(inner_faces, graph)
+def decompose_outer_face(sorted_inner_face_edges, target_vertices, graph, positions):
 
     # Find the Graph's Outer face(s)
     outer_faces, sorted_outer_face_edges, is_cycle = get_outer_face(
@@ -217,6 +213,21 @@ def update_graph_with_sight_cells(graph, positions, cell_graph, cell_positions, 
     graph.update(cell_graph)
 
 
+def get_inner_faces(target_vertices, graph, positions):
+
+    # Identify the graph's inner faces to extract their ordered edges
+    inner_faces = find_inner_faces(graph=graph, positions=positions)
+    inner_faces_incidences = find_face_vertex_incidence(faces=inner_faces,
+                                                        target_vertices=target_vertices)
+    print(f"inner faces:           {inner_faces}")
+    print(f"inner face incidences: {inner_faces_incidences}")
+    # Get the Face's sorted Edges
+    sorted_face_edges = get_ordered_face_edges(inner_faces, graph)
+
+    # Return both the incidence table and the sorted edges
+    return sorted_face_edges
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
@@ -244,8 +255,8 @@ if __name__ == '__main__':
     # Specify vertices and edges
     # todo: the example below causes floating point crashes as all their x and y points are identical
     # coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
-    coordinates = [(0.001, 2.00003), (1.001, 0.005), (2.000003, 1.0002), (3.00004, 0.0002),
-                   (4.0003, 2.0006), (2.000001, 4.004)]
+    coordinates = [(0.001, 2.0003), (1.001, 0.005), (2.0003, 1.0002), (3.004, 0.0002),
+                   (4.0003, 2.006), (2.0001, 4.004)]
 
     vertices = range(0, len(coordinates))
     edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
@@ -270,19 +281,15 @@ if __name__ == '__main__':
         graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
 
     for edge in edges:
-        print(f"edge: {edge}")
         graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
     for edge in more_edges:
-        print(f"edge: {edge}")
         graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
     for edge in custom_edges:
-        print(f"edge: {edge}")
         graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
     positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
     positions.update(
         {more_vertices[index]: np.array(more_coordinates[index]) for index in range(0, len(more_vertices))})
     positions.update({v_index: np.array((0.0, 1.0))})
-    print(graph.edges)
 
     # MAIN -------------------------------------------------------------------------------------------------------------
 
@@ -301,21 +308,26 @@ if __name__ == '__main__':
 
     # Planarize Graph after removal of target vertex
     print("\nPlanarize Remaining Graph after target removal")
-    print(f"largest vertex index: {max(graph.nodes)}")
     p_graph, p_positions = copy.deepcopy(r_graph), copy.deepcopy(r_positions)
     virtual_edge_set = planarize_graph(graph=p_graph,
                                        positions=p_positions,
                                        edge_crossings=r_crossings,
-                                       largest_index=54)
+                                       largest_index=max(graph.nodes))
 
     # Draw the planarized graph
     draw_graph(graph=p_graph, positions=p_positions)
     save_drawn_graph(f"{output_directory}/graph_2.png")
 
+    # Get Inner Faces
+    sorted_inner_face_edges = get_inner_faces(target_vertices=target_adjacency,
+                                              graph=p_graph,
+                                              positions=p_positions)
+    sys.exit()
     # Select the faces within which to embed the split vertices
     print("\nDecompose The Outer Face")
     d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
-    incidence_table, cell_graph_object = decompose_outer_face(graph=p_graph,
+    incidence_table, cell_graph_object = decompose_outer_face(sorted_inner_face_edges=sorted_inner_face_edges,
+                                                              graph=p_graph,
                                                               positions=p_positions,
                                                               target_vertices=target_adjacency)
     update_graph_with_sight_cells(graph=d_graph,
@@ -378,27 +390,6 @@ if __name__ == '__main__':
 
     #
     sight_cell_edges = get_sight_cells_edge_sets(sight_cells, plane_graph)
-
-
-    print(f"\nSight Cells: {sight_cells}")
-    print(f"\nSight Edges: {sight_cell_edges}")
-    print(f"\nIncidences:  {sight_cell_incidences}")
-
-    # Find best set of sight cells per face
-    selected_cells = select_sight_cells(sight_cells, sight_cell_incidences)
-    print(f"\nSelected:    {selected_cells}")
-
-    # Check whether selected faces match sight cell incidence
-    rerank = match_cell_and_face_incidence(face_incidences=face_incidences,
-                                           selected_sight_cell_incidences=selected_cells)
-
-    # Draw and Save Planar, Convex-Face Graph
-    planar_drawing_start_time = timeit.default_timer()
-    draw_graph(graph=plane_graph, positions=plane_positions)
-    save_drawn_graph(f"{output_directory}/sight_cell_line_segments_2.png")
-    planar_drawing_time = timeit.default_timer() - planar_drawing_start_time
-
-    sys.exit()
 
     # EMBED INPUT GRAPH ------------------------------------------------------------------------------------------------
 

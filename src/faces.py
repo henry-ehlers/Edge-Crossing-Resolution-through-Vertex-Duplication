@@ -377,7 +377,7 @@ def cross_product(vector_a, vector_b):
 
 
 def vector_angle(vector_1, vector_2):
-
+    # TODO: runtime errors encountered sometimes
     # Calculate Unit Vectors of Input Vectors
     unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
     unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
