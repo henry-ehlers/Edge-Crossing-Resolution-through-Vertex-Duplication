@@ -15,14 +15,16 @@ def select_embedding_faces(incidence_table, target_vertices):
                                             targets=target_vertices)
     print(incidence_matrix)
 
-    selected_entries = ilp_choose_face(visibility_matrix=incidence_matrix)
+    selected_entries = ilp_choose_face(visibility_matrix=incidence_matrix.to_numpy(dtype=int))
     print(f"selected entry indices: {selected_entries}")
+    print(incidence_matrix.iloc[selected_entries])
     pass
 
 
 def get_incidence_matrix(incidence_table, targets=None):
 
     # Initialize the incidence matrix as an empty numpy array
+    entries = incidence_table["identifier"].tolist()
     targets = targets if targets is not None else list(set(incidence_table["incidence"].tolist()))
     incidence_matrix = np.empty(shape=(incidence_table.shape[0], len(targets)), dtype=int)
 
@@ -32,7 +34,7 @@ def get_incidence_matrix(incidence_table, targets=None):
             incidence_matrix[row][col] = 1 if targets[col] in incidence_table.loc[row, "incidence"] else 0
 
     # Return the matrix
-    return incidence_matrix
+    return pd.DataFrame(incidence_matrix, columns=targets, index=entries)
 
 
 def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target_vertices, graph, positions):
