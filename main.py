@@ -370,7 +370,10 @@ if __name__ == '__main__':
     save_drawn_graph(f"{output_directory}/graph_3.png")
 
     # Select the targets within which to embed split vertices
-    print()
+    print(f"\nSelect Embedding Cells/Faces")
+    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence],
+                                axis=0)
+    print(incidence_table)
 
 
     sys.exit()
