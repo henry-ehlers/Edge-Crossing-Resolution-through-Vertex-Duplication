@@ -5,8 +5,67 @@ import networkx as nx
 import itertools as it
 import pandas as pd
 import numpy as np
+import gurobipy as gp
+from gurobipy import GRB
 import copy
 import sys
+
+
+def ilp_choose_face(visibility_matrix):
+    (W, T) = visibility_matrix.shape
+
+    # Create model
+    m = gp.Model("facechoice")
+
+    # Create variables
+    # c_i = 1   :   worker i is chosen
+    cell = m.addVars(W, vtype=GRB.BINARY, name="c")
+
+    # e_ij = 1   :   task j is assigned to worker i
+    edge = m.addVars(W, T, vtype=GRB.BINARY, name="e")
+
+    # Set objective
+    obj = gp.quicksum(edge)
+    m.setObjective(obj, GRB.MAXIMIZE)
+
+    # Create constraints
+    # can only select two workers
+    m.addConstr(gp.quicksum(cell) <= 2)
+
+    # a task can only be done by one worker
+    for j in range(T):
+        assignment_amount = gp.LinExpr(0)
+
+        for i in range(W):
+            assignment_amount.addTerms(1, edge[i, j])
+
+        m.addConstr(assignment_amount <= 1)
+
+    # a task cannot be assigned to a unchosen worker
+    for i in range(W):
+        for j in range(T):
+            m.addConstr(cell[i] >= edge[i, j])
+
+    # if a worker cant do the task, it is not assigned to him
+    for i in range(W):
+        for j in range(T):
+            m.addConstr(edge[i, j] <= visibility_matrix[i][j])
+
+    # Optimize model
+    m.optimize()
+
+    faces = []
+    index = 0
+
+    for v in m.getVars():
+
+        if v.varName[0] == "c":
+
+            if (v.x) == 1:
+                faces += [index]
+        index += 1
+
+    return (faces)
 
 
 def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
@@ -308,19 +367,6 @@ def find_outer_face_vertex_incidence(outer_face, inner_faces, target_vertices):
 
     # Return Dictionary of face vertex incidence
     return outer_face_incidences
-
-
-def get_maximally_incident_faces(face_incidence_table):
-
-    # Select best row (i.e. combination of faces)
-    # TODO 1: use ILP to select best face. will require
-    #  a) turning data structure into matrix, and
-    #  b) keeping track of which matrix indices corresponding to outer face
-    # TODO 2: break ties meaningfully
-    selected_row = face_incidence_table.loc[0]
-
-    # Return two best faces and boolean indicating wether they are an outer face or not
-    return (selected_row.at["outer"], selected_row.at["face_a"]), (False, selected_row.at["face_b"])
 
 
 def cross_product(vector_a, vector_b):

@@ -10,96 +10,29 @@ from src.sight_cells import *
 from src.faces import *
 
 
-def check_sight_cells(face_incidence_table, target_vertices,
-                      inner_faces, outer_faces,
-                      sorted_inner_face_edges, sorted_outer_face_edges,
-                      inner_cycles, outer_cycles,
-                      graph, positions):
-    # Select the top faces to investigate
-    # face_selection = get_maximally_incident_faces(face_incidence_table)
-    # selected_faces = [selected_face[1] for selected_face in face_selection]
-    print(f"\nsorted outer edges: {sorted_outer_face_edges}")
-    print(f"\nsorted inner edges: {sorted_inner_face_edges}")
+def select_embedding_faces(incidence_table, target_vertices):
+    incidence_matrix = get_incidence_matrix(incidence_table=incidence_table,
+                                            targets=target_vertices)
+    print(incidence_matrix)
 
-    # Initialize the objects in which to store each face's selected cells, their graphs, and positions
-    face_selection = face_incidence_table.loc[1]
-    selected_faces = (face_selection.at["outer"], face_selection.at["face_a"]), \
-                     (False, face_selection.at["face_b"])
-    print(f"face selection: {face_selection}")
-    print(f"selected faces: {selected_faces}")
-
-    # Check for convexity
-    for selected_face in selected_faces:
-        is_outer, face = selected_face[0], selected_face[1]
-        face_incidence = set(target_vertices).intersection(set(face))
-
-        # Get Sight Cells of Inner Face
-        if not is_outer:
-            face_edges = sorted_inner_face_edges[face]
-            if is_inner_face_convex(face_edges, p_positions):
-                cell_incidence_table = pd.DataFrame(data={"sight_cell": [tuple(face)],
-                                                          "incidence": [face_incidence],
-                                                          "n_incidence": [len(face_incidence)]})
-                print(cell_incidence_table)
-                new_graph = []
-            else:
-                cell_selection, cell_graph, cell_positions = None, None, None
-
-        # Get Sight Cells of Outer Face
-        else:
-            cell_incidence_table, new_graph = get_outer_face_sight_cells(outer_faces=outer_faces,
-                                                                         sorted_outer_edges=sorted_outer_face_edges,
-                                                                         is_cycle=outer_cycles,
-                                                                         target_vertices=target_vertices,
-                                                                         graph=graph,
-                                                                         positions=positions)
-
-    return
+    selected_entries = ilp_choose_face(visibility_matrix=incidence_matrix)
+    print(f"selected entry indices: {selected_entries}")
+    pass
 
 
-def select_embedding_faces(p_graph, p_positions, target_vertices):
+def get_incidence_matrix(incidence_table, targets=None):
 
-    # Identify the graph's faces and their incidences
-    inner_faces = find_inner_faces(graph=p_graph, positions=p_positions)
-    inner_face_edge_map = build_face_to_edge_map(p_graph, inner_faces)
-    inner_face_incidences = find_face_vertex_incidence(inner_faces, target_vertices)
-    sorted_inner_face_edges = get_ordered_face_edges(inner_faces, p_graph)
+    # Initialize the incidence matrix as an empty numpy array
+    targets = targets if targets is not None else list(set(incidence_table["incidence"].tolist()))
+    incidence_matrix = np.empty(shape=(incidence_table.shape[0], len(targets)), dtype=int)
 
-    # Find Outer Face
-    outer_faces, outer_face_edges, is_cycle = find_outer_face(sorted_inner_face_edges, p_graph, p_positions)
+    # Fill the array with 1 if the target vertex of that column is present
+    for row in range(0, incidence_table.shape[0]):
+        for col in range(0, len(targets)):
+            incidence_matrix[row][col] = 1 if targets[col] in incidence_table.loc[row, "incidence"] else 0
 
-    #
-    outer_face_identifier = frozenset(set.union(*[set(outer_face) for outer_face in outer_faces]))
-    sorted_outer_face_edges = {outer_face: sort_face_edges(outer_face_edges[outer_face])
-                                for outer_face in outer_faces if is_cycle[outer_face]}
-
-    # Get the incidences of the outer face
-    outer_face_incidences = find_outer_face_vertex_incidence(outer_face_identifier, inner_faces, target_vertices)
-    # TODO: organize data structure for outer and inner incidences
-    # TODO: rank said data structure
-    # TODO: figure out who to pass on the sight cell part -> needs to know in what direction to extend sight lines
-
-    # Combine face incidences and select top set
-    face_incidence_table = get_face_incidence_table(inner_face_incidences=inner_face_incidences,
-                                                    outer_face_incidences=outer_face_incidences)
-    print(face_incidence_table)
-
-    check_sight_cells(
-        face_incidence_table=face_incidence_table,
-        target_vertices=target_vertices,
-        inner_faces=inner_faces,
-        outer_faces=outer_faces,
-        sorted_inner_face_edges=sorted_inner_face_edges,
-        sorted_outer_face_edges=sorted_outer_face_edges,
-        inner_cycles=None,
-        outer_cycles=is_cycle,
-        graph=p_graph,
-        positions=p_positions)
-
-    # TODO: check whether sight cell incidences coincide with those of face
-    # TODO: return rerun selection if needed
-
-    return
+    # Return the matrix
+    return incidence_matrix
 
 
 def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target_vertices, graph, positions):
@@ -121,9 +54,6 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                            face_edges=sorted_outer_edges,
                                                            face_edge_map=edge_map,
                                                            positions=o_positions)
-    print(f"\n SIGHT CELLS")
-    [print(f"{cell} - {cell_incidences[cell]}") for cell in sight_cells]
-    print()
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
@@ -133,15 +63,14 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                                  cells_edge_list=outer_sight_cell_edges,
                                                                  positions=o_positions,
                                                                  graph=o_graph)
-    print(f"CELL INCIDENCES: {cell_incidences}")
 
     # Get Sorted Incidence Table of sight cells and their incidences
-    incidence_table = get_incidence_table(incidences=cell_incidences,
-                                          entry_type="cell",
-                                          outer=True)
+    cell_incidence_table = get_incidence_table(incidences=cell_incidences,
+                                               entry_type="cell",
+                                               outer=True)
 
     # Return Everything if no single sight cell can realize the incidence of the face
-    return incidence_table, [sight_cells, cell_incidences, edge_map, o_graph, o_positions]
+    return cell_incidence_table, [sight_cells, cell_incidences, edge_map, o_graph, o_positions]
 
 
 def get_incidence_table(incidences, entry_type="face", outer=False):
@@ -353,6 +282,8 @@ if __name__ == '__main__':
                                                                     graph=p_graph,
                                                                     positions=p_positions)
 
+    print(inner_face_incidence)
+
     # Decompose the outer face into sight cells and update the planar graph
     print("\nDecompose The Outer Face")
     d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
@@ -371,10 +302,10 @@ if __name__ == '__main__':
 
     # Select the targets within which to embed split vertices
     print(f"\nSelect Embedding Cells/Faces")
-    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence],
-                                axis=0)
+    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence], axis=0, ignore_index=True)
     print(incidence_table)
-
+    # select_embedding_faces(incidence_table, target_adjacency, d_graph, d_positions)
+    select_embedding_faces(incidence_table, target_adjacency)
 
     sys.exit()
 
