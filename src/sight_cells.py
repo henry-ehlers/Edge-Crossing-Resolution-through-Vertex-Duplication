@@ -142,6 +142,7 @@ def get_face_sight_cells_incidences(face_sight_cells, face_edge_list, target_ver
 
 def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edges, positions):
     """"""
+
     # Check what targets are already in the current sight cell
     targets_in_cell = sight_cell_vertices.intersection(target_vertices)
     remaining_targets = set(target_vertices) - targets_in_cell
@@ -158,12 +159,14 @@ def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edg
         # Iterate over all edges and check whether they intersect the line between centroid and target
         is_target_visible = True
         for edge in real_face_edges:
-
             if target in edge:
                 continue
 
+            # Check edge crossings of sight line against edge line extended
+            # TODO: floating point issues can cause incorrect results
             edge_line = [positions[vertex] for vertex in edge]
             intersection = line_intersection(sight_line[0], sight_line[1], edge_line[0], edge_line[1])
+
             # If the two lines intersect, they are not visible
             if intersection is not None:
                 is_target_visible = False
@@ -177,10 +180,10 @@ def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edg
     return sight_cell_incidence
 
 
-def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph):
+def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph, positions):
     # todo: outer face also contains all faces INSIDE of the graph
 
-    for index_a in range(0, len(cells)):
+    for index_a in range(0, len(cells) - 1):
         for index_b in range(index_a + 1, len(cells)):
             cell_a, cell_b = cells[index_a], cells[index_b]
 
@@ -199,7 +202,8 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph):
                 merge_face_sight_cells(cells=cells,
                                        cells_edge_list=cells_edge_list,
                                        cell_incidences=cell_incidences,
-                                       graph=graph)
+                                       graph=graph,
+                                       positions=positions)
 
                 # Exit recursion (as the set of cells has changed) and return the removed vertices
                 return
@@ -223,16 +227,17 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
     new_cell = cell_a.union(cell_b)
 
     # Update the Cell List
+    [cells.remove(cell) for cell in [cell_a, cell_b]]
     cells.append(new_cell)
-    [cells.remove(cell_key) for cell_key in [cell_a, cell_b]]
 
     # Update each Cell's edge list
+    [cells_edge_list.pop(cell) for cell in [cell_a, cell_b]]
     cells_edge_list[new_cell] = new_edge_set
-    [cells_edge_list.pop(cell_key, None) for cell_key in [cell_a, cell_b]]
 
     # Update the Cells Incidences
-    cell_incidences[new_cell] = copy.deepcopy(cell_incidences[cell_a])
-    [cell_incidences.pop(cell_key, None) for cell_key in [cell_a, cell_b]]
+    new_cell_incidence = copy.deepcopy(cell_incidences[cell_a])
+    [cell_incidences.pop(cell) for cell in [cell_a, cell_b]]
+    cell_incidences[new_cell] = new_cell_incidence
 
     # Update the graph
     for merge_edge in merge_edges:
@@ -408,7 +413,7 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, edge_map, v
 
     # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
     origin_vertex, new_vertex_index = joint_vertex, max(graph.nodes) + 1
-
+    print(f"Added Vertex {new_vertex_index} and connected it to {origin_vertex}")
     graph.add_node(node_for_adding=new_vertex_index, virtual=1)
     graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, segment=1, real=0)
     positions[new_vertex_index] = np.array(crossing_point)
@@ -507,7 +512,8 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, cells
     merge_face_sight_cells(cells=face_sight_cells,
                            cells_edge_list=cells_edge_list,
                            cell_incidences=cell_incidences,
-                           graph=graph)
+                           graph=graph,
+                           positions=positions)
     face_sight_cells = set(face_sight_cells)
 
     # Draw Merged Embedding
@@ -668,6 +674,7 @@ def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, grap
 
     if face_edge_crossings:
         virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
+        print(f"Added virtual edges between {virtual_edges}")
         non_empty_virtual_edges = {k: v for k, v in virtual_edges.items() if v}
         virtual_edge_map.update(non_empty_virtual_edges)
         graph.update(face_graph)

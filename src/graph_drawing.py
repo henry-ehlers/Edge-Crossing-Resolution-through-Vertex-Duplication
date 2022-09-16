@@ -64,7 +64,9 @@ def get_graph_entity_data(entity_dictionary, entity_key, data_key, default_value
 def color_split_vertices(graph):
     node_color_map = []
     for vertex in graph:
-        if get_graph_entity_data(graph.nodes, vertex, "target", 0) == 1:
+        if vertex == 9:
+            color = "red"
+        elif get_graph_entity_data(graph.nodes, vertex, "target", 0) == 1:
             color = "red"
         elif get_graph_entity_data(graph.nodes, vertex, "boundary", 0) == 1:
             color = "blue"

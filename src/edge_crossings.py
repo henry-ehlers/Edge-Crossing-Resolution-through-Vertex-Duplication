@@ -2,6 +2,49 @@ import numpy as np
 import copy
 
 
+def unbounded_line_intersection(p1, p2, p3, p4):
+
+    # Extract individual floats from point tuples
+    x1, y1 = p1
+    x2, y2 = p2
+    x3, y3 = p3
+    x4, y4 = p4
+
+    # Calculate denominator and return None if lines are parallel
+    denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+    if denominator == 0:
+        return None
+
+    # Calculate scalar
+    ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
+
+    # Calculate new point coordinates
+    x = x1 + ua * (x2 - x1)
+    y = y1 + ua * (y2 - y1)
+
+    # Return Coordinates and scalar
+    return (x, y), ua
+
+
+def extend_line(point_1, point_2, bounds=((-2, -2), (-2, 2), (2, 2), (2, -2))):
+
+    ts = np.array(object=[float("-inf"), float("inf")], dtype=float)
+    intersections = [(None, None), (None, None)]
+    for index_a in range(0, len(bounds)):
+        index_b = (index_a + 1) % len(bounds)
+        result = unbounded_line_intersection(point_1, point_2, bounds[index_a], bounds[index_b])
+        if result is None:
+            continue
+        if 0 >= result[1] >= ts[0]:
+            ts[0] = result[1]
+            intersections[0] = result[0]
+        elif 1 <= result[1] <= ts[1]:
+            ts[1] = result[1]
+            intersections[1] = result[0]
+
+    return intersections
+
+
 def project_point_onto_line(point, start_point, end_point):
     normalized = (end_point-start_point) / np.linalg.norm(x=end_point-start_point)
     return np.dot(point - start_point, normalized)
@@ -129,7 +172,6 @@ def planarize_graph(graph, positions, edge_crossings, largest_index=None):
             [edges_to_be_removed.add(edge) for edge in [edge_a, edge_b]]
 
     # Remove original edge set and add virtual edge set
-
     virtual_edge_set = add_virtual_edges(graph, positions, edge_to_virtual_vertex)
     remove_edges(graph, list(edges_to_be_removed))
 

@@ -105,7 +105,7 @@ def select_embedding_faces(p_graph, p_positions, target_vertices):
 def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target_vertices, graph, positions):
 
     # Identify all sight cells in the outer face
-    outer_bounds = get_embedding_square(graph=graph, positions=positions, scaler=3)
+    outer_bounds = get_embedding_square(graph=graph, positions=positions, scaler=1.2)
     sight_cells, edge_map, o_graph, o_positions = find_outer_face_sight_cells(selected_faces=outer_faces,
                                                                               ordered_face_edges=sorted_outer_edges,
                                                                               graph=graph,
@@ -121,6 +121,9 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                            face_edges=sorted_outer_edges,
                                                            face_edge_map=edge_map,
                                                            positions=o_positions)
+    print(f"\n SIGHT CELLS")
+    [print(f"{cell} - {cell_incidences[cell]}") for cell in sight_cells]
+    print()
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
@@ -241,12 +244,13 @@ if __name__ == '__main__':
     # Specify vertices and edges
     # todo: the example below causes floating point crashes as all their x and y points are identical
     # coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
-    coordinates = [(0, 2), (1, 0), (2, 1), (3, 0), (4, 2), (2, 4)]
+    coordinates = [(0.001, 2.00003), (1.001, 0.005), (2.000003, 1.0002), (3.00004, 0.0002),
+                   (4.0003, 2.0006), (2.000001, 4.004)]
 
     vertices = range(0, len(coordinates))
     edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
 
-    more_coordinates = [(-2, 1.5), (-1, 1.5), (-1, 0.5)]
+    more_coordinates = [(-2.0004, 1.500004), (-1.006, 1.5008), (-1.0004, 0.500007)]
     more_vertices = range(len(coordinates), len(coordinates) + len(more_coordinates))
 
     more_edges = ((more_vertices[index], more_vertices[(index + 1) % len(more_vertices)])
@@ -302,7 +306,7 @@ if __name__ == '__main__':
     virtual_edge_set = planarize_graph(graph=p_graph,
                                        positions=p_positions,
                                        edge_crossings=r_crossings,
-                                       largest_index=30)
+                                       largest_index=54)
 
     # Draw the planarized graph
     draw_graph(graph=p_graph, positions=p_positions)
