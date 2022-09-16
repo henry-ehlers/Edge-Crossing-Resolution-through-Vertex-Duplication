@@ -317,45 +317,29 @@ def find_minimal_sight_cell_set(cell_incidences):
     return {cell: cell_incidences[cell] for cell in selected_cells}
 
 
-def get_sorted_sight_cell_incidence_table(sight_cell_incidences):
-
-    # Collect list of cells and their incidences
-    incidence_table = []
-    [incidence_table.append((cell, sight_cell_incidences.get(cell, None))) for cell in sight_cell_incidences.keys()]
-
-    # Transform list into pandas dataframe
-    incidence_table = pd.DataFrame(data=incidence_table, columns=['sight_cell', 'incidence'])
-    incidence_table["n_incidence"] = [len(incidence) for incidence in incidence_table["incidence"]]
-
-    # Sort incidence table by the number of vertices incident to each cell
-    incidence_table.sort_values(by='n_incidence', ascending=False, inplace=True, ignore_index=True)
-
-    # Return the table
-    return incidence_table
-
-
 def select_sight_cells(cell_incidences, target_vertices):
     """"""
 
-    # Get the incidence table
-    incidence_table = get_sorted_sight_cell_incidence_table(cell_incidences)
-    print(incidence_table)
-
-    # Iterate over all cells and their incidences
-    selected_cells, remaining_targets = {}, set(target_vertices)
-    for index, row in incidence_table.iterrows():
-
-        # If no targets remain, return the selection
-        if len(remaining_targets) == 0:
-            return selected_cells
-
-        # If the current cell's incidence is not yet selected, select it and update remaining targets
-        if remaining_targets.intersection(row['incidence']):
-            remaining_targets -= row['incidence']
-            selected_cells.update({row['sight_cell']:  row['incidence']})
-
-    # TODO: we should never return here; maybe cover this case somehow?
-    return selected_cells
+    # # Get the incidence table
+    # incidence_table = get_sorted_sight_cell_incidence_table(cell_incidences)
+    # print(incidence_table)
+    #
+    # # Iterate over all cells and their incidences
+    # selected_cells, remaining_targets = {}, set(target_vertices)
+    # for index, row in incidence_table.iterrows():
+    #
+    #     # If no targets remain, return the selection
+    #     if len(remaining_targets) == 0:
+    #         return selected_cells
+    #
+    #     # If the current cell's incidence is not yet selected, select it and update remaining targets
+    #     if remaining_targets.intersection(row['incidence']):
+    #         remaining_targets -= row['incidence']
+    #         selected_cells.update({row['sight_cell']:  row['incidence']})
+    #
+    # # TODO: we should never return here; maybe cover this case somehow?
+    # return selected_cells
+    pass
 
 
 def match_cell_and_face_incidence(face_incidences, selected_sight_cell_incidences):

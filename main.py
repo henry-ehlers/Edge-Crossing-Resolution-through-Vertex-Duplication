@@ -133,12 +133,33 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                                  cells_edge_list=outer_sight_cell_edges,
                                                                  positions=o_positions,
                                                                  graph=o_graph)
+    print(f"CELL INCIDENCES: {cell_incidences}")
 
     # Get Sorted Incidence Table of sight cells and their incidences
-    incidence_table = get_sorted_sight_cell_incidence_table(cell_incidences)
+    incidence_table = get_incidence_table(incidences=cell_incidences,
+                                          entry_type="cell",
+                                          outer=True)
 
     # Return Everything if no single sight cell can realize the incidence of the face
     return incidence_table, [sight_cells, cell_incidences, edge_map, o_graph, o_positions]
+
+
+def get_incidence_table(incidences, entry_type="face", outer=False):
+
+    # Create lists for each of the 4 columns
+    entry_list = [entry for entry in incidences.keys()]
+    incidence_list = [incidences[entry] for entry in entry_list]
+    type_list = [entry_type] * len(entry_list)
+    outer_list = [outer] * len(entry_list)
+
+    # Create n x 4 data table, where n = the number of faces
+    incidence_table = pd.DataFrame({"type":       type_list,
+                                    "outer":      outer_list,
+                                    "identifier": entry_list,
+                                    "incidence":  incidence_list})
+
+    # Return the pandas data table
+    return incidence_table
 
 
 def identify_target_vertex(graph, positions):
@@ -215,17 +236,25 @@ def update_graph_with_sight_cells(graph, positions, cell_graph, cell_positions, 
 
 def get_inner_faces(target_vertices, graph, positions):
 
-    # Identify the graph's inner faces to extract their ordered edges
-    inner_faces = find_inner_faces(graph=graph, positions=positions)
+    # Identify the graph's inner faces
+    inner_faces = find_inner_faces(graph=graph,
+                                   positions=positions)
+
+    # Identify each face's incidence (based not on visibility)
     inner_faces_incidences = find_face_vertex_incidence(faces=inner_faces,
                                                         target_vertices=target_vertices)
-    print(f"inner faces:           {inner_faces}")
-    print(f"inner face incidences: {inner_faces_incidences}")
+
+    # Create Pandas Data Table of Face Incidences
+    inner_incidence_table = get_incidence_table(incidences=inner_faces_incidences,
+                                                entry_type="face",
+                                                outer=False)
+
     # Get the Face's sorted Edges
-    sorted_face_edges = get_ordered_face_edges(inner_faces, graph)
+    sorted_face_edges = get_ordered_face_edges(faces=inner_faces,
+                                               graph=graph)
 
     # Return both the incidence table and the sorted edges
-    return sorted_face_edges
+    return inner_incidence_table, sorted_face_edges
 
 
 # Press the green button in the gutter to run the script.
@@ -319,17 +348,18 @@ if __name__ == '__main__':
     save_drawn_graph(f"{output_directory}/graph_2.png")
 
     # Get Inner Faces
-    sorted_inner_face_edges = get_inner_faces(target_vertices=target_adjacency,
-                                              graph=p_graph,
-                                              positions=p_positions)
-    sys.exit()
-    # Select the faces within which to embed the split vertices
+    print(f"\nIdentify the Inner Faces")
+    inner_face_incidence, sorted_inner_face_edges = get_inner_faces(target_vertices=target_adjacency,
+                                                                    graph=p_graph,
+                                                                    positions=p_positions)
+
+    # Decompose the outer face into sight cells and update the planar graph
     print("\nDecompose The Outer Face")
     d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
-    incidence_table, cell_graph_object = decompose_outer_face(sorted_inner_face_edges=sorted_inner_face_edges,
-                                                              graph=p_graph,
-                                                              positions=p_positions,
-                                                              target_vertices=target_adjacency)
+    outer_cell_incidence, cell_graph_object = decompose_outer_face(sorted_inner_face_edges=sorted_inner_face_edges,
+                                                                   graph=p_graph,
+                                                                   positions=p_positions,
+                                                                   target_vertices=target_adjacency)
     update_graph_with_sight_cells(graph=d_graph,
                                   positions=d_positions,
                                   cell_graph=cell_graph_object[3],
@@ -338,6 +368,10 @@ if __name__ == '__main__':
 
     draw_graph(graph=d_graph, positions=d_positions)
     save_drawn_graph(f"{output_directory}/graph_3.png")
+
+    # Select the targets within which to embed split vertices
+    print()
+
 
     sys.exit()
 

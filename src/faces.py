@@ -280,38 +280,11 @@ def get_edge_connecting_vertices(graph, vertex_a, vertex_b):
 
 
 def find_face_vertex_incidence(faces, target_vertices):
-
-    # Initialize an empty dictionary (using sets as keys) to store vertex incidence sets
-    face_incidences = dict()  # face_incidences = {face: dict() for face in faces}
-
-    # Initialize set of vertex set as list, and target vertices as set
-    faces = list([list(face) for face in faces])
+    # Initialize target vertices as set
     target_vertex_set = set(target_vertices)
 
-    # Iterate over all faces
-    for face_index_a in range(0, len(faces) - 1):
-
-        # Extract current face, transform back into set
-        face_a = frozenset(faces[face_index_a])
-        face_incidences[face_a] = dict()
-
-        # Determine how many target vertices are incident and left over
-        incidence_a = face_a & target_vertex_set
-        remaining_targets = target_vertex_set - incidence_a
-
-        # Iterate over remaining faces
-        for face_index_b in range(face_index_a + 1, len(faces)):
-
-            # Extract current face, transform back into set
-            face_b = frozenset(faces[face_index_b])
-
-            # Determine how many remaining target faces are incident
-            incidence_b = face_b & remaining_targets
-            incident_vertices = incidence_a.union(incidence_b)
-
-            # Store results only if non-empty
-            if incident_vertices:
-                face_incidences[face_a][face_b] = incident_vertices
+    # Initialize an empty dictionary (using sets as keys) to store vertex incidence sets
+    face_incidences = {face: face & target_vertex_set for face in faces}
 
     # Return Dictionary of face vertex incidence
     return face_incidences
@@ -335,28 +308,6 @@ def find_outer_face_vertex_incidence(outer_face, inner_faces, target_vertices):
 
     # Return Dictionary of face vertex incidence
     return outer_face_incidences
-
-
-def get_face_incidence_table(inner_face_incidences, outer_face_incidences=None):
-
-    # Initialize list of faces and incidences to grow
-    face_incidences = []
-
-    # Iterate over all inner faces and collect their numbers of incident vertices
-    [face_incidences.append((False, face_a, face_b, len(inner_face_incidences[face_a][face_b])))
-     for face_a in inner_face_incidences.keys() for face_b in inner_face_incidences[face_a].keys()]
-
-    # Iterate over all outer faces and collect their numbers of incident vertices
-    if outer_face_incidences:
-        [face_incidences.append((True, face_a, face_b, len(outer_face_incidences[face_a][face_b])))
-         for face_a in outer_face_incidences.keys() for face_b in outer_face_incidences[face_a].keys()]
-
-    # Create Pandas Dataframe from collected incidence data and sort according to incidences
-    face_incidences = pd.DataFrame(data=face_incidences, columns=['outer', 'face_a', 'face_b', 'incidence'])
-    face_incidences.sort_values(by="incidence", axis='index', ascending=False, inplace=True, ignore_index=True)
-
-    # Return data table
-    return face_incidences
 
 
 def get_maximally_incident_faces(face_incidence_table):
