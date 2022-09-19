@@ -1,11 +1,19 @@
 from src.edge_crossings import *
+from src.edges import *
 
 import networkx as nx
 import numpy as np
 import copy
 
 
-def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_extended=set(), start_index=None):
+def get_nested_key(dictionary, key_a, key_b):
+    try:
+        return dictionary[key_a][key_b]
+    except KeyError:
+        return None
+
+
+def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_extended, start_index=None):
 
     # Create new graph and positions objects
     segment_graph, segment_positions = copy.deepcopy(graph), copy.deepcopy(positions)
@@ -13,17 +21,13 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
     # Store nodes and edges for easier look-up
     virtual_nodes = nx.get_node_attributes(graph, "virtual")
     corner_nodes = nx.get_node_attributes(graph, "corner")
-    print(f"virtual node lsit: {virtual_nodes}")
-    print(f"boundary node lsit: {corner_nodes}")
 
     real_nodes = [v for v in segment_graph.nodes if (virtual_nodes.get(v, 0) != 1) and (corner_nodes.get(v, 0) != 1)]
     edges = frozenset([frozenset(edge) for edge in list(segment_graph.edges())])
 
     # Store the number of nodes and largest index
     vertex_index = start_index if start_index else max(graph.nodes)
-    print(f"starting index: {vertex_index}")
     number_of_nodes = len(real_nodes)
-    print(f"\nnodes: {number_of_nodes}")
 
     # Iterate over all pairwise vertex combinations
     for index_a in range(0, number_of_nodes):
@@ -33,31 +37,66 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
             vertex_b = real_nodes[index_b]
             print(f"Vertex B: {vertex_b}")
 
-            # Check if vertex pair was already extended
-            if {vertex_a, vertex_b} in already_extended:
-                continue
+            # Calculate intersections with boundary
+            intersections = extend_line(segment_positions[vertex_a], segment_positions[vertex_b], bounds)
 
-            # Check if this particular combination of vertices is connected (by virtual edge sets)
+            # # Check if this particular combination of vertices is connected (by virtual edge sets)
             virtual_connection = [v_edge_set for v_edge_set in virtual_edge_set if {vertex_a, vertex_b} <= v_edge_set]
             if virtual_connection:
                 already_connected = 1
             else:
                 already_connected = 1 if {real_nodes[index_a], real_nodes[index_b]} in edges else 0
+            print(f"already connected: {already_connected}")
 
-            # Calculate intersections with boundary
-            intersections = extend_line(segment_positions[vertex_a], segment_positions[vertex_b], bounds)
+            if already_connected == 0:
+                segment_graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, segment=1)
 
-            # Add new boundary vertices to the graph
-            for added_vertex in range(0, len(intersections)):
-                vertex_index += 1
-                segment_graph.add_node(node_for_adding=vertex_index, split=0, target=0, virtual=0, boundary=1, segment=0)
-                segment_positions[vertex_index] = np.asarray(intersections[added_vertex])
+            for pair_index, (target, joint) in enumerate([(vertex_b, vertex_a), (vertex_a, vertex_b)]):
+                print(f"target: {target}")
+                print(f"joint:  {joint}")
+                print(f"intersection: {intersections[pair_index]}")
 
-            # Add new edges (line segments) to graph
-            connections = [(vertex_index - 1, vertex_a), (vertex_b, vertex_index)] if already_connected \
-                else [(vertex_index - 1, vertex_a), (vertex_a, vertex_b), (vertex_b, vertex_index)]
-            for connection in connections:
-                segment_graph.add_edge(u_of_edge=connection[0], v_of_edge=connection[1], virtual=0, target=0, segment=1)
+                extended_vertex = get_nested_key(already_extended, target, joint)
+                print(f"already extended: {extended_vertex}")
+
+                # TODO: check if edges still/already exist
+
+                # Check if vertex pair has already been extended
+                if extended_vertex is not None:
+                    extended_edges = virtual_edge_set.get(frozenset((joint, extended_vertex[0])), None)
+
+                    # Check if any virtual edges exist between joint and extension terminus
+                    if extended_edges is not None:
+                        connections = get_vertex_sequence(edges=extended_edges, first_node=joint, is_ordered=False)
+                        print(f"virtual edge set: {extended_edges}")
+                        print(f"vertex chain: {connections}")
+
+                    # If not, then the connection is a direct one
+                    else:
+                        connections = [joint, extended_vertex[0]]
+                        print(f"Direct connection between {joint} and {extended_vertex[0]}")
+
+                # If not, then create new vertex
+                else:
+                    connections = [joint]
+
+                # Check if extended vertex is a boundary -> if not, create a new one
+                if (extended_vertex is None) or (extended_vertex[1] != 1):
+                    vertex_index += 1
+                    segment_graph.add_node(node_for_adding=vertex_index, boundary=1)
+                    segment_positions[vertex_index] = np.asarray(intersections[pair_index])
+                    connections.append(vertex_index)
+                    print(f"Added vertex {vertex_index}")
+
+                print(f"connections: {connections}")
+                # Add new edges (line segments) to graph
+                for index in range(1, len(connections)):
+                    print(f"index: {index}")
+                    edge = {connections[index - 1], connections[index]}
+                    print(f"Edge: {edge}")
+                    if edge in edges:
+                        continue
+                    segment_graph.add_edge(u_of_edge=int(edge.pop()), v_of_edge=int(edge.pop()), segment=1)
 
     # Return new graph and positions objects
     return segment_graph, segment_positions

@@ -29,12 +29,13 @@ def get_sight_cell_edges(sight_cells, graph):
 
 
 def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, positions, bounds, outer):
+
     # Keep track of the added vertices, and in which edges they were added
     added_vertices, edge_to_virtual_vertices = [], {}
 
     # Consider only those vertices whose angle is greater than 180 degrees
     bend_vertices = [key for key in inner_angles.keys() if inner_angles[key] > 180]
-    connected_vertices = {vertex: {} for vertex in bend_vertices}
+    connected_vertices = {vertex: {} for vertex in vertices}
     boundary_edges = nx.get_edge_attributes(graph, "boundary")
 
     for joint_vertex in bend_vertices:
@@ -83,7 +84,7 @@ def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, pos
             added_vertices.append(new_vertex)
             print(f"joint vertex: {joint_vertex}")
             print(f"connecting v: {connecting_vertex}")
-            connected_vertices[joint_vertex][connecting_vertex] = (new_vertex, boundary_edges.get(bisected_edge, 0))
+            connected_vertices[connecting_vertex][joint_vertex] = (new_vertex, boundary_edges.get(bisected_edge, 0))
 
             # Add
             if bisected_edge in edge_to_virtual_vertices:
@@ -516,18 +517,15 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, cells
     save_drawn_graph(f"./graph_outer_merged.png")
 
     # Update the face's cells, their incidents, and edges based on deleted vertices
-    face_sight_cells, cell_incidences, cells_edge_map = update_sight_cell_graph(sight_cells=face_sight_cells,
-                                                                                cell_incidences=cell_incidences,
-                                                                                edge_map=cells_edge_map,
-                                                                                graph=graph,
-                                                                                positions=positions)
+    # face_sight_cells, cell_incidences, cells_edge_map = update_sight_cell_graph(sight_cells=face_sight_cells,
+    #                                                                             cell_incidences=cell_incidences,
+    #                                                                             edge_map=cells_edge_map,
+    #                                                                             graph=graph,
+    #                                                                             positions=positions)
 
     # Draw Merged Embedding
     draw_graph(graph=graph, positions=positions)
     save_drawn_graph(f"./graph_outer_merged_updated.png")
-
-    print(f"\nCELL INDICES:")
-    [print(f"({cell} - {cell_incidences[cell]})") for cell in cell_incidences.keys()]
 
     # Return updated sight cells, incidences, and edge map
     # TODO: inconsistency - we do not explicitly return graph or positions -> these are passed/altered by reference
@@ -698,7 +696,7 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
     target_joint_vertices = [key for key in target_angles.keys() if target_angles[key] > 180]
 
     #
-    connected_vertices = {vertex: {} for vertex in target_joint_vertices}
+    connected_vertices = {vertex: {} for vertex in origin_joint_vertices}
     boundary_edges = nx.get_edge_attributes(graph, "boundary")
 
     #
@@ -740,7 +738,7 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
             added_vertices.append(new_vertex)
 
             #
-            connected_vertices[target_vertex][joint_vertex] = (new_vertex, boundary_edges.get(bisected_edge, 0))
+            connected_vertices[joint_vertex][target_vertex] = (new_vertex, boundary_edges.get(bisected_edge, 0))
 
             # Add
             if bisected_edge in edge_to_virtual_vertices:

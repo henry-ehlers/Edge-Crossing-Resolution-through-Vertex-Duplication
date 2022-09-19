@@ -141,7 +141,8 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
             graph.add_edge(u_of_edge=vertex_a,
                            v_of_edge=vertex_b,
                            virtual=1,
-                           real=edge_data.get("real", 0))
+                           real=edge_data.get("real", 0),
+                           boundary=edge_data.get("boundary", 0))
     return virtual_edge_set
 
 

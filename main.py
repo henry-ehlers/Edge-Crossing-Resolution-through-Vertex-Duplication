@@ -49,7 +49,6 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
         positions=positions,
         is_cycle=is_cycle,
         bounds=bounds)
-    print(f"\nConnected Vertices: {connected_vertices}")
 
     # Calculate the incidence of all sight cells to the outer face's target incident vertices
     outer_face = set().union(*outer_faces)
@@ -59,11 +58,9 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                            face_edges=sorted_outer_edges,
                                                            face_edge_map=edge_map,
                                                            positions=o_positions)
-
     print(f"\n EDGE MAP:")
     [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]
     print(f"----------------------------------------------------------")
-    print(f"\nConnected Vertices: {connected_vertices}")
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
@@ -73,13 +70,14 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                                  cells_edge_list=outer_sight_cell_edges,
                                                                  positions=o_positions,
                                                                  graph=o_graph)
-    print(f"\nConnected Vertices: {connected_vertices}")
+    print(f"\n EDGE MAP:")
+    [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]
+    print(f"----------------------------------------------------------")
 
     # Get Sorted Incidence Table of sight cells and their incidences
     cell_incidence_table = get_incidence_table(incidences=cell_incidences,
                                                entry_type="cell",
                                                outer=True)
-    print(f"\nConnected Vertices: {connected_vertices}")
 
     # Return Everything if no single sight cell can realize the incidence of the face
     new_graph_object = {"cells":           sight_cells,
@@ -323,33 +321,25 @@ if __name__ == '__main__':
     draw_graph(graph=d_graph, positions=d_positions)
     save_drawn_graph(f"{output_directory}/graph_3.png")
 
-    print("\nINCIDENCES:")
-    [print(f"{cell} - {cell_graph_object['incidences'][cell]}") for cell in cell_graph_object["incidences"].keys()]
-    [virtual_edge_set.pop(cell) for cell in list(virtual_edge_set.keys()) if not virtual_edge_set[cell]]
-    print("\nPlanarized Virtual Edge Set")
-    [print(f"{cell} - {virtual_edge_set[cell]}") for cell in virtual_edge_set.keys()]
-
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
     print(f"\nProjecting all Line Segments")
+    [virtual_edge_set.pop(cell) for cell in list(virtual_edge_set.keys()) if not virtual_edge_set[cell]]
     edge_map = {**virtual_edge_set, **cell_graph_object["edge_map"]}
     for edge in list(edge_map.keys()):
         edge_map[frozenset(edge)] = edge_map[edge]
         edge_map.pop(edge)
-    print(f"\ncomplete edge map:")
-    [print(f"{cell} - {edge_map[cell]}") for cell in edge_map.keys()]
-    print(f"\n connected vertices:")
-    print(f"{cell_graph_object['connected_nodes']}")
-    [print(f"{v} - {cell_graph_object['connected_nodes'][v]}") for v in cell_graph_object['connected_nodes'].keys()]
-    sys.exit()
-    # s_graph, s_positions = draw_all_line_segments(graph=d_graph,
-    #                                               positions=d_positions,
-    #                                               virtual_edge_set=edge_map,
-    #                                               bounds=outer_bounds,
-    #                                               already_extended=cell_graph_object['connected_nodes'])
+
+    s_graph, s_positions = draw_all_line_segments(graph=d_graph,
+                                                  positions=d_positions,
+                                                  virtual_edge_set=edge_map,
+                                                  bounds=outer_bounds,
+                                                  already_extended=cell_graph_object['connected_nodes'])
 
     # Draw the planarized graph
     draw_graph(graph=s_graph, positions=s_positions)
     save_drawn_graph(f"{output_directory}/graph_4.png")
+
+    sys.exit()
 
     # Select the targets within which to embed split vertices
     print(f"\nSelect Embedding Cells/Faces")
