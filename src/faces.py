@@ -381,6 +381,9 @@ def vector_angle(vector_1, vector_2):
 
     # Calculate Dot Product and Signed Angle in Radians
     dot_product = np.dot(unit_vector_1, unit_vector_2)
+    print(f"unit vector 1: {unit_vector_1}")
+    print(f"unit vector 2: {unit_vector_2}")
+    print(f"dot product: {dot_product}")
     angle = np.arccos(dot_product)
 
     # Return Angle in Degrees

@@ -29,16 +29,20 @@ def get_sight_cell_edges(sight_cells, graph):
 
 def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, positions, bounds, outer):
     # Keep track of the added vertices, and in which edges they were added
-    added_vertices, edge_to_virtual_vertices, connected_vertices = [], {}, set()
+    added_vertices, edge_to_virtual_vertices = [], {}
 
     # Consider only those vertices whose angle is greater than 180 degrees
     bend_vertices = [key for key in inner_angles.keys() if inner_angles[key] > 180]
+    connected_vertices = {vertex: {} for vertex in bend_vertices}
+    boundary_edges = nx.get_edge_attributes(graph, "boundary")
 
     for joint_vertex in bend_vertices:
         for connecting_vertex in vertices:
+            input(f"\nProjecting Joint {joint_vertex} against {connecting_vertex}")
 
             # Skip any vertex pair that is a) consists of the same vertex, or b) has already been investigated
             if connecting_vertex == joint_vertex:
+                print("is identical")
                 continue
 
             # Check whether bend and other vertex can 'see' each other
@@ -54,6 +58,7 @@ def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, pos
 
             # If they cannot see each other, skip to the next pair
             if not is_visible:
+                print("is not visible")
                 continue
 
             # Extend the sight-line, producing a
@@ -70,13 +75,15 @@ def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, pos
 
             # Vertices can see one-another, but not produce a legal extension.
             if bisected_edge is None:
+                print("no edge bisected")
                 continue
 
+            print(f"bisected edge {bisected_edge} with vertex {new_vertex}")
             # Keep track of what has been added
             added_vertices.append(new_vertex)
             print(f"joint vertex: {joint_vertex}")
             print(f"connecting v: {connecting_vertex}")
-            connected_vertices.add(frozenset((joint_vertex, connecting_vertex)))
+            connected_vertices[joint_vertex][connecting_vertex] = (new_vertex, boundary_edges.get(bisected_edge, 0))
 
             # Add
             if bisected_edge in edge_to_virtual_vertices:
@@ -401,14 +408,13 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, edge_map, v
 
     # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
     origin_vertex, new_vertex_index = joint_vertex, max(graph.nodes) + 1
-    print(f"Added Vertex {new_vertex_index} and connected it to {origin_vertex}")
     graph.add_node(node_for_adding=new_vertex_index, virtual=1)
-    graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, segment=1, real=0)
+    graph.add_edge(u_of_edge=origin_vertex, v_of_edge=new_vertex_index, segment=1)
     positions[new_vertex_index] = np.array(crossing_point)
 
     # Also add edge between two vertices that were extended (if they do not already have an edge)
     if not already_connected:
-        graph.add_edge(u_of_edge=joint_vertex, v_of_edge=connecting_vertex, segment=1, real=0)
+        graph.add_edge(u_of_edge=joint_vertex, v_of_edge=connecting_vertex, segment=1)
 
     # Return a list of added vertices and a map of edges to newly placed virtual vertices
     return closest_edge, new_vertex_index
@@ -449,8 +455,8 @@ def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, edge_map, g
     return True
 
 
-def check_vertex_visibility_by_angle(joint_vertex, inner_angles, edges, vertices, positions, outer,
-                                     connecting_vertex=None, connecting_position=None):
+def check_vertex_visibility_by_angle(joint_vertex: object, inner_angles: object, edges: object, vertices: object, positions: object, outer: object,
+                                     connecting_vertex: object = None, connecting_position: object = None) -> object:
 
     # Ensure that either a vertex or a position has been provided
     assert (connecting_vertex is not None) or (connecting_position is not None), \
@@ -684,12 +690,17 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
                                    graph, positions, bounds, outer=True):
 
     # Keep track of the added vertices, and in which edges they were added
-    added_vertices, edge_to_virtual_vertices, connected_vertices = [], {}, set()
+    added_vertices, edge_to_virtual_vertices = [], {}
 
     # Consider only those vertices whose angle is greater than 180 degrees
     origin_joint_vertices = [key for key in origin_angles.keys() if origin_angles[key] > 180]
     target_joint_vertices = [key for key in target_angles.keys() if target_angles[key] > 180]
 
+    #
+    connected_vertices = {vertex: {} for vertex in target_joint_vertices}
+    boundary_edges = nx.get_edge_attributes(graph, "boundary")
+
+    #
     for joint_vertex in origin_joint_vertices:
         for target_vertex in target_joint_vertices:
 
@@ -726,20 +737,23 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
 
             # Keep track of what has been added
             added_vertices.append(new_vertex)
-            connected_vertices.add(frozenset([joint_vertex, target_vertex]))
+
+            #
+            connected_vertices[target_vertex][joint_vertex] = (new_vertex, boundary_edges.get(bisected_edge, 0))
 
             # Add
             if bisected_edge in edge_to_virtual_vertices:
                 edge_to_virtual_vertices[bisected_edge].add(new_vertex)
             else:
                 edge_to_virtual_vertices[bisected_edge] = {new_vertex}
-    print(f"connected vertices: {connected_vertices}")
 
+    #
     return edge_to_virtual_vertices, added_vertices, connected_vertices
 
 
 def add_boundary_to_graph(bounds, graph, positions, offset=0.2, largest_index=None):
 
+    # Specify
     start_index = largest_index + 1 if largest_index is not None else max(graph.nodes) + 1
 
     # Define the labels of vertices and their edges
@@ -750,7 +764,7 @@ def add_boundary_to_graph(bounds, graph, positions, offset=0.2, largest_index=No
     for index in range(0, len(bounds)):
         new_position = np.array(bounds[index]) - np.sign(np.array(bounds[index])) * np.array([offset, offset])
         positions[bound_vertices[index]] = new_position
-    graph.add_nodes_from(bound_vertices, boundary=1)
+    graph.add_nodes_from(bound_vertices, corner=1)
     graph.add_edges_from(bound_edges, real=1, boundary=1)
 
     # Return the added vertex labels and edges
@@ -856,6 +870,8 @@ def project_face_against_self(face, ordered_face_edges, face_edge_map, graph, po
         bounds=bounds,
         outer=outer)
 
+    [connected_vertices.pop(v) for v in connected_vertices.keys() if connected_vertices.get(v, None) is None]
+
     # Return
     return edge_to_virtual_vertices, added_vertices, connected_vertices
 
@@ -894,6 +910,10 @@ def project_outer_face_against_another_face(face, other_face, edge_map, ordered_
         bounds=bounds,
         outer=True)
 
+    #
+    [connected_vertices.pop(v) for v in connected_vertices.keys() if connected_vertices.get(v, None) is None]
+
+    #
     return edge_to_virtual_vertices, added_vertices, connected_vertices
 
 
@@ -920,7 +940,7 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
     bound_vertices, bound_edges = add_boundary_to_graph(bounds, outer_graph, outer_positions,
                                                         largest_index=max(graph.nodes))
     face_edge_map = {edge: [edge] for edge in all_face_edges + bound_edges}
-    connected_vertex_map = set()
+    connected_vertex_map = dict()
 
     # Iterate over all faces
     selected_face_list = list(selected_faces)
@@ -937,8 +957,8 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
             face, ordered_face_edges, face_edge_map, outer_graph, outer_positions, bounds, outer=True)
 
         # Update Graph and Virtual Edge Map with New added vertices
-        print(f"connected: {connected_vertices}")
-        connected_vertex_map = connected_vertex_map.union(connected_vertices)
+        print(f"\nconnected WITHIN FACE: {connected_vertices}")
+        connected_vertex_map.update(connected_vertices)
         print(f"map: {connected_vertex_map}")
         update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
                                           edge_to_virtual_vertices, outer_graph, outer_positions, outer=True)
@@ -966,8 +986,8 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
                 sys.exit("Non Accounted for Constellation of face!")
 
             # Update Graph and Virtual Edge Map with New added vertices
-            print(f"connected: {connected_vertices}")
-            connected_vertex_map = connected_vertex_map.union(connected_vertices)
+            print(f"\nconnected OUTSIDE FACE: {connected_vertices}")
+            connected_vertex_map.update(connected_vertices)
             print(f"map: {connected_vertex_map}")
             update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
                                               edge_to_virtual_vertices, outer_graph, outer_positions, outer=True)
@@ -975,6 +995,7 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
             # Draw Initial Embedding
             draw_graph(graph=outer_graph, positions=outer_positions)
             save_drawn_graph(f"./graph_{face}+{other_face}.png")
+    print(f"\nfinal map: {connected_vertex_map}")
 
     # Identify all faces (i.e. sight cells in outer face)
     face_graph = nx.Graph(outer_graph.subgraph(nodes=list(set(unlist(unlist(list(face_edge_map.values())))))))

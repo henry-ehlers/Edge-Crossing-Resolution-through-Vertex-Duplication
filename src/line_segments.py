@@ -12,11 +12,11 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
 
     # Store nodes and edges for easier look-up
     virtual_nodes = nx.get_node_attributes(graph, "virtual")
-    boundary_nodes = nx.get_node_attributes(graph, "boundary")
+    corner_nodes = nx.get_node_attributes(graph, "corner")
     print(f"virtual node lsit: {virtual_nodes}")
-    print(f"boundary node lsit: {boundary_nodes}")
+    print(f"boundary node lsit: {corner_nodes}")
 
-    real_nodes = [v for v in segment_graph.nodes if (virtual_nodes.get(v, 0) != 1) and (boundary_nodes.get(v, 0) != 1)]
+    real_nodes = [v for v in segment_graph.nodes if (virtual_nodes.get(v, 0) != 1) and (corner_nodes.get(v, 0) != 1)]
     edges = frozenset([frozenset(edge) for edge in list(segment_graph.edges())])
 
     # Store the number of nodes and largest index
@@ -166,13 +166,13 @@ def create_subface_graph(graph, positions, target_faces, face_intersection_map):
                     # Create new Vertex
                     vertex_index += 1
                     edge_targets.append(vertex_index)
-                    graph.add_node(node_for_adding=vertex_index, split=0, target=0, virtual=0, boundary=0, segment=1)
+                    graph.add_node(node_for_adding=vertex_index, segment=1)
                     face_vertex_map[target_face].add(vertex_index)
                     positions[vertex_index] = np.asarray(intersection)
                     edge_to_virtual_vertex[face_edge].add(vertex_index)
                 else:
                     edge_targets.append(face_edge)
-            graph.add_edge(u_of_edge=edge_targets[0], v_of_edge=edge_targets[1], virtual=0, target=0, segment=1)
+            graph.add_edge(u_of_edge=edge_targets[0], v_of_edge=edge_targets[1], segment=1)
 
     # Add virtual edge connections
     # [print(f"{index} - {edge_to_virtual_vertex[index]}") for index in edge_to_virtual_vertex.keys()]
