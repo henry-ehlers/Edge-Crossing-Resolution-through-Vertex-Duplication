@@ -1,34 +1,48 @@
 from src.edge_crossings import *
+
+import networkx as nx
 import numpy as np
 import copy
 
 
-def draw_all_line_segments(graph, positions, virtual_edge_set, bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
+def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_extended=set(), start_index=None):
 
     # Create new graph and positions objects
     segment_graph, segment_positions = copy.deepcopy(graph), copy.deepcopy(positions)
 
     # Store nodes and edges for easier look-up
-    node_list = list(segment_graph.nodes())
+    virtual_nodes = nx.get_node_attributes(graph, "virtual")
+    boundary_nodes = nx.get_node_attributes(graph, "boundary")
+    print(f"virtual node lsit: {virtual_nodes}")
+    print(f"boundary node lsit: {boundary_nodes}")
+
+    real_nodes = [v for v in segment_graph.nodes if (virtual_nodes.get(v, 0) != 1) and (boundary_nodes.get(v, 0) != 1)]
     edges = frozenset([frozenset(edge) for edge in list(segment_graph.edges())])
 
     # Store the number of nodes and largest index
-    vertex_index = max(node_list)
-    number_of_nodes = len(node_list)
+    vertex_index = start_index if start_index else max(graph.nodes)
+    print(f"starting index: {vertex_index}")
+    number_of_nodes = len(real_nodes)
+    print(f"\nnodes: {number_of_nodes}")
 
     # Iterate over all pairwise vertex combinations
     for index_a in range(0, number_of_nodes):
-        vertex_a = node_list[index_a]
+        vertex_a = real_nodes[index_a]
+        print(f"\nVertex A: {vertex_a}")
         for index_b in range(index_a + 1, number_of_nodes):
-            vertex_b = node_list[index_b]
+            vertex_b = real_nodes[index_b]
+            print(f"Vertex B: {vertex_b}")
 
-            # Check if this particular combination of vertices maps to a virtual edge set
-            found_set = [v_edge_set for v_edge_set in virtual_edge_set if {vertex_a, vertex_b} <= v_edge_set]
-            if found_set:
-                if any(graph.nodes[vertex]["virtual"] == 1 for vertex in [vertex_a, vertex_b]): continue
+            # Check if vertex pair was already extended
+            if {vertex_a, vertex_b} in already_extended:
+                continue
+
+            # Check if this particular combination of vertices is connected (by virtual edge sets)
+            virtual_connection = [v_edge_set for v_edge_set in virtual_edge_set if {vertex_a, vertex_b} <= v_edge_set]
+            if virtual_connection:
                 already_connected = 1
             else:
-                already_connected = 1 if {node_list[index_a], node_list[index_b]} in edges else 0
+                already_connected = 1 if {real_nodes[index_a], real_nodes[index_b]} in edges else 0
 
             # Calculate intersections with boundary
             intersections = extend_line(segment_positions[vertex_a], segment_positions[vertex_b], bounds)

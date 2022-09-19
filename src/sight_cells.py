@@ -29,7 +29,8 @@ def get_sight_cell_edges(sight_cells, graph):
 
 def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, positions, bounds, outer):
     # Keep track of the added vertices, and in which edges they were added
-    added_vertices, edge_to_virtual_vertices = [], {}
+    added_vertices, edge_to_virtual_vertices, connected_vertices = [], {}, set()
+
     # Consider only those vertices whose angle is greater than 180 degrees
     bend_vertices = [key for key in inner_angles.keys() if inner_angles[key] > 180]
 
@@ -73,14 +74,17 @@ def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, pos
 
             # Keep track of what has been added
             added_vertices.append(new_vertex)
+            print(f"joint vertex: {joint_vertex}")
+            print(f"connecting v: {connecting_vertex}")
+            connected_vertices.add(frozenset((joint_vertex, connecting_vertex)))
 
             # Add
             if bisected_edge in edge_to_virtual_vertices:
                 edge_to_virtual_vertices[bisected_edge].add(new_vertex)
             else:
                 edge_to_virtual_vertices[bisected_edge] = {new_vertex}
-
-    return edge_to_virtual_vertices, added_vertices
+    print(f"connected: {connected_vertices}")
+    return edge_to_virtual_vertices, added_vertices, connected_vertices
 
 
 def get_faces_sight_cell_incidences(sight_cells, target_vertices, face_edges, face_edge_map, positions):
@@ -680,7 +684,7 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
                                    graph, positions, bounds, outer=True):
 
     # Keep track of the added vertices, and in which edges they were added
-    added_vertices, edge_to_virtual_vertices = [], {}
+    added_vertices, edge_to_virtual_vertices, connected_vertices = [], {}, set()
 
     # Consider only those vertices whose angle is greater than 180 degrees
     origin_joint_vertices = [key for key in origin_angles.keys() if origin_angles[key] > 180]
@@ -722,14 +726,16 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
 
             # Keep track of what has been added
             added_vertices.append(new_vertex)
+            connected_vertices.add(frozenset([joint_vertex, target_vertex]))
 
             # Add
             if bisected_edge in edge_to_virtual_vertices:
                 edge_to_virtual_vertices[bisected_edge].add(new_vertex)
             else:
                 edge_to_virtual_vertices[bisected_edge] = {new_vertex}
+    print(f"connected vertices: {connected_vertices}")
 
-    return edge_to_virtual_vertices, added_vertices
+    return edge_to_virtual_vertices, added_vertices, connected_vertices
 
 
 def add_boundary_to_graph(bounds, graph, positions, offset=0.2, largest_index=None):
@@ -744,8 +750,9 @@ def add_boundary_to_graph(bounds, graph, positions, offset=0.2, largest_index=No
     for index in range(0, len(bounds)):
         new_position = np.array(bounds[index]) - np.sign(np.array(bounds[index])) * np.array([offset, offset])
         positions[bound_vertices[index]] = new_position
-    graph.add_nodes_from(bound_vertices)
-    graph.add_edges_from(bound_edges, real=1)
+    graph.add_nodes_from(bound_vertices, boundary=1)
+    graph.add_edges_from(bound_edges, real=1, boundary=1)
+
     # Return the added vertex labels and edges
     return bound_vertices, bound_edges
 
@@ -780,7 +787,7 @@ def get_face_sight_cells(selected_faces, ordered_face_edges, graph, positions,
         else:
 
             # Project sight lines if possible
-            edge_to_virtual_vertices, added_vertices = project_face_against_self(
+            edge_to_virtual_vertices, added_vertices, connected_vertices = project_face_against_self(
                 face, ordered_face_edges, face_edge_map, graph, positions, bounds, outer=False)
 
             # Update Graph and Edge Map
@@ -839,17 +846,18 @@ def project_face_against_self(face, ordered_face_edges, face_edge_map, graph, po
     candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
 
     # Extend all sight lines, add new vertices where necessary, and keep track of edge bisection
-    edge_to_virtual_vertices, added_vertices = project_face_sight_lines(edges=candidate_edges,
-                                                                        vertices=face_vertices,
-                                                                        inner_angles=face_angles,
-                                                                        edge_map=face_edge_map,
-                                                                        graph=graph,
-                                                                        positions=positions,
-                                                                        bounds=bounds,
-                                                                        outer=outer)
+    edge_to_virtual_vertices, added_vertices, connected_vertices = project_face_sight_lines(
+        edges=candidate_edges,
+        vertices=face_vertices,
+        inner_angles=face_angles,
+        edge_map=face_edge_map,
+        graph=graph,
+        positions=positions,
+        bounds=bounds,
+        outer=outer)
 
     # Return
-    return edge_to_virtual_vertices, added_vertices
+    return edge_to_virtual_vertices, added_vertices, connected_vertices
 
 
 def project_outer_face_against_singleton():
@@ -874,18 +882,19 @@ def project_outer_face_against_another_face(face, other_face, edge_map, ordered_
     face_angles = calculate_face_outer_angles(face_vertices, positions)
 
     #
-    edge_to_virtual_vertices, added_vertices = project_additional_sight_lines(edges=candidate_edges,
-                                                                              origin_vertices=face_vertices,
-                                                                              origin_angles=face_angles,
-                                                                              target_vertices=other_face_vertices,
-                                                                              edge_map=edge_map,
-                                                                              target_angles=other_face_angles,
-                                                                              graph=graph,
-                                                                              positions=positions,
-                                                                              bounds=bounds,
-                                                                              outer=True)
+    edge_to_virtual_vertices, added_vertices, connected_vertices = project_additional_sight_lines(
+        edges=candidate_edges,
+        origin_vertices=face_vertices,
+        origin_angles=face_angles,
+        target_vertices=other_face_vertices,
+        edge_map=edge_map,
+        target_angles=other_face_angles,
+        graph=graph,
+        positions=positions,
+        bounds=bounds,
+        outer=True)
 
-    return edge_to_virtual_vertices, added_vertices
+    return edge_to_virtual_vertices, added_vertices, connected_vertices
 
 
 def get_subgraph(nodes, edges, graph, positions):
@@ -911,6 +920,7 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
     bound_vertices, bound_edges = add_boundary_to_graph(bounds, outer_graph, outer_positions,
                                                         largest_index=max(graph.nodes))
     face_edge_map = {edge: [edge] for edge in all_face_edges + bound_edges}
+    connected_vertex_map = set()
 
     # Iterate over all faces
     selected_face_list = list(selected_faces)
@@ -923,10 +933,13 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
         other_faces.remove(face)
 
         # Project sight-lines within the currently selected face against itself
-        edge_to_virtual_vertices, added_vertices = project_face_against_self(
+        edge_to_virtual_vertices, added_vertices, connected_vertices = project_face_against_self(
             face, ordered_face_edges, face_edge_map, outer_graph, outer_positions, bounds, outer=True)
 
         # Update Graph and Virtual Edge Map with New added vertices
+        print(f"connected: {connected_vertices}")
+        connected_vertex_map = connected_vertex_map.union(connected_vertices)
+        print(f"map: {connected_vertex_map}")
         update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
                                           edge_to_virtual_vertices, outer_graph, outer_positions, outer=True)
 
@@ -941,7 +954,7 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
 
             # Check if the Other face is a cycle or not -> check angle visibilities + edge crossing visibilities
             if is_cycle[other_face]:
-                edge_to_virtual_vertices, added_vertices = project_outer_face_against_another_face(
+                edge_to_virtual_vertices, added_vertices, connected_vertices = project_outer_face_against_another_face(
                     face, other_face, face_edge_map, ordered_face_edges, outer_positions, outer_graph, bounds)
             elif not is_cycle[other_face] and len(other_face) > 1:
                 # TODO: if other face is not a cycle -> special visiblility checking of ONLY edge intersections
@@ -953,6 +966,9 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
                 sys.exit("Non Accounted for Constellation of face!")
 
             # Update Graph and Virtual Edge Map with New added vertices
+            print(f"connected: {connected_vertices}")
+            connected_vertex_map = connected_vertex_map.union(connected_vertices)
+            print(f"map: {connected_vertex_map}")
             update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
                                               edge_to_virtual_vertices, outer_graph, outer_positions, outer=True)
 
@@ -968,7 +984,7 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
     [sight_cells.remove(cell) for cell in copy.copy(sight_cells) for face in selected_faces if face.issubset(cell)]
 
     # Return the identified sight cells and the subgraph
-    return sight_cells, face_edge_map, outer_graph, outer_positions
+    return sight_cells, face_edge_map, connected_vertex_map, outer_graph, outer_positions
 
 
 def deep_update_of_virtual_edge_map(complete_map, new_map):

@@ -1,3 +1,5 @@
+import copy
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import itertools as it
@@ -14,7 +16,7 @@ def select_embedding_faces(incidence_table, target_vertices):
     incidence_matrix = get_incidence_matrix(incidence_table=incidence_table,
                                             targets=target_vertices)
     print(incidence_matrix)
-
+    # TODO: resolve ties
     selected_entries = ilp_choose_face(visibility_matrix=incidence_matrix.to_numpy(dtype=int))
     print(f"selected entry indices: {selected_entries}")
     print(incidence_matrix.iloc[selected_entries])
@@ -37,16 +39,16 @@ def get_incidence_matrix(incidence_table, targets=None):
     return pd.DataFrame(incidence_matrix, columns=targets, index=entries)
 
 
-def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target_vertices, graph, positions):
+def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target_vertices, graph, positions, bounds):
 
     # Identify all sight cells in the outer face
-    outer_bounds = get_embedding_square(graph=graph, positions=positions, scaler=1.2)
-    sight_cells, edge_map, o_graph, o_positions = find_outer_face_sight_cells(selected_faces=outer_faces,
-                                                                              ordered_face_edges=sorted_outer_edges,
-                                                                              graph=graph,
-                                                                              positions=positions,
-                                                                              is_cycle=is_cycle,
-                                                                              bounds=outer_bounds)
+    sight_cells, edge_map, connected_vertices, o_graph, o_positions = find_outer_face_sight_cells(
+        selected_faces=outer_faces,
+        ordered_face_edges=sorted_outer_edges,
+        graph=graph,
+        positions=positions,
+        is_cycle=is_cycle,
+        bounds=bounds)
 
     # Calculate the incidence of all sight cells to the outer face's target incident vertices
     outer_face = set().union(*outer_faces)
@@ -72,7 +74,13 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                outer=True)
 
     # Return Everything if no single sight cell can realize the incidence of the face
-    return cell_incidence_table, [sight_cells, cell_incidences, edge_map, o_graph, o_positions]
+    new_graph_object = {"cells":           sight_cells,
+                        "incidences":      cell_incidences,
+                        "connected_nodes": connected_vertices,
+                        "edge_map":        edge_map,
+                        "graph":           o_graph,
+                        "positions":       o_positions}
+    return cell_incidence_table, new_graph_object
 
 
 def get_incidence_table(incidences, entry_type="face", outer=False):
@@ -130,7 +138,7 @@ def get_outer_face(sorted_inner_face_edges, graph, positions):
     return outer_faces, sorted_outer_face_edges, is_cycle
 
 
-def decompose_outer_face(sorted_inner_face_edges, target_vertices, graph, positions):
+def decompose_outer_face(sorted_inner_face_edges, target_vertices, graph, positions, bounds):
 
     # Find the Graph's Outer face(s)
     outer_faces, sorted_outer_face_edges, is_cycle = get_outer_face(
@@ -142,7 +150,8 @@ def decompose_outer_face(sorted_inner_face_edges, target_vertices, graph, positi
                                                                         is_cycle=is_cycle,
                                                                         target_vertices=target_vertices,
                                                                         graph=graph,
-                                                                        positions=positions)
+                                                                        positions=positions,
+                                                                        bounds=bounds)
 
     # Return the decomposed outer face subgraph
     return cell_incidence_table, new_graph_object
@@ -289,18 +298,45 @@ if __name__ == '__main__':
     # Decompose the outer face into sight cells and update the planar graph
     print("\nDecompose The Outer Face")
     d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
+    outer_bounds = get_embedding_square(graph=p_graph,
+                                        positions=p_positions,
+                                        scaler=1.2)
     outer_cell_incidence, cell_graph_object = decompose_outer_face(sorted_inner_face_edges=sorted_inner_face_edges,
                                                                    graph=p_graph,
                                                                    positions=p_positions,
-                                                                   target_vertices=target_adjacency)
+                                                                   target_vertices=target_adjacency,
+                                                                   bounds=outer_bounds)
     update_graph_with_sight_cells(graph=d_graph,
                                   positions=d_positions,
-                                  cell_graph=cell_graph_object[3],
-                                  cell_positions=cell_graph_object[4],
-                                  new_edge_map=cell_graph_object[2])
+                                  cell_graph=cell_graph_object["graph"],
+                                  cell_positions=cell_graph_object["positions"],
+                                  new_edge_map=cell_graph_object["edge_map"])
 
     draw_graph(graph=d_graph, positions=d_positions)
     save_drawn_graph(f"{output_directory}/graph_3.png")
+
+    [virtual_edge_set.pop(cell) for cell in list(virtual_edge_set.keys()) if not virtual_edge_set[cell]]
+    print("\nPlanarized Virtual Edge Set")
+    [print(f"{cell} - {virtual_edge_set[cell]}") for cell in virtual_edge_set.keys()]
+
+    # Create line-segments between all vertices now already connected by edges or virtual edge sets
+    print(f"\nProjecting all Line Segments")
+    edge_map = {**virtual_edge_set, **cell_graph_object["edge_map"]}
+    for edge in list(edge_map.keys()):
+        edge_map[frozenset(edge)] = edge_map[edge]
+        edge_map.pop(edge)
+    print(f"\ncomplete edge map:")
+    [print(f"{cell} - {edge_map[cell]}") for cell in edge_map.keys()]
+    print(f"\n connected vertices: {cell_graph_object['connected_nodes']}")
+    s_graph, s_positions = draw_all_line_segments(graph=d_graph,
+                                                  positions=d_positions,
+                                                  virtual_edge_set=edge_map,
+                                                  bounds=outer_bounds,
+                                                  already_extended=cell_graph_object['connected_nodes'])
+
+    # Draw the planarized graph
+    draw_graph(graph=s_graph, positions=s_positions)
+    save_drawn_graph(f"{output_directory}/graph_4.png")
 
     # Select the targets within which to embed split vertices
     print(f"\nSelect Embedding Cells/Faces")

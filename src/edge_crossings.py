@@ -164,7 +164,7 @@ def planarize_graph(graph, positions, edge_crossings, largest_index=None):
             index += 1
 
             # Add new vertex to graph and drawing's locations
-            graph.add_node(node_for_adding=index, split=0, target=0, virtual=1, boundary=0, segment=0)
+            graph.add_node(node_for_adding=index, virtual=1)
             positions[index] = np.asarray(edge_crossings[edge_a][edge_b])
 
             # Log connections to new virtual vertex to be added and original (real) edges to be removed
