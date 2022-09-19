@@ -324,26 +324,26 @@ if __name__ == '__main__':
     draw_graph(graph=d_graph, positions=d_positions)
     save_drawn_graph(f"{output_directory}/graph_3.png")
 
+    # Create line-segments between all vertices now already connected by edges or virtual edge sets
+    print(f"\nUpdate Inner Face")
+    update_faces_with_edge_map(inner_face_incidence, sorted_inner_face_edges, cell_graph_object["edge_map"])
+    print(inner_face_incidence)
+    print()
+    print(sorted_inner_face_edges)
+
     # Select the targets within which to embed split vertices
     print(f"\nSelect Embedding Cells/Faces")
     incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence],
                                 ignore_index=True,
                                 axis=0)
     selected_cells = select_embedding_faces(incidence_table, target_adjacency)
-    print(selected_cells)
+    print(f"selected cells: {selected_cells}")
+    print(f"index: {selected_cells.index}")
+    selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
 
-    # Create line-segments between all vertices now already connected by edges or virtual edge sets
-    print(f"\nProjecting all Line Segments")
-    update_faces_with_edge_map(inner_face_incidence, sorted_inner_face_edges, cell_graph_object["edge_map"])
-    print(inner_face_incidence)
-    print()
-    print(sorted_inner_face_edges)
+    print(f"selected faces: {selected_faces}")
 
-    print("FACE CELL EDGE MAP")
-    [print(f"face {cell} -- {face_cell_edge_map[cell]}") for cell in face_cell_edge_map.keys()]
-    print(f"---------------------------------------------------------------------")
-    sys.exit()
-
+    print(f"\nDraw All-to-All line segments")
     [virtual_edge_set.pop(cell) for cell in list(virtual_edge_set.keys()) if not virtual_edge_set[cell]]
     edge_map = {**virtual_edge_set, **cell_graph_object["edge_map"]}
     for edge in list(edge_map.keys()):
@@ -356,19 +356,15 @@ if __name__ == '__main__':
                                                   bounds=outer_bounds,
                                                   already_extended=cell_graph_object['connected_nodes'])
 
-    # Draw the planarized graph
+    # Draw the segment graph
     draw_graph(graph=s_graph, positions=s_positions)
     save_drawn_graph(f"{output_directory}/graph_4.png")
 
-    print(f"\nedge map:")
-    [print(f"{cell} -- {edge_map[cell]}") for cell in edge_map.keys()]
-
-    sys.exit()
-
+    print(f"\nCull Non-Selected Line Segments")
     c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
         graph=s_graph,
         positions=s_positions,
-        target_faces=None,
+        target_faces=selected_faces,
         face_edge_map=edge_map)
 
     sys.exit()
