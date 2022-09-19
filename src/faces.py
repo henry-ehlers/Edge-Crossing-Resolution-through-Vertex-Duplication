@@ -102,6 +102,31 @@ def get_ordered_face_edges(faces, graph):
     return ordered_face_edges
 
 
+def unlist(nested_list):
+    return list(it.chain.from_iterable(nested_list))
+
+
+def update_faces_with_edge_map(face_incidence_table, face_edge_map, edge_map):
+    print(f"\nedge map:  {edge_map}")
+    print(f"\nface edge map:  {face_edge_map}")
+
+    for index, row in face_incidence_table.iterrows():
+        face = row["identifier"]
+        print(f"face: {face}")
+        face_edges = face_edge_map[face]
+        new_face_edges = []
+        for edge in face_edges:
+            new_face_edges.append(edge_map.get(edge, [edge]))
+        new_face_edges = unlist(new_face_edges)
+        print(f"new face edges: {new_face_edges}")
+        new_face_identifier = frozenset(unlist(new_face_edges))
+        print(f"vertex set: {new_face_identifier}")
+
+        face_edge_map.pop(face)
+        face_edge_map[new_face_identifier] = new_face_edges
+        face_incidence_table.at[index, "identifier"] = new_face_identifier
+
+
 def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
 
     sorted_vertices = get_sorted_face_vertices(sorted_edges[cycle], is_sorted=True)

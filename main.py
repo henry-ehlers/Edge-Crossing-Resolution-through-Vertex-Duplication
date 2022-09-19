@@ -20,7 +20,7 @@ def select_embedding_faces(incidence_table, target_vertices):
     selected_entries = ilp_choose_face(visibility_matrix=incidence_matrix.to_numpy(dtype=int))
     print(f"selected entry indices: {selected_entries}")
     print(incidence_matrix.iloc[selected_entries])
-    pass
+    return selected_entries
 
 
 def get_incidence_matrix(incidence_table, targets=None):
@@ -298,8 +298,11 @@ if __name__ == '__main__':
     inner_face_incidence, sorted_inner_face_edges = get_inner_faces(target_vertices=target_adjacency,
                                                                     graph=p_graph,
                                                                     positions=p_positions)
-
+    inner_face_edge_map = get_ordered_face_edges(faces=inner_face_incidence['identifier'].tolist(),
+                                                 graph=p_graph)
+    print(f"inner face edge map: {inner_face_edge_map}")
     print(inner_face_incidence)
+    print(f"\n sorted inner edges: {sorted_inner_face_edges}")
 
     # Decompose the outer face into sight cells and update the planar graph
     print("\nDecompose The Outer Face")
@@ -321,8 +324,26 @@ if __name__ == '__main__':
     draw_graph(graph=d_graph, positions=d_positions)
     save_drawn_graph(f"{output_directory}/graph_3.png")
 
+    # Select the targets within which to embed split vertices
+    print(f"\nSelect Embedding Cells/Faces")
+    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence],
+                                ignore_index=True,
+                                axis=0)
+    selected_cells = select_embedding_faces(incidence_table, target_adjacency)
+    print(selected_cells)
+
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
     print(f"\nProjecting all Line Segments")
+    update_faces_with_edge_map(inner_face_incidence, sorted_inner_face_edges, cell_graph_object["edge_map"])
+    print(inner_face_incidence)
+    print()
+    print(sorted_inner_face_edges)
+
+    print("FACE CELL EDGE MAP")
+    [print(f"face {cell} -- {face_cell_edge_map[cell]}") for cell in face_cell_edge_map.keys()]
+    print(f"---------------------------------------------------------------------")
+    sys.exit()
+
     [virtual_edge_set.pop(cell) for cell in list(virtual_edge_set.keys()) if not virtual_edge_set[cell]]
     edge_map = {**virtual_edge_set, **cell_graph_object["edge_map"]}
     for edge in list(edge_map.keys()):
@@ -339,14 +360,16 @@ if __name__ == '__main__':
     draw_graph(graph=s_graph, positions=s_positions)
     save_drawn_graph(f"{output_directory}/graph_4.png")
 
+    print(f"\nedge map:")
+    [print(f"{cell} -- {edge_map[cell]}") for cell in edge_map.keys()]
+
     sys.exit()
 
-    # Select the targets within which to embed split vertices
-    print(f"\nSelect Embedding Cells/Faces")
-    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence], axis=0, ignore_index=True)
-    print(incidence_table)
-    # select_embedding_faces(incidence_table, target_adjacency, d_graph, d_positions)
-    select_embedding_faces(incidence_table, target_adjacency)
+    c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
+        graph=s_graph,
+        positions=s_positions,
+        target_faces=None,
+        face_edge_map=edge_map)
 
     sys.exit()
 

@@ -19,8 +19,7 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
     segment_graph, segment_positions = copy.deepcopy(graph), copy.deepcopy(positions)
 
     # Store nodes and edges for easier look-up
-    virtual_nodes = nx.get_node_attributes(graph, "virtual")
-    corner_nodes = nx.get_node_attributes(graph, "corner")
+    virtual_nodes, corner_nodes = nx.get_node_attributes(graph, "virtual"), nx.get_node_attributes(graph, "corner")
 
     real_nodes = [v for v in segment_graph.nodes if (virtual_nodes.get(v, 0) != 1) and (corner_nodes.get(v, 0) != 1)]
     edges = frozenset([frozenset(edge) for edge in list(segment_graph.edges())])
@@ -34,7 +33,6 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
         vertex_a = real_nodes[index_a]
         for index_b in range(index_a + 1, number_of_nodes):
             vertex_b = real_nodes[index_b]
-            print(f"\n Vertex A {vertex_a} and Vertex B: {vertex_b}")
 
             # Calculate intersections with boundary
             intersections = extend_line(segment_positions[vertex_a], segment_positions[vertex_b], bounds)
@@ -45,37 +43,30 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
                 already_connected = 1
             else:
                 already_connected = 1 if {real_nodes[index_a], real_nodes[index_b]} in edges else 0
-            print(f"already connected: {already_connected}")
 
+            # If the two vertices are not yet connected, connect them with a segment edge
             if already_connected == 0:
                 segment_graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, segment=1)
 
+            # Project vertex-a onto vertex-b and vice-versa
             for pair_index, (target, joint) in enumerate([(vertex_b, vertex_a), (vertex_a, vertex_b)]):
-                print(f"target: {target}")
-                print(f"joint:  {joint}")
-                print(f"intersection: {intersections[pair_index]}")
-
-                extended_vertex = get_nested_key(already_extended, target, joint)
-                print(f"already extended: {extended_vertex}")
 
                 # Check if vertex pair has already been extended
+                extended_vertex = get_nested_key(already_extended, target, joint)
                 if extended_vertex is not None:
-                    extended_edges = virtual_edge_set.get(frozenset((joint, extended_vertex[0])), None)
 
                     # Check if any virtual edges exist between joint and extension terminus
+                    extended_edges = virtual_edge_set.get(frozenset((joint, extended_vertex[0])), None)
                     if extended_edges is not None:
                         connections = get_vertex_sequence(edges=extended_edges,
                                                           first_node=joint,
                                                           is_ordered=False)
-                        print(f"virtual edge set: {extended_edges}")
-                        print(f"vertex chain: {connections}")
 
-                    # If not, then the connection is a direct one
+                    # If no additional vertices exist, then connect only the joint and the
                     else:
                         connections = [joint, extended_vertex[0]]
-                        print(f"Direct connection between {joint} and {extended_vertex[0]}")
 
-                # If not, then create new vertex
+                # If no connections exist, the keep and empty list
                 else:
                     connections = [joint]
 
@@ -84,18 +75,13 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
                 segment_graph.add_node(node_for_adding=vertex_index, boundary=1)
                 segment_positions[vertex_index] = np.asarray(intersections[pair_index])
                 connections.append(vertex_index)
-                print(f"Added vertex {vertex_index}")
 
-                print(f"connections: {connections}")
-                # Add new edges (line segments) to graph
+                # Add new edges (line segments) to graph if the edge does not yet exist
                 for index in range(1, len(connections)):
                     edge = {connections[index - 1], connections[index]}
-                    print(f"Edge: {edge}")
                     if edge in edges:
                         continue
-                    print(f"adding edge {edge}")
                     segment_graph.add_edge(u_of_edge=int(edge.pop()), v_of_edge=int(edge.pop()), segment=1)
-                input("Next pair\n")
 
     # Return new graph and positions objects
     return segment_graph, segment_positions
@@ -104,12 +90,10 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
 def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map):
 
     # Create new graph objects
-    culled_graph = copy.deepcopy(graph)
-    culled_positions = copy.deepcopy(positions)
+    culled_graph, culled_positions = copy.deepcopy(graph), copy.deepcopy(positions)
 
     # Keep track of non-intersecting segments
-    edges_to_be_removed = set()
-    nodes_to_be_removed = set()
+    edges_to_be_removed, nodes_to_be_removed = set(), set()
 
     # Initialize empty nested dictionary
     face_intersection_map = {target_face: dict() for target_face in target_faces}
