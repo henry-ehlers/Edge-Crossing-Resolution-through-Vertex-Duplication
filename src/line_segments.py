@@ -32,10 +32,9 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
     # Iterate over all pairwise vertex combinations
     for index_a in range(0, number_of_nodes):
         vertex_a = real_nodes[index_a]
-        print(f"\nVertex A: {vertex_a}")
         for index_b in range(index_a + 1, number_of_nodes):
             vertex_b = real_nodes[index_b]
-            print(f"Vertex B: {vertex_b}")
+            print(f"\n Vertex A {vertex_a} and Vertex B: {vertex_b}")
 
             # Calculate intersections with boundary
             intersections = extend_line(segment_positions[vertex_a], segment_positions[vertex_b], bounds)
@@ -59,15 +58,15 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
                 extended_vertex = get_nested_key(already_extended, target, joint)
                 print(f"already extended: {extended_vertex}")
 
-                # TODO: check if edges still/already exist
-
                 # Check if vertex pair has already been extended
                 if extended_vertex is not None:
                     extended_edges = virtual_edge_set.get(frozenset((joint, extended_vertex[0])), None)
 
                     # Check if any virtual edges exist between joint and extension terminus
                     if extended_edges is not None:
-                        connections = get_vertex_sequence(edges=extended_edges, first_node=joint, is_ordered=False)
+                        connections = get_vertex_sequence(edges=extended_edges,
+                                                          first_node=joint,
+                                                          is_ordered=False)
                         print(f"virtual edge set: {extended_edges}")
                         print(f"vertex chain: {connections}")
 
@@ -80,23 +79,23 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
                 else:
                     connections = [joint]
 
-                # Check if extended vertex is a boundary -> if not, create a new one
-                if (extended_vertex is None) or (extended_vertex[1] != 1):
-                    vertex_index += 1
-                    segment_graph.add_node(node_for_adding=vertex_index, boundary=1)
-                    segment_positions[vertex_index] = np.asarray(intersections[pair_index])
-                    connections.append(vertex_index)
-                    print(f"Added vertex {vertex_index}")
+                # Add another virtual vertex beyond the boundary
+                vertex_index += 1
+                segment_graph.add_node(node_for_adding=vertex_index, boundary=1)
+                segment_positions[vertex_index] = np.asarray(intersections[pair_index])
+                connections.append(vertex_index)
+                print(f"Added vertex {vertex_index}")
 
                 print(f"connections: {connections}")
                 # Add new edges (line segments) to graph
                 for index in range(1, len(connections)):
-                    print(f"index: {index}")
                     edge = {connections[index - 1], connections[index]}
                     print(f"Edge: {edge}")
                     if edge in edges:
                         continue
+                    print(f"adding edge {edge}")
                     segment_graph.add_edge(u_of_edge=int(edge.pop()), v_of_edge=int(edge.pop()), segment=1)
+                input("Next pair\n")
 
     # Return new graph and positions objects
     return segment_graph, segment_positions
