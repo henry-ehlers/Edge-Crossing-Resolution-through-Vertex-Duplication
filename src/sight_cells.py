@@ -4,6 +4,7 @@ from src.vertex_splitting import calculate_face_centroid
 from src.graph_drawing import *
 from src.faces import *
 
+import collections.abc
 import networkx as nx
 import itertools as it
 import pandas as pd
@@ -38,7 +39,6 @@ def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, pos
 
     for joint_vertex in bend_vertices:
         for connecting_vertex in vertices:
-            input(f"\nProjecting Joint {joint_vertex} against {connecting_vertex}")
 
             # Skip any vertex pair that is a) consists of the same vertex, or b) has already been investigated
             if connecting_vertex == joint_vertex:
@@ -91,6 +91,7 @@ def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, pos
             else:
                 edge_to_virtual_vertices[bisected_edge] = {new_vertex}
     print(f"connected: {connected_vertices}")
+
     return edge_to_virtual_vertices, added_vertices, connected_vertices
 
 
@@ -925,6 +926,15 @@ def get_subgraph(nodes, edges, graph, positions):
     return sub_graph, sub_positions
 
 
+def update(d, u):
+    for k, v in u.items():
+        if isinstance(v, collections.abc.Mapping):
+            d[k] = update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
+
+
 def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positions, is_cycle, bounds):
     # TODO: a bisected REAL edge will not be extended since we are looking up the original edge sets, whcih don't
     # TODO: exist anymore, i think. look at (7, 14) and (14, 8) not being extended in 1.5
@@ -958,7 +968,7 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
 
         # Update Graph and Virtual Edge Map with New added vertices
         print(f"\nconnected WITHIN FACE: {connected_vertices}")
-        connected_vertex_map.update(connected_vertices)
+        update(connected_vertex_map, connected_vertices)
         print(f"map: {connected_vertex_map}")
         update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
                                           edge_to_virtual_vertices, outer_graph, outer_positions, outer=True)
@@ -987,7 +997,7 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
 
             # Update Graph and Virtual Edge Map with New added vertices
             print(f"\nconnected OUTSIDE FACE: {connected_vertices}")
-            connected_vertex_map.update(connected_vertices)
+            update(connected_vertex_map, connected_vertices)
             print(f"map: {connected_vertex_map}")
             update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
                                               edge_to_virtual_vertices, outer_graph, outer_positions, outer=True)
