@@ -248,11 +248,11 @@ if __name__ == '__main__':
     # Create Graph
     graph = nx.Graph()
     for vertex in vertices:
-        graph.add_node(vertex)
+        graph.add_node(vertex, real=1)
     for vertex in more_vertices:
-        graph.add_node(vertex)
+        graph.add_node(vertex, real=1)
     v_index = max(graph.nodes) + 1
-    graph.add_node(v_index)
+    graph.add_node(v_index, real=1)
     for edge in target_edges:
         graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
 
@@ -350,7 +350,10 @@ if __name__ == '__main__':
     for edge in list(edge_map.keys()):
         edge_map[frozenset(edge)] = edge_map[edge]
         edge_map.pop(edge)
-
+    print(f"\nvirtual edge set:")
+    [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]
+    print(f"\n already extended:")
+    [print(f"{vertex}: {cell_graph_object['connected_nodes'][vertex]}") for vertex in cell_graph_object['connected_nodes'].keys()]
     s_graph, s_positions = draw_all_line_segments(graph=d_graph,
                                                   positions=d_positions,
                                                   virtual_edge_set=edge_map,
@@ -360,6 +363,8 @@ if __name__ == '__main__':
     # Draw the segment graph
     draw_graph(graph=s_graph, positions=s_positions)
     save_drawn_graph(f"{output_directory}/graph_4.png")
+
+    sys.exit()
 
     print(f"\nCull Non-Selected Line Segments")
     print(f"cells: {incidence_table['identifier'].tolist()}")
