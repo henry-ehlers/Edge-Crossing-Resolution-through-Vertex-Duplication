@@ -58,9 +58,6 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                            face_edges=sorted_outer_edges,
                                                            face_edge_map=edge_map,
                                                            positions=o_positions)
-    print(f"\n EDGE MAP:")
-    [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]
-    print(f"----------------------------------------------------------")
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
@@ -70,8 +67,12 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                                  cells_edge_list=outer_sight_cell_edges,
                                                                  positions=o_positions,
                                                                  graph=o_graph)
-    print(f"\n EDGE MAP:")
-    [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]
+
+    print(f"\n cells MAP:")
+    [print(f"{cell}") for cell in cell_incidences]
+    print(f"----------------------------------------------------------")
+    print(f"\n incidences MAP:")
+    [print(f"{cell} - {cell_incidences[cell]}") for cell in cell_incidences.keys()]
     print(f"----------------------------------------------------------")
 
     # Get Sorted Incidence Table of sight cells and their incidences

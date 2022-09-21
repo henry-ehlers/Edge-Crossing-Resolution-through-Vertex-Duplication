@@ -539,43 +539,24 @@ def update_merged_sight_cells(sight_cells, cell_incidences, edge_map, graph, pos
 
     # Iterate over all vertices to determine whether it must be removed
     for node in list(graph.nodes()):
+        print(f"\nnode: {node}")
 
         # Get the current node's edges
         node_edges = list(graph.edges(node))
 
         # If the node has a degree of more than 2, it must remain
-        if len(node_edges) > 2 or len(node_edges) == 1:
+        if len(node_edges) != 0:
+            print(f"has {len(node_edges)} connections")
             continue
 
         # If the node is not virtual, do not consider it
         if node not in virtual_nodes:
+            print("not a virtual node")
             continue
-
-        # Replace removed vertex's edges with single one
-        if len(node_edges) == 2:
-
-            # Create new edge
-            #vertex_a, vertex_b = set(node_edges[0]) - {node}, set(node_edges[1]) - {node}
-            #new_edge = (vertex_a.pop(), vertex_b.pop())
-
-            # Replace old edge in map, remove old edge from graph, and add new edge to graph
-            #replace_edges_with_replacement(edges=node_edges, replacement=new_edge, edge_map=edge_map)
-            #graph.add_edge(u_of_edge=new_edge[0], v_of_edge=new_edge[1])
-            #graph.remove_edges_from(node_edges)
-
-            continue
-
-        # Remove Vertex from graph and positions list
-        # graph.remove_node(node)
-        # positions.pop(node)
 
         # Remove Edge from edge map and vertex from sight cell
         remove_elements_from_dictionary_frozenset_key(element=node, dictionary=cell_incidences)
-        # remove_edges_with_vertex(vertex=node, edge_map=edge_map)
         remove_vertex_from_sight_cell(vertex=node, sight_cells=sight_cells)
-
-    # Remove Edges which do not have any virtual maps
-    # [edge_map.pop(key_edge) for key_edge in list(edge_map.keys()) if (len(edge_map.get(key_edge)) == 0)]
 
     return sight_cells, cell_incidences, edge_map
 
