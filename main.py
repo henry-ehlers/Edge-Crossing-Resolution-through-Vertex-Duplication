@@ -407,6 +407,25 @@ if __name__ == '__main__':
     draw_graph(graph=c_graph, positions=c_positions)
     save_drawn_graph(f"{output_directory}/graph_6.png")
 
+    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(graph=c_graph,
+                                                                       positions=c_positions)
+    plane_face_virtual_edge_set = planarize_graph(graph=c_graph,
+                                                  positions=c_positions,
+                                                  edge_crossings=face_edge_crossings)
+
+    # Draw the segment graph
+    draw_graph(graph=c_graph, positions=c_positions)
+    save_drawn_graph(f"{output_directory}/graph_7.png")
+
+    print(f"FACE VIRTUAL SET")
+    print(plane_face_virtual_edge_set)
+    print(f"subface_vertex_map")
+    print(subface_vertex_map)
+    plane_graph_sub_faces = find_all_subfaces(graph=c_graph,
+                                              virtual_edge_set_map=plane_face_virtual_edge_set,
+                                              target_face_to_vertex_map=subface_vertex_map)
+    print(f"\nSUBFACES:")
+    print(plane_graph_sub_faces)
     sys.exit()
 
 

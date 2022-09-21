@@ -70,6 +70,7 @@ def ilp_choose_face(visibility_matrix):
 
 def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
 
+    # TODO: rework this nonsense to work with our updated data structures and
     # Prepare dictionary of sets within which to store all found faces per face
     subfaces = {target_face: set() for target_face in target_face_to_vertex_map.keys()}
 
@@ -79,6 +80,7 @@ def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
 
         # Mark vertices based on their inclusion in virtual edge sets pertaining to the current set
         for edge_set in virtual_edge_set_map:
+            # TODO: what is being intersected here?
             intersection = target_face_to_vertex_map[target_face] & edge_set
             if len(intersection) >= 2:
                 [vertices_to_keep.add(vertex) for vertex in list(edge_set)]
