@@ -397,6 +397,16 @@ if __name__ == '__main__':
     draw_graph(graph=c_graph, positions=c_positions)
     save_drawn_graph(f"{output_directory}/graph_5.png")
 
+    subface_edge_set, subface_vertex_map = create_subface_graph(
+        graph=c_graph,
+        positions=c_positions,
+        target_faces=selected_faces,
+        face_intersection_map=intersection_map)
+
+    # Draw the segment graph
+    draw_graph(graph=c_graph, positions=c_positions)
+    save_drawn_graph(f"{output_directory}/graph_6.png")
+
     sys.exit()
 
 

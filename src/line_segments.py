@@ -241,7 +241,7 @@ def create_subface_graph(graph, positions, target_faces, face_intersection_map):
     vertex_index = max(node_list)
 
     edges_to_be_removed = set()
-    nodes_to_be_removed = [vertex for vertex in graph if graph.nodes[vertex]["boundary"] == 1]
+    nodes_to_be_removed = [n for n, b in nx.get_node_attributes(G=graph, name="boundary").items() if b == 1]
     edge_to_virtual_vertex = dict()
     face_vertex_map = {face: set() for face in target_faces}
 
@@ -281,5 +281,5 @@ def create_subface_graph(graph, positions, target_faces, face_intersection_map):
     [graph.remove_edge(u=list(edge)[0], v=list(edge)[1]) for edge in edges_to_be_removed]
     [graph.remove_node(vertex) for vertex in nodes_to_be_removed]
 
-    return graph, positions, virtual_edge_set, face_vertex_map
+    return virtual_edge_set, face_vertex_map
 
