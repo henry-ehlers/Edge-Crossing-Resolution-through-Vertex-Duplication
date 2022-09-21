@@ -361,6 +361,13 @@ if __name__ == '__main__':
     save_drawn_graph(f"{output_directory}/graph_4.png")
 
     print(f"\nCull Non-Selected Line Segments")
+    print(f"cells: {incidence_table['identifier'].tolist()}")
+    # TODO: the cells of the decomposed outer face have not been updated, since we commented out the vertex deletion
+    #  subsequently, the ordered_face_edges function is looking for edges which no longer exist
+    #  i.e. edges that were merge edges -> these vertices (singletons) need to be removed from the incidence set
+    complete_cell_edge_map = get_ordered_face_edges(faces=incidence_table['identifier'].tolist(),
+                                                    graph=d_graph)
+    [print(f"{cell} - {complete_cell_edge_map[cell]}") for cell in complete_cell_edge_map.keys()]
     c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
         graph=s_graph,
         positions=s_positions,
