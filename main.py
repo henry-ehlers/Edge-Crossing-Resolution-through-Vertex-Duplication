@@ -382,9 +382,12 @@ if __name__ == '__main__':
     complete_cell_edge_map = get_ordered_face_edges(faces=incidence_table['identifier'].tolist(),
                                                     graph=d_graph)
     [print(f"{cell} - {complete_cell_edge_map[cell]}") for cell in complete_cell_edge_map.keys()]
+
+    print(f"\nFace edge map:")
+    print(complete_cell_edge_map)
     c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
         target_faces=selected_faces,
-        face_edge_map=edge_map,
+        face_edge_map=complete_cell_edge_map,
         face_vertex_map=cell_graph_object["vertex_map"],
         segment_edge_map=s_edge_map,
         graph=s_graph,
