@@ -504,6 +504,7 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, cells
     """"""
 
     # Try Merging Cells in non-convex face
+    # TODO no cast to list
     face_sight_cells = list(face_sight_cells)
     merge_face_sight_cells(cells=face_sight_cells,
                            cells_edge_list=cells_edge_list,
@@ -517,11 +518,10 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, cells
     save_drawn_graph(f"./graph_outer_merged.png")
 
     # Update the face's cells, their incidents, and edges based on deleted vertices
-    face_sight_cells, cell_incidences, cells_edge_map = update_merged_sight_cells(sight_cells=face_sight_cells,
-                                                                                  cell_incidences=cell_incidences,
-                                                                                  edge_map=cells_edge_map,
-                                                                                  graph=graph,
-                                                                                  positions=positions)
+    cell_vertex_map = update_merged_sight_cells(sight_cells=face_sight_cells,
+                                                cell_incidences=cell_incidences,
+                                                edge_map=cells_edge_map,
+                                                graph=graph)
 
     # Draw Merged Embedding
     draw_graph(graph=graph, positions=positions)
@@ -529,13 +529,14 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, cells
 
     # Return updated sight cells, incidences, and edge map
     # TODO: inconsistency - we do not explicitly return graph or positions -> these are passed/altered by reference
-    return face_sight_cells, cell_incidences, cells_edge_map
+    #return face_sight_cells, cell_incidences, cells_edge_map
 
 
-def update_merged_sight_cells(sight_cells, cell_incidences, edge_map, graph, positions):
+def update_merged_sight_cells(sight_cells, cell_incidences, edge_map, graph):
 
     # Replace all vertices which are virtual, have a degree of 2, and connected only to virtual vertices
     virtual_nodes = nx.get_node_attributes(graph, "virtual")
+    cell_vertex_map = {cell: cell for cell in sight_cells}
 
     # Iterate over all vertices to determine whether it must be removed
     for node in list(graph.nodes()):
@@ -556,9 +557,10 @@ def update_merged_sight_cells(sight_cells, cell_incidences, edge_map, graph, pos
 
         # Remove Edge from edge map and vertex from sight cell
         remove_elements_from_dictionary_frozenset_key(element=node, dictionary=cell_incidences)
+        remove_elements_from_dictionary_frozenset_key(element=node, dictionary=cell_vertex_map)
         remove_vertex_from_sight_cell(vertex=node, sight_cells=sight_cells)
 
-    return sight_cells, cell_incidences, edge_map
+    return cell_vertex_map
 
 
 def update_sight_cell_graph(sight_cells, cell_incidences, edge_map, graph, positions):

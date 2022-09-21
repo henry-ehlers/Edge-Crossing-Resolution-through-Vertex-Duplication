@@ -103,9 +103,10 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
             segment_edge_map[frozenset(new_boundary_vertices)] = [set(edge) for edge in virtual_edges]
 
     print(f"\nSEGMENT MAP:")
-    [print(f"{key} - {item}") for key, item in segment_edge_map.items()]
+    [print(f"{key} - {item}") for key, item in segment_edge_map.items()],
+
     # Return new graph and positions objects
-    return segment_graph, segment_positions
+    return segment_graph, segment_positions, segment_edge_map
 
 
 def do_both_vertices_map_to_either(vertex_a, vertex_b, dict_a, dict_b):
@@ -124,7 +125,7 @@ def cull_by_vertex_identity(vertex_a, vertex_b, face):
     return len(face.intersection({vertex_a, vertex_b})) == 2
 
 
-def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map):
+def cull_all_line_segment_graph(target_faces, face_edge_map, face_vertex_map, segment_edge_map, graph, positions):
 
     # Create new graph objects
     culled_graph, culled_positions = copy.deepcopy(graph), copy.deepcopy(positions)
@@ -142,9 +143,11 @@ def cull_all_line_segment_graph(graph, positions, target_faces, face_edge_map):
     # Initialize empty nested dictionary
     face_intersection_map = {target_face: dict() for target_face in target_faces}
 
-    for edge in segment_edges.keys():
-        print(f"\nedge {edge}")
+    for segment_edge, sub_edges in segment_edges.items():
+        print(f"\nedge {segment_edge}")
 
+        for sub_edge in sub_edges:
+            pass
         # Ensure that the edge is a segment
         # (should always be the case, but just to be sure)
         if segment_edges[edge] == 0:

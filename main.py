@@ -61,12 +61,13 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
-    sight_cells, cell_incidences, edge_map = merge_cells_wrapper(face_sight_cells=sight_cells,
-                                                                 cell_incidences=cell_incidences,
-                                                                 cells_edge_map=edge_map,
-                                                                 cells_edge_list=outer_sight_cell_edges,
-                                                                 positions=o_positions,
-                                                                 graph=o_graph)
+    #sight_cells, cell_incidences, edge_map =
+    merge_cells_wrapper(face_sight_cells=sight_cells,
+                        cell_incidences=cell_incidences,
+                        cells_edge_map=edge_map,
+                        cells_edge_list=outer_sight_cell_edges,
+                        positions=o_positions,
+                        graph=o_graph)
 
     print(f"\n cells MAP:")
     [print(f"{cell}") for cell in cell_incidences]
@@ -74,7 +75,9 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
     print(f"\n incidences MAP:")
     [print(f"{cell} - {cell_incidences[cell]}") for cell in cell_incidences.keys()]
     print(f"----------------------------------------------------------")
-
+    print(f"\n face sight cells MAP:")
+    [print(f"{key}") for key in sight_cells]
+    print(f"----------------------------------------------------------")
     # Get Sorted Incidence Table of sight cells and their incidences
     cell_incidence_table = get_incidence_table(incidences=cell_incidences,
                                                entry_type="cell",
@@ -354,11 +357,11 @@ if __name__ == '__main__':
     [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]
     print(f"\n already extended:")
     [print(f"{vertex}: {cell_graph_object['connected_nodes'][vertex]}") for vertex in cell_graph_object['connected_nodes'].keys()]
-    s_graph, s_positions = draw_all_line_segments(graph=d_graph,
-                                                  positions=d_positions,
-                                                  virtual_edge_set=edge_map,
-                                                  bounds=outer_bounds,
-                                                  already_extended=cell_graph_object['connected_nodes'])
+    s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
+                                                              positions=d_positions,
+                                                              virtual_edge_set=edge_map,
+                                                              bounds=outer_bounds,
+                                                              already_extended=cell_graph_object['connected_nodes'])
 
     # Draw the segment graph
     draw_graph(graph=s_graph, positions=s_positions)
