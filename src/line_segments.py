@@ -129,50 +129,26 @@ def cull_all_line_segment_graph(target_faces, face_edge_map, face_vertex_map, se
 
     # Create new graph objects
     culled_graph, culled_positions = copy.deepcopy(graph), copy.deepcopy(positions)
-    segment_edges = nx.get_edge_attributes(G=culled_graph, name="segment")
-    real_nodes, virtual_nodes, boundary_nodes = \
-        [nx.get_node_attributes(G=culled_graph, name=f"{t}") for t in ["real", "virtual", "boundary"]]
-    print(f"\nSegment Edges: {segment_edges}")
-    print(f"\nReal Nodes: {real_nodes}")
-    print(f"\nVirtual Nodes: {virtual_nodes}")
-    print(f"\nBoundary Nodes: {boundary_nodes}")
 
     # Keep track of non-intersecting segments
-    edges_to_be_removed, nodes_to_be_removed = set(), set()
+    edges_to_keep = set()
 
     # Initialize empty nested dictionary
     face_intersection_map = {target_face: dict() for target_face in target_faces}
 
-    for segment_edge, sub_edges in segment_edges.items():
-        print(f"\nedge {segment_edge}")
+    for segment_edge, sub_edges in segment_edge_map.items():
+        print(f"\nSegment {segment_edge}")
 
-        for sub_edge in sub_edges:
-            pass
-        # Ensure that the edge is a segment
-        # (should always be the case, but just to be sure)
-        if segment_edges[edge] == 0:
-            print(f"segment edge: {edge} not a segment {segment_edges[edge]}")
-            continue
+        for face in target_faces:
+            old_vertex_set = face_vertex_map[face]
 
-        # Extract vertices of edge
-        vertex_a, vertex_b = edge[0], edge[1]
-        print(f"vertices {vertex_a} and {vertex_b}")
+            found_in_vertex_set = False
+            for (vertex_a, vertex_b) in sub_edges:
+                if len(old_vertex_set.intersection({vertex_a, vertex_b})) == 2:
+                    print(f'found edge {(vertex_a, vertex_b)} in target face {face}')
+                    edges_to_keep.add(frozenset((vertex_a, vertex_b)))
+                    found_in_vertex_set = True
 
-        # Keep Track of intersections found
-        delete_edge = True
-
-        for target_face in target_faces:
-            intersections_found = 0
-
-            #
-            if do_both_vertices_map(vertex_a, vertex_b, virtual_nodes):
-                print("CHECK CULL BY IDENTITY")
-                cull = cull_by_vertex_identity(vertex_a=vertex_a, vertex_b=vertex_b, face=target_face)
-                print(f"CULL? - {cull}")
-            elif does_one_vertex_map(vertex_a, vertex_b, real_nodes) or does_one_vertex_map(vertex_a, vertex_b, boundary_nodes):
-                print("CHECK BY EDGE CROSSING")
-            else:
-                print("NOT ACCOUNTED FOR")
             # for face_edge in face_edge_map[target_face]:
             #
             #     # Determine if line actually passes through one of the vertices which define the face
@@ -210,9 +186,12 @@ def cull_all_line_segment_graph(target_faces, face_edge_map, face_vertex_map, se
     #     if delete_edge and any([culled_graph.nodes[vertex]["boundary"] == 1 for vertex in [vertex_a, vertex_b]]):
     #         nodes_to_be_removed.add(vertex_a if culled_graph.nodes[vertex_a]["boundary"] == 1 else vertex_b)
     #
-    # # Remove Edges and Vertices which did not intersect any face
-    # for edge in edges_to_be_removed:
-    #     culled_graph.remove_edge(u=edge[0], v=edge[1])
+    # Remove Edges and Vertices which did not intersect any face
+    segment_edges = [e for e, v in nx.get_edge_attributes(G=culled_graph, name="segment").items() if v == 1]
+    for edge in segment_edges:
+        if frozenset(edge) in edges_to_keep:
+            continue
+        culled_graph.remove_edge(u=edge[0], v=edge[1])
     # for node in nodes_to_be_removed:
     #     culled_graph.remove_node(node)
 

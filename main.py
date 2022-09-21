@@ -61,14 +61,14 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
-    #sight_cells, cell_incidences, edge_map =
-    merge_cells_wrapper(face_sight_cells=sight_cells,
-                        cell_incidences=cell_incidences,
-                        cells_edge_map=edge_map,
-                        cells_edge_list=outer_sight_cell_edges,
-                        positions=o_positions,
-                        graph=o_graph)
+    sight_cells, vertex_map = merge_cells_wrapper(face_sight_cells=sight_cells,
+                                                  cell_incidences=cell_incidences,
+                                                  cells_edge_map=edge_map,
+                                                  cells_edge_list=outer_sight_cell_edges,
+                                                  positions=o_positions,
+                                                  graph=o_graph)
 
+    # DEBUG
     print(f"\n cells MAP:")
     [print(f"{cell}") for cell in cell_incidences]
     print(f"----------------------------------------------------------")
@@ -78,6 +78,10 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
     print(f"\n face sight cells MAP:")
     [print(f"{key}") for key in sight_cells]
     print(f"----------------------------------------------------------")
+    print(f"\n face vertex map:")
+    [print(f"{key} -> {item}") for key, item in vertex_map.items()]
+    print(f"----------------------------------------------------------")
+
     # Get Sorted Incidence Table of sight cells and their incidences
     cell_incidence_table = get_incidence_table(incidences=cell_incidences,
                                                entry_type="cell",
@@ -88,6 +92,7 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                         "incidences":      cell_incidences,
                         "connected_nodes": connected_vertices,
                         "edge_map":        edge_map,
+                        "vertex_map":      vertex_map,
                         "graph":           o_graph,
                         "positions":       o_positions}
     return cell_incidence_table, new_graph_object
@@ -367,7 +372,7 @@ if __name__ == '__main__':
     draw_graph(graph=s_graph, positions=s_positions)
     save_drawn_graph(f"{output_directory}/graph_4.png")
 
-    sys.exit()
+
 
     print(f"\nCull Non-Selected Line Segments")
     print(f"cells: {incidence_table['identifier'].tolist()}")
@@ -378,12 +383,19 @@ if __name__ == '__main__':
                                                     graph=d_graph)
     [print(f"{cell} - {complete_cell_edge_map[cell]}") for cell in complete_cell_edge_map.keys()]
     c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
-        graph=s_graph,
-        positions=s_positions,
         target_faces=selected_faces,
-        face_edge_map=edge_map)
+        face_edge_map=edge_map,
+        face_vertex_map=cell_graph_object["vertex_map"],
+        segment_edge_map=s_edge_map,
+        graph=s_graph,
+        positions=s_positions)
+
+    # Draw the segment graph
+    draw_graph(graph=c_graph, positions=c_positions)
+    save_drawn_graph(f"{output_directory}/graph_5.png")
 
     sys.exit()
+
 
     # # Locate faces and best two for target face
     # TODO: find outer face

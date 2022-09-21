@@ -504,8 +504,7 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, cells
     """"""
 
     # Try Merging Cells in non-convex face
-    # TODO no cast to list
-    face_sight_cells = list(face_sight_cells)
+    face_sight_cells = list(face_sight_cells)  # Reminder: cast is done to enable more efficient indexed looping
     merge_face_sight_cells(cells=face_sight_cells,
                            cells_edge_list=cells_edge_list,
                            cell_incidences=cell_incidences,
@@ -529,14 +528,14 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, cells
 
     # Return updated sight cells, incidences, and edge map
     # TODO: inconsistency - we do not explicitly return graph or positions -> these are passed/altered by reference
-    #return face_sight_cells, cell_incidences, cells_edge_map
+    return face_sight_cells, cell_vertex_map
 
 
 def update_merged_sight_cells(sight_cells, cell_incidences, edge_map, graph):
 
     # Replace all vertices which are virtual, have a degree of 2, and connected only to virtual vertices
     virtual_nodes = nx.get_node_attributes(graph, "virtual")
-    cell_vertex_map = {cell: cell for cell in sight_cells}
+    cell_vertex_map = {copy.copy(cell): copy.copy(cell) for cell in sight_cells}
 
     # Iterate over all vertices to determine whether it must be removed
     for node in list(graph.nodes()):
