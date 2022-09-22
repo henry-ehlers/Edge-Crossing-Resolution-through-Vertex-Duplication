@@ -1,4 +1,5 @@
 from src.edge_crossings import *
+import networkx as nx
 import pandas as pd
 import numpy as np
 import itertools
@@ -20,7 +21,8 @@ def get_split_vertex_locations(positions, target_face_subfaces):
 def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbors):
 
     # Extract all real edges
-    real_edges = [edge for edge in graph.edges if graph.edges[edge]["virtual"] == 0]
+    real_edges = [edge for edge, real in nx.get_edge_attributes(G=graph, name="real").items() if real == 1]
+    print(f"real edges: {real_edges}")
 
     # Store all edge crossings
     induced_edge_crossings = {target_face: dict() for target_face in centroids.keys()}
@@ -52,7 +54,7 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
 
             # Store the number of edge crossings
             induced_edge_crossings[target_face][subface] = tuple(intersections)
-
+    
     # Return Complete Set
     return induced_edge_crossings
 

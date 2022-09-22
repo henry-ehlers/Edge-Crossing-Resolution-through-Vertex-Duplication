@@ -8,6 +8,7 @@ import numpy as np
 import timeit
 import sys
 
+from src.vertex_splitting import *
 from src.sight_cells import *
 from src.faces import *
 
@@ -408,33 +409,37 @@ if __name__ == '__main__':
     draw_graph(graph=c_graph, positions=c_positions)
     save_drawn_graph(f"{output_directory}/graph_6.png")
 
+    # Identify all edge crossings in the faces, planarize the graph, and update the face's vertex sets
+    print(f"\nSUBFACE CREATION")
     face_edge_crossings, face_vertex_crossings = locate_edge_crossings(graph=c_graph,
                                                                        positions=c_positions)
     plane_face_virtual_edge_set = planarize_graph(graph=c_graph,
                                                   positions=c_positions,
                                                   edge_crossings=face_edge_crossings)
+    update_face_vertex_map(vertex_map=subface_vertex_map,
+                           virtual_edge_map=plane_face_virtual_edge_set)
 
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)
     save_drawn_graph(f"{output_directory}/graph_7.png")
 
-    update_face_vertex_map(vertex_map=subface_vertex_map, virtual_edge_map=plane_face_virtual_edge_set)
+    # Select Subfaces
+    print(f"\nSUBFACE SELECTION")
+    plane_graph_sub_faces = find_all_subfaces(target_faces=selected_faces,
+                                              face_vertex_map=subface_vertex_map,
+                                              graph=c_graph)
+    [print(f"\n{face} - {subfaces}") for face, subfaces in plane_graph_sub_faces.items()]
+    subface_centroids = get_split_vertex_locations(positions=c_positions,
+                                                   target_face_subfaces=plane_graph_sub_faces)
+    print(f"\nsubface centroids: {subface_centroids}")
+    induced_edge_crossings = calculate_induced_edge_crossings(graph=r_graph,
+                                                              positions=r_positions,
+                                                              centroids=subface_centroids,
+                                                              target_neighbors=target_adjacency)
+    print(f"\ninduced edge crossings: {induced_edge_crossings}")
+    # pair_induced_crossings, neighbor_assignment = get_split_vertex_pairs(induced_edge_crossings)
 
-    print(f"\nplanarized face virtual set:")
-    print(plane_face_virtual_edge_set)
-    # TODO: merge subfaces based on incidence?
-
-    print(f"FACE VIRTUAL SET")
-    print(plane_face_virtual_edge_set)
-    print(f"subface_vertex_map")
-    print(subface_vertex_map)
-    plane_graph_sub_faces = find_all_subfaces(graph=c_graph,
-                                              virtual_edge_set_map=plane_face_virtual_edge_set,
-                                              target_face_to_vertex_map=subface_vertex_map)
-    print(f"\nSUBFACES:")
-    print(plane_graph_sub_faces)
     sys.exit()
-
 
     # # Locate faces and best two for target face
     # TODO: find outer face

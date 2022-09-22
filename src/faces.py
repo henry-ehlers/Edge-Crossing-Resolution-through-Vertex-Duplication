@@ -68,30 +68,21 @@ def ilp_choose_face(visibility_matrix):
     return (faces)
 
 
-def find_all_subfaces(graph, virtual_edge_set_map, target_face_to_vertex_map):
+def find_all_subfaces(target_faces, face_vertex_map, graph):
 
     # TODO: rework this nonsense to work with our updated data structures and
     # Prepare dictionary of sets within which to store all found faces per face
-    subfaces = {target_face: set() for target_face in target_face_to_vertex_map.keys()}
+    subfaces = {face: None for face in target_faces}
 
     # Limit search of cycle basis to subfaces
-    for target_face in target_face_to_vertex_map.keys():
-        vertices_to_keep = set()
+    for face in target_faces:
 
-        # Mark vertices based on their inclusion in virtual edge sets pertaining to the current set
-        for edge_set in virtual_edge_set_map:
-            # TODO: what is being intersected here?
-            intersection = target_face_to_vertex_map[target_face] & edge_set
-            if len(intersection) >= 2:
-                [vertices_to_keep.add(vertex) for vertex in list(edge_set)]
-            elif len(intersection) == 1:
-                vertices_to_keep.add(intersection.pop())
-            else:
-                continue
+        # Extrac
+        vertex_set = face_vertex_map.get(face)
 
         # Keep only vertices pertaining to current subgraph and search for cycle basis within
-        subgraph = copy.deepcopy(graph).subgraph(list(vertices_to_keep))
-        subfaces[target_face] = find_inner_faces(subgraph)  # todo: also pass positions?
+        subgraph = copy.deepcopy(graph).subgraph(list(vertex_set))
+        subfaces[face] = find_inner_faces(subgraph)  # todo: also pass positions?
 
     # Return all subfaces for each target face
     return subfaces
