@@ -437,8 +437,18 @@ if __name__ == '__main__':
                                                               centroids=subface_centroids,
                                                               target_neighbors=target_adjacency)
     print(f"\ninduced edge crossings:")
-    print(induced_edge_crossings)
-    # pair_induced_crossings, neighbor_assignment = get_split_vertex_pairs(induced_edge_crossings)
+    [print(induced_edge_crossings[key]) for key in induced_edge_crossings.keys()]
+    labels = ["face", "sub_face"]
+    # TODO: how to fucking extract columns out of pandas, christ
+    test = induced_edge_crossings[selected_faces[0]][:, 2:(2+len(target_adjacency))]
+    print(f"targets: {labels}")
+    print(induced_edge_crossings[selected_faces[0]])
+    print(test)
+    print(test.to_numpy())
+    selected_sub_faces = ilp_choose_subface(
+        induced_cross_A=np.delete(induced_edge_crossings[selected_faces[0]], labels).to_numpy(),
+        induced_cross_B=np.delete(induced_edge_crossings[selected_faces[1]], labels).to_numpy())
+    print(f"selected subfaces: {selected_sub_faces}")
 
     sys.exit()
 
