@@ -54,9 +54,37 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
 
             # Store the number of edge crossings
             induced_edge_crossings[target_face][subface] = tuple(intersections)
-    
+
+    # TODO: turn induced edge crossings into table
+    selected_face = list(centroids.keys())[0]
+    get_subface_edge_crossing_table(face=selected_face,
+                                    subface_crossings=induced_edge_crossings[selected_face],
+                                    target_vertices=target_neighbors)
     # Return Complete Set
     return induced_edge_crossings
+
+
+def get_subface_edge_crossing_table(face, subface_crossings, target_vertices):
+
+    # Create Lists of sub-faces and faces
+    sub_faces = [subface for subface in subface_crossings.keys()]
+    faces = [face] * len(subface_crossings)
+
+    # Tabulate the number of crossings for all target vertex and subface combinations
+    crossings = np.empty(shape=(len(subface_crossings), len(target_vertices)),
+                         dtype=int)
+    for index, subface in enumerate(sub_faces):
+        print(f"subface: {subface}")
+        crossings[index, ...] = subface_crossings[subface]
+
+    # Create crossing pandas data frame
+    crossing_table = pd.DataFrame(data=crossings,columns=target_vertices, dtype=int)
+    crossing_table.insert(loc=0, column="sub_face", value=sub_faces)
+    crossing_table.insert(loc=0, column="face", value=faces)
+
+    # Return table
+    return crossing_table
+
 
 
 def get_split_vertex_pairs(induced_edge_crossings):
