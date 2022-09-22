@@ -32,6 +32,7 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
 
         # Iterate over all subfaces in the current target face
         for subface in centroids[target_face].keys():
+            print(f"\nSUBFACE {subface}")
             point_a = centroids[target_face][subface]
 
             # Store the number of intersections per neighbor
@@ -40,28 +41,36 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
             # Iterate over all neighbors that still need to be connected
             for neighbor_index, neighbor in enumerate(target_neighbors):
                 point_b = positions[neighbor]
-
+                print(f"target {neighbor}")
                 # Iterate over all edges in the graph
-                for edge in real_edges:
+                for (vertex_c, vertex_d) in real_edges:
+
+                    # Do not check intersections with edges bounded by neighbor (ends count as crossings)
+                    if neighbor in (vertex_c, vertex_d):
+                        continue
 
                     # Extract vertices and positions that form edge
-                    vertex_c, vertex_d = edge[0], edge[1]
                     point_c, point_d = positions[vertex_c], positions[vertex_d]
 
                     # Calculate intersection and store if they do
                     if line_intersection(point_a, point_b, point_c, point_d) is not None:
+                        print(f"intersection with {(vertex_c, vertex_d)}")
                         intersections[neighbor_index] += 1
 
             # Store the number of edge crossings
+            print(f"intersections {tuple(intersections)}")
             induced_edge_crossings[target_face][subface] = tuple(intersections)
 
-    # TODO: turn induced edge crossings into table
-    selected_face = list(centroids.keys())[0]
-    get_subface_edge_crossing_table(face=selected_face,
-                                    subface_crossings=induced_edge_crossings[selected_face],
-                                    target_vertices=target_neighbors)
+    # Tabulate the number of edge crossings per subface
+    crossing_tables = {face: None for face in centroids.keys()}
+    for target_face in crossing_tables.keys():
+        crossing_tables[target_face] = get_subface_edge_crossing_table(
+            face=target_face,
+            subface_crossings=induced_edge_crossings[target_face],
+            target_vertices=target_neighbors)
+
     # Return Complete Set
-    return induced_edge_crossings
+    return crossing_tables
 
 
 def get_subface_edge_crossing_table(face, subface_crossings, target_vertices):

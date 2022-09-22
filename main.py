@@ -436,7 +436,8 @@ if __name__ == '__main__':
                                                               positions=r_positions,
                                                               centroids=subface_centroids,
                                                               target_neighbors=target_adjacency)
-    print(f"\ninduced edge crossings: {induced_edge_crossings}")
+    print(f"\ninduced edge crossings:")
+    print(induced_edge_crossings)
     # pair_induced_crossings, neighbor_assignment = get_split_vertex_pairs(induced_edge_crossings)
 
     sys.exit()
