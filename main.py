@@ -432,19 +432,32 @@ if __name__ == '__main__':
     subface_centroids = get_split_vertex_locations(positions=c_positions,
                                                    target_face_subfaces=plane_graph_sub_faces)
     print(f"\nsubface centroids: {subface_centroids}")
-    induced_edge_crossings = calculate_induced_edge_crossings(graph=r_graph,
-                                                              positions=r_positions,
-                                                              centroids=subface_centroids,
-                                                              target_neighbors=target_adjacency)
-    print(f"\ninduced edge crossings:")
-    [print(induced_edge_crossings[key]) for key in induced_edge_crossings.keys()]
 
-    # TODO: how to fucking extract columns out of pandas, christ
+    induced_edge_crossings = calculate_induced_edge_crossings(
+        graph=r_graph,
+        positions=r_positions,
+        centroids=subface_centroids,
+        target_neighbors=target_adjacency)
+    print(f"\ninduced edge crossings:")
+
+    #
     selected_sub_faces = select_sub_faces(sub_face_tables=induced_edge_crossings,
                                           target_faces=selected_faces,
                                           target_vertices=target_adjacency)
     print(f"selected sub_faces: {selected_sub_faces}")
-    # print(f"selected subfaces: {selected_sub_faces}")
+
+    n_graph, n_positions = place_split_vertices(faces=selected_faces,
+                                                sub_faces=selected_sub_faces,
+                                                centroids=subface_centroids,
+                                                edge_crossings=induced_edge_crossings,
+                                                target_vertex=target_vertex,
+                                                target_adjacency=target_adjacency,
+                                                graph=r_graph,
+                                                positions=r_positions)
+
+    # Draw the segment graph
+    draw_graph(graph=n_graph, positions=n_positions)
+    save_drawn_graph(f"{output_directory}/graph_8.png")
 
     sys.exit()
 
