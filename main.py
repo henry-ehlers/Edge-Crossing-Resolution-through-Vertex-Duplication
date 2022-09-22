@@ -401,6 +401,7 @@ if __name__ == '__main__':
         graph=c_graph,
         positions=c_positions,
         target_faces=selected_faces,
+        face_vertex_map=cell_graph_object["vertex_map"],
         face_intersection_map=intersection_map)
 
     # Draw the segment graph
@@ -416,6 +417,12 @@ if __name__ == '__main__':
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)
     save_drawn_graph(f"{output_directory}/graph_7.png")
+
+    update_face_vertex_map(vertex_map=subface_vertex_map, virtual_edge_map=plane_face_virtual_edge_set)
+
+    print(f"\nplanarized face virtual set:")
+    print(plane_face_virtual_edge_set)
+    # TODO: merge subfaces based on incidence?
 
     print(f"FACE VIRTUAL SET")
     print(plane_face_virtual_edge_set)
