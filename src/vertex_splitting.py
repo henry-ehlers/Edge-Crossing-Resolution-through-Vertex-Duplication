@@ -158,40 +158,28 @@ def select_vertex_splits(pair_induced_crossings):
     return minimum_induced_crossings, target_subfaces, number_of_ties
 
 
-def place_split_vertices(faces, sub_faces, centroids, edge_crossings, target_vertex, target_adjacency, graph, positions):
-    print(edge_crossings)
+def place_split_vertices(faces, selected_sub_faces, centroids, target_vertex, graph, positions):
 
     # Create new graph and position objects
-
     split_graph, split_positions = copy.deepcopy(graph), copy.deepcopy(positions)
 
     # Determine the indices of the to-be-split vertices
     # TODO: fix the indexing to make sense
-    split_vertex_indices = [max(graph.nodes()) + 1, max(graph.nodes()) + 2]
-    print(split_vertex_indices)
+    second_index = (max(graph.nodes()) if max(graph.nodes()) > target_vertex else target_vertex) + 1
+    new_indices = [target_vertex, second_index]
+    print(new_indices)
 
     # Add newly split vertices to the graph and positions
-    [split_graph.add_node(node_for_adding=split_vertex, split=1, real=1) for split_vertex in split_vertex_indices]
-    split_positions[split_vertex_indices[0]] = centroids[faces[0]].get(sub_faces[0])
-    split_positions[split_vertex_indices[1]] = centroids[faces[1]].get(sub_faces[1])
+    [split_graph.add_node(node_for_adding=split_vertex, split=1, real=1) for split_vertex in new_indices]
+    sub_faces = list(selected_sub_faces.keys())
+    split_positions[new_indices[0]] = centroids[faces[0]].get(sub_faces[0])
+    split_positions[new_indices[1]] = centroids[faces[1]].get(sub_faces[1])
 
     #
-    print(target_adjacency)
-    for index, vertex in enumerate(target_adjacency):
-        print(f"target adjacency: {vertex}")
+    for ind, s_face in enumerate(sub_faces):
 
-        #
-        crossing_a = edge_crossings[faces[0]].loc[edge_crossings[faces[0]]["sub_face"] == sub_faces[0], vertex][0]
-        crossing_b = edge_crossings[faces[1]].loc[edge_crossings[faces[1]]["sub_face"] == sub_faces[1], vertex][0]
-        print(crossing_a)
-        print(crossing_b)
-        # TODO: resolve ties better lol
-        selected_sub_face = 0 if crossing_a <= crossing_b else 1
-
-        #
-        split_graph.add_edge(u_of_edge=split_vertex_indices[selected_sub_face],
-                             v_of_edge=vertex,
-                             real=1)
+        vertices = list(selected_sub_faces[s_face])
+        [split_graph.add_edge(u_of_edge=new_indices[ind], v_of_edge=vertex, real=1) for vertex in vertices]
 
     return split_graph, split_positions
 

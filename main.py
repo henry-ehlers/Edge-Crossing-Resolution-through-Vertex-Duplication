@@ -447,11 +447,9 @@ if __name__ == '__main__':
     print(f"selected sub_faces: {selected_sub_faces}")
 
     n_graph, n_positions = place_split_vertices(faces=selected_faces,
-                                                sub_faces=selected_sub_faces,
+                                                selected_sub_faces=selected_sub_faces,
                                                 centroids=subface_centroids,
-                                                edge_crossings=induced_edge_crossings,
                                                 target_vertex=target_vertex,
-                                                target_adjacency=target_adjacency,
                                                 graph=r_graph,
                                                 positions=r_positions)
 

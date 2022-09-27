@@ -15,27 +15,23 @@ def select_sub_faces(sub_face_tables, target_faces, target_vertices):
 
     # Extract sub-faces as dictionary of list; one per face
     sub_faces = {face: sub_face_tables[face].loc[:, "sub_face"].tolist() for face in target_faces}
-    print(sub_faces)
-    print(len(sub_faces))
-    print(sub_face_tables[target_faces[0]].loc[:, target_vertices].to_numpy())
-    print(sub_face_tables[target_faces[1]].loc[:, target_vertices].to_numpy())
+
     # ILP select best pair of sub-faces
     selected_sub_faces, sub_face_incidences = ilp_choose_subface(
         induced_cross_A=sub_face_tables[target_faces[0]].loc[:, target_vertices].to_numpy(),
         induced_cross_B=sub_face_tables[target_faces[1]].loc[:, target_vertices].to_numpy()
     )
-    print(f"selected sub-face indices: {selected_sub_faces}")
-    print(f"selected sub-face incidences: {sub_face_incidences}")
 
+    # Convert indices of ILP selection to named faces and vertices
     sub_face_names = tuple([sub_faces[target_faces[i]][selected_sub_faces[i]] for i in range(0, 2)])
-    sub_face_neighbors
-    sub_face_neighbors = [tuple([target_vertices[i] for i in range(0, len(target_vertices))
-                                 if sub_face_incidences[i] == 1]) for j in range(0, 2)]
-    print(f"subface selection: {sub_face_names}")
-    print(f"subface neighbors: {sub_face_neighbors}")
+    sub_face_neighbors = [[target_vertices[i] for i in range(0, len(target_vertices))
+                           if sub_face_incidences[j][i] == 1] for j in range(0, 2)]
 
-    # Return tuple of sub-face's vertices frozen-sets
-    return tuple([sub_faces[target_faces[i]][selected_sub_faces[i]] for i in range(0, 2)])
+    # Store Selection as dictionary
+    sub_face_selection = {sub_face_names[i]: frozenset(sub_face_neighbors[i]) for i in range(0, 2)}
+
+    # Return dictionary of selection and their incidence
+    return sub_face_selection
 
 
 def ilp_choose_subface(induced_cross_A, induced_cross_B):
