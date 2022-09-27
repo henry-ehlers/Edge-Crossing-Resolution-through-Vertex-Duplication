@@ -421,11 +421,11 @@ if __name__ == '__main__':
     print(f"\nSUBFACE CREATION")
     face_edge_crossings, face_vertex_crossings = locate_edge_crossings(graph=c_graph,
                                                                        positions=c_positions)
-    plane_face_virtual_edge_set = planarize_graph(graph=c_graph,
+    plane_face_virtual_edge_map = planarize_graph(graph=c_graph,
                                                   positions=c_positions,
                                                   edge_crossings=face_edge_crossings)
     update_face_vertex_map(vertex_map=subface_vertex_map,
-                           virtual_edge_map=plane_face_virtual_edge_set)
+                           virtual_edge_map=plane_face_virtual_edge_map)
 
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)
@@ -436,40 +436,50 @@ if __name__ == '__main__':
     plane_graph_sub_faces = find_all_subfaces(target_faces=selected_faces,
                                               face_vertex_map=subface_vertex_map,
                                               graph=c_graph)
-    # TODO: get sub-face's edge sets
 
-    [print(f"\n{face} - {subfaces}") for face, subfaces in plane_graph_sub_faces.items()]
+    # Calculate each subface's centroid
     subface_centroids = get_split_vertex_locations(positions=c_positions,
                                                    target_face_subfaces=plane_graph_sub_faces)
-    print(f"\nsubface centroids: {subface_centroids}")
 
-    # Calculcate the number of edge crossing induced by connected each subface to all target neighbors
-    induced_edge_crossings = calculate_induced_edge_crossings(
-        graph=r_graph,
-        positions=r_positions,
-        centroids=subface_centroids,
-        target_neighbors=target_adjacency)
+    # Calculate the number of edge crossing induced by connected each subface to all target neighbors
+    induced_edge_crossings = calculate_induced_edge_crossings(graph=r_graph,
+                                                              positions=r_positions,
+                                                              centroids=subface_centroids,
+                                                              target_neighbors=target_adjacency)
 
-    # Get the number of induced edge crossings in the form of a dictionary of pandas dataframes
-    induced_edge_crossing_table = get_edge_crossing_table(induced_edge_crossings=induced_edge_crossings,
-                                                          cell_centroids=subface_centroids,
-                                                          target_neighbors=target_adjacency)
-    print(f"\ninduced edge crossings:")
+    # Get Sub_face's edge set
+    subfaces_edge_sets = get_face_sub_face_edge_sets(face_sub_cells=plane_graph_sub_faces,
+                                                     graph=c_graph)
 
+    print(f"\nsubfaces_edge_sets:")
+    print(subfaces_edge_sets)
     print(f"\ninduced edge crossings")
     print(induced_edge_crossings)
     print(f"\nsubfaces:")
     print(plane_graph_sub_faces)
-    print(f"\nedge set:")
-    print(plane_face_virtual_edge_set)
+    print(f"\nedge map:")
+    print(plane_face_virtual_edge_map)
 
     # TODO: merge sub-faces based on induced edge-crossing "incidence"
-    # merge_cells_wrapper(face_sight_cells=sub_faces,
-    #                     cells_edge_map=,
-    #                     cells_edge_list=,
-    #                     cell_incidences=induced_edge_crossings,
-    #                     graph=r_graph,
-    #                     positions=r_positions)
+    plane_graph_sub_faces = sub_face_merge_wrapper(face_sub_faces=plane_graph_sub_faces,
+                                                   face_sub_face_crossings=induced_edge_crossings,
+                                                   face_sub_face_edge_set=subfaces_edge_sets,
+                                                   graph=c_graph,
+                                                   positions=c_positions)
+    faces = list(plane_graph_sub_faces.keys())
+    print(f"\n merged subfaces")
+    print(f"\n FACE {faces[0]}")
+    [print(f"{subface} --> {induced_edge_crossings[faces[0]][subface]}") for subface in plane_graph_sub_faces[faces[0]]]
+    print(f"\n FACE {faces[1]}")
+    [print(f"{subface} --> {induced_edge_crossings[faces[1]][subface]}") for subface in plane_graph_sub_faces[faces[1]]]
+
+    # Calculate each subface's centroid
+    subface_centroids = get_split_vertex_locations(positions=c_positions,
+                                                   target_face_subfaces=plane_graph_sub_faces)
+
+    # Get the number of induced edge crossings in the form of a dictionary of pandas dataframes
+    induced_edge_crossing_table = get_edge_crossing_table(induced_edge_crossings=induced_edge_crossings,
+                                                          target_neighbors=target_adjacency)
 
     #
     selected_sub_faces = select_sub_faces(sub_face_tables=induced_edge_crossing_table,

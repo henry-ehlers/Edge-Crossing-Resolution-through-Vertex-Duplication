@@ -1,4 +1,5 @@
 from src.edges import *
+from src.graph_drawing import *
 
 import matplotlib.path as mpltPath
 import networkx as nx
@@ -11,8 +12,138 @@ import copy
 import sys
 
 
-def merge_sub_faces():
-    pass
+def get_face_sub_face_edge_sets(face_sub_cells, graph):
+    sight_cell_edge_list = {face: {} for face in face_sub_cells.keys()}
+    for face in face_sub_cells.keys():
+        print(f"\nface: {face}")
+        sight_cell_edge_list[face].update(get_sub_face_edges(face_sub_cells[face], graph))
+    return sight_cell_edge_list
+
+
+def get_sub_face_edges(sub_faces, graph):
+    edge_set = {sub_face: set() for sub_face in sub_faces}
+    for sub_face in sub_faces:
+        print(f"sub-face: {sub_face}")
+        cell_edges = get_face_vertex_sequence(sub_face, graph)
+        print(f"cell_edges: {cell_edges}")
+        [edge_set[sub_face].add(frozenset(edge)) for edge in cell_edges]
+    return edge_set
+
+
+def sub_face_merge_wrapper(face_sub_faces, face_sub_face_crossings, face_sub_face_edge_set,
+                           graph, positions):
+
+    #face_sub_face_edge_map
+
+    for face in face_sub_faces.keys():
+        print(f"\nface: {face}")
+        # Try Merging Cells in non-convex face
+        sub_faces = list(face_sub_faces[face])  # Reminder: cast is done to enable more efficient indexed looping
+        print(f"sub faces: {sub_faces}")
+        merge_sub_faces(sub_faces=sub_faces,
+                        sub_face_edge_set=face_sub_face_edge_set[face],
+                        sub_face_crossings=face_sub_face_crossings[face],
+                        graph=graph)
+        face_sub_faces[face] = set(sub_faces)
+
+        # Draw Merged Embedding
+        draw_graph(graph=graph, positions=positions)
+        save_drawn_graph(f"./merged_sub_faces_{face}.png")
+
+        #'s cells, their incidents, and edges based on deleted vertices
+        # cell_vertex_map = update_merged_sight_cells(sight_cells=face_sight_cells,
+        #                                             cell_incidences=cell_incidences,
+        #                                             edge_map=cells_edge_map,
+        #                                             graph=graph)
+        #
+        # # Draw Merged Embedding
+        # draw_graph(graph=graph, positions=positions)
+        # save_drawn_graph(f"./graph_outer_merged_updated.png")
+
+    # Return updated sight cells, incidences, and edge map
+    # TODO: inconsistency - we do not explicitly return graph or positions -> these are passed/altered by reference
+    return face_sub_faces
+
+
+def merge_sub_faces(sub_faces, sub_face_edge_set, sub_face_crossings, graph):
+
+    #
+    for index_a in range(0, len(sub_faces) - 1):
+        for index_b in range(index_a + 1, len(sub_faces)):
+            sub_face_a, sub_face_b = sub_faces[index_a], sub_faces[index_b]
+
+            # Attempt to merge the two cells, return a boolean for success and a (possibly empty) vertex ID
+            merge_successful = try_merge_two_sub_faces(sub_face_a=sub_face_a,
+                                                       sub_face_b=sub_face_b,
+                                                       sub_faces=sub_faces,
+                                                       sub_face_edge_set=sub_face_edge_set,
+                                                       sub_face_crossings=sub_face_crossings,
+                                                       graph=graph)
+
+            # If the merge was successful, recurse
+            if merge_successful:
+
+                # Recurse and repeat merging
+                merge_sub_faces(sub_faces=sub_faces,
+                                sub_face_edge_set=sub_face_edge_set,
+                                sub_face_crossings=sub_face_crossings,
+                                graph=graph)
+
+                # Exit recursion (as the set of cells has changed) and return the removed vertices
+                return
+
+    # Final loop, nothing left to merge, return the removed vertices
+    return
+
+
+def try_merge_two_sub_faces(sub_face_a, sub_face_b, sub_faces, sub_face_edge_set, sub_face_crossings, graph):
+    """
+
+    :param sub_face_a: frozenset(sub_face)
+    :param sub_face_b:
+    :param sub_faces: list of frozenset(sub_faces)
+    :param sub_face_edge_set: dictionary which maps sub_faces to its edges. The dictionary is typed and structured as
+    follows: {frozenset(sub_face: (frozenset(edges)}
+    :param sub_face_crossings:
+    :param graph:
+
+    :return:
+    """
+
+    # Check whether the two sub_faces have at least one edge in common
+    merge_edges = sub_face_edge_set[sub_face_a].intersection(sub_face_edge_set[sub_face_b])
+
+    # Check whether the two sub_faces are identical in terms of their induced edge crossings
+    crossings_a, crossings_b = sub_face_crossings[sub_face_a], sub_face_crossings[sub_face_b]
+
+    # If the sub_faces don't share an edge or aren't identical in edge crossings, they cannot be merged
+    if (crossings_a == crossings_b) or (len(merge_edges) == 0):
+        return False
+
+    # Determine the new cell's vertex set and edge list
+    new_edge_set = sub_face_edge_set[sub_face_a].union(sub_face_edge_set[sub_face_a]) - merge_edges
+    new_sub_face = sub_face_a.union(sub_face_b)
+
+    # Update the Cell List
+    [sub_faces.remove(sub_face) for sub_face in [sub_face_a, sub_face_b]]
+    sub_faces.append(new_sub_face)
+
+    # Update Sub-Face edge list, i.e. remove the two merged ones with the new one
+    [sub_face_edge_set.pop(sub_face) for sub_face in [sub_face_a, sub_face_b]]
+    sub_face_edge_set[new_sub_face] = new_edge_set
+
+    # Update the Sub-face's induced edge crossing dictionary
+    new_sub_face_crossings = copy.deepcopy(sub_face_crossings[sub_face_a])
+    [sub_face_crossings.pop(cell) for cell in [sub_face_a, sub_face_b]]
+    sub_face_crossings[new_sub_face] = new_sub_face_crossings
+
+    # Update the graph by removing the edges along which the sub-faces were merged
+    for merge_edge in merge_edges:
+        merge_edge = list(merge_edge)
+        graph.remove_edge(u=merge_edge[0], v=merge_edge[1])
+
+    # The merge has successfully occurred
+    return True
 
 
 def select_sub_faces(sub_face_tables, target_faces, target_vertices):

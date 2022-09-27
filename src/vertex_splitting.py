@@ -68,15 +68,13 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
     return induced_edge_crossings
 
 
-def get_edge_crossing_table(induced_edge_crossings, cell_centroids, target_neighbors):
+def get_edge_crossing_table(induced_edge_crossings, target_neighbors):
     """
     a function to convert a provided dictionary of induced edge crossings to a dictionary of pandas dataframes.
 
     :param induced_edge_crossings: a nested dictionary which contains the number of edge crossings induced to connect
     the centroid of each face to each of the p target neighbors. The dictionary has a structure of
     {frozenset(face): frozenset(subface): (integer tuple of length p)}
-    :param cell_centroids: a nested dictionary of each subface's centroid. The dictionary is structured as follows
-    {frozenset(face): frozenset(subface): np.array(centroid)}
     :param target_neighbors: a list of length p containing the vertices to which all centroids must connect
 
     :return: a dictionary of length f (where f is the number of faces), where each value is an n*p pandas dataframe,
@@ -84,7 +82,7 @@ def get_edge_crossing_table(induced_edge_crossings, cell_centroids, target_neigh
     """
 
     # Initialize dictionary with two keys; one for each target face
-    crossing_tables = {face: None for face in cell_centroids.keys()}
+    crossing_tables = {face: None for face in induced_edge_crossings.keys()}
 
     # Iter ate over the two target faces
     for target_face in crossing_tables.keys():

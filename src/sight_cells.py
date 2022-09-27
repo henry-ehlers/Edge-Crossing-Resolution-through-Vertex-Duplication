@@ -193,8 +193,7 @@ def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edg
     return sight_cell_incidence
 
 
-def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph, positions):
-    # todo: outer face also contains all faces INSIDE of the graph
+def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph):
 
     for index_a in range(0, len(cells) - 1):
         for index_b in range(index_a + 1, len(cells)):
@@ -215,8 +214,7 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph, posit
                 merge_face_sight_cells(cells=cells,
                                        cells_edge_list=cells_edge_list,
                                        cell_incidences=cell_incidences,
-                                       graph=graph,
-                                       positions=positions)
+                                       graph=graph)
 
                 # Exit recursion (as the set of cells has changed) and return the removed vertices
                 return
@@ -508,8 +506,7 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, cells
     merge_face_sight_cells(cells=face_sight_cells,
                            cells_edge_list=cells_edge_list,
                            cell_incidences=cell_incidences,
-                           graph=graph,
-                           positions=positions)
+                           graph=graph)
     face_sight_cells = set(face_sight_cells)
 
     # Draw Merged Embedding
