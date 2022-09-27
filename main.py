@@ -62,6 +62,12 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
+    print(f"\nsight-cells:")
+    [print(f"{key}") for key in sight_cells]
+    print(f"\ncell edge_map:")
+    print(edge_map)
+    print(f"\ncell outer_sight_cell_edges:")
+    print(outer_sight_cell_edges)
     sight_cells, vertex_map = merge_cells_wrapper(face_sight_cells=sight_cells,
                                                   cell_incidences=cell_incidences,
                                                   cells_edge_map=edge_map,
@@ -70,18 +76,20 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                   graph=o_graph)
 
     # DEBUG
-    print(f"\n cells MAP:")
-    [print(f"{cell}") for cell in cell_incidences]
-    print(f"----------------------------------------------------------")
     print(f"\n incidences MAP:")
-    [print(f"{cell} - {cell_incidences[cell]}") for cell in cell_incidences.keys()]
+    [print(f"{cell} -> {inc}") for cell, inc in cell_incidences.items()]
     print(f"----------------------------------------------------------")
     print(f"\n face sight cells MAP:")
-    [print(f"{key}") for key in sight_cells]
+    [print(f"{cell}") for cell in sight_cells]
     print(f"----------------------------------------------------------")
     print(f"\n face vertex map:")
     [print(f"{key} -> {item}") for key, item in vertex_map.items()]
     print(f"----------------------------------------------------------")
+    print(f"\ncell edge list:")
+    print(outer_sight_cell_edges)
+    print(f"----------------------------------------------------------")
+    print(f"\nedge map:")
+    print(edge_map)
 
     # Get Sorted Incidence Table of sight cells and their incidences
     cell_incidence_table = get_incidence_table(incidences=cell_incidences,
@@ -428,20 +436,43 @@ if __name__ == '__main__':
     plane_graph_sub_faces = find_all_subfaces(target_faces=selected_faces,
                                               face_vertex_map=subface_vertex_map,
                                               graph=c_graph)
+    # TODO: get sub-face's edge sets
+
     [print(f"\n{face} - {subfaces}") for face, subfaces in plane_graph_sub_faces.items()]
     subface_centroids = get_split_vertex_locations(positions=c_positions,
                                                    target_face_subfaces=plane_graph_sub_faces)
     print(f"\nsubface centroids: {subface_centroids}")
 
+    # Calculcate the number of edge crossing induced by connected each subface to all target neighbors
     induced_edge_crossings = calculate_induced_edge_crossings(
         graph=r_graph,
         positions=r_positions,
         centroids=subface_centroids,
         target_neighbors=target_adjacency)
+
+    # Get the number of induced edge crossings in the form of a dictionary of pandas dataframes
+    induced_edge_crossing_table = get_edge_crossing_table(induced_edge_crossings=induced_edge_crossings,
+                                                          cell_centroids=subface_centroids,
+                                                          target_neighbors=target_adjacency)
     print(f"\ninduced edge crossings:")
 
+    print(f"\ninduced edge crossings")
+    print(induced_edge_crossings)
+    print(f"\nsubfaces:")
+    print(plane_graph_sub_faces)
+    print(f"\nedge set:")
+    print(plane_face_virtual_edge_set)
+
+    # TODO: merge sub-faces based on induced edge-crossing "incidence"
+    # merge_cells_wrapper(face_sight_cells=sub_faces,
+    #                     cells_edge_map=,
+    #                     cells_edge_list=,
+    #                     cell_incidences=induced_edge_crossings,
+    #                     graph=r_graph,
+    #                     positions=r_positions)
+
     #
-    selected_sub_faces = select_sub_faces(sub_face_tables=induced_edge_crossings,
+    selected_sub_faces = select_sub_faces(sub_face_tables=induced_edge_crossing_table,
                                           target_faces=selected_faces,
                                           target_vertices=target_adjacency)
     print(f"selected sub_faces: {selected_sub_faces}")

@@ -64,15 +64,38 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
             print(f"intersections {tuple(intersections)}")
             induced_edge_crossings[target_face][subface] = tuple(intersections)
 
-    # Tabulate the number of edge crossings per subface
-    crossing_tables = {face: None for face in centroids.keys()}
+    # Return Complete Set
+    return induced_edge_crossings
+
+
+def get_edge_crossing_table(induced_edge_crossings, cell_centroids, target_neighbors):
+    """
+    a function to convert a provided dictionary of induced edge crossings to a dictionary of pandas dataframes.
+
+    :param induced_edge_crossings: a nested dictionary which contains the number of edge crossings induced to connect
+    the centroid of each face to each of the p target neighbors. The dictionary has a structure of
+    {frozenset(face): frozenset(subface): (integer tuple of length p)}
+    :param cell_centroids: a nested dictionary of each subface's centroid. The dictionary is structured as follows
+    {frozenset(face): frozenset(subface): np.array(centroid)}
+    :param target_neighbors: a list of length p containing the vertices to which all centroids must connect
+
+    :return: a dictionary of length f (where f is the number of faces), where each value is an n*p pandas dataframe,
+    where n = the number of subfaces in face f, and p = the number of target neighbor vertices
+    """
+
+    # Initialize dictionary with two keys; one for each target face
+    crossing_tables = {face: None for face in cell_centroids.keys()}
+
+    # Iter ate over the two target faces
     for target_face in crossing_tables.keys():
+
+        # Get all induced edge crossings for all subfaces in current face
         crossing_tables[target_face] = get_subface_edge_crossing_table(
             face=target_face,
             subface_crossings=induced_edge_crossings[target_face],
             target_vertices=target_neighbors)
 
-    # Return Complete Set
+    # Return Edge Crossing Tables
     return crossing_tables
 
 

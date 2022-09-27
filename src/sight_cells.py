@@ -539,19 +539,16 @@ def update_merged_sight_cells(sight_cells, cell_incidences, edge_map, graph):
 
     # Iterate over all vertices to determine whether it must be removed
     for node in list(graph.nodes()):
-        print(f"\nnode: {node}")
 
         # Get the current node's edges
         node_edges = list(graph.edges(node))
 
         # If the node has a degree of more than 2, it must remain
         if len(node_edges) != 0:
-            print(f"has {len(node_edges)} connections")
             continue
 
         # If the node is not virtual, do not consider it
         if node not in virtual_nodes:
-            print("not a virtual node")
             continue
 
         # Remove Edge from edge map and vertex from sight cell
@@ -609,11 +606,13 @@ def update_sight_cell_graph(sight_cells, cell_incidences, edge_map, graph, posit
 
 
 def remove_elements_from_dictionary_frozenset_key(element, dictionary):
-    print(f"trying to remove {element} from cell incidence dictionary")
+
+    #
     for key in list(dictionary.keys()):
         if not key.intersection({element}):
             continue
-        print(f"mapped to face {key} with values {dictionary[key]}")
+
+        #
         new_key = set(key)
         new_key.remove(element)
         dictionary[frozenset(new_key)] = copy.copy(dictionary[key])
@@ -651,7 +650,6 @@ def replace_edges_with_replacement(edges, replacement, edge_map):
 
             # Replace the mapped edge's edge list with the altered set
             edge_map[mapped_edge] = [tuple(edge) for edge in mapped_edge_set]
-            print(f"replaced at {mapped_edge} -> {edge_map[mapped_edge]}")
             return
 
 
@@ -664,7 +662,6 @@ def remove_vertex_from_sight_cell(vertex, sight_cells):
         new_cell = set(sight_cell)
         new_cell.remove(vertex)
         new_cell = frozenset(new_cell)
-        print(f"found {vertex} in {sight_cell} and replaced with {new_cell}")
         sight_cells.add(new_cell)
 
 
@@ -697,7 +694,6 @@ def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, grap
 
     if face_edge_crossings:
         virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
-        print(f"Added virtual edges between {virtual_edges}")
         non_empty_virtual_edges = {k: v for k, v in virtual_edges.items() if v}
         virtual_edge_map.update(non_empty_virtual_edges)
         graph.update(face_graph)

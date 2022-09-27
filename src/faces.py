@@ -11,6 +11,10 @@ import copy
 import sys
 
 
+def merge_sub_faces():
+    pass
+
+
 def select_sub_faces(sub_face_tables, target_faces, target_vertices):
 
     # Extract sub-faces as dictionary of list; one per face
