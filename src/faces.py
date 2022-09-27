@@ -6,6 +6,7 @@ import itertools as it
 import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
+import re
 import copy
 import sys
 
@@ -14,19 +15,32 @@ def select_sub_faces(sub_face_tables, target_faces, target_vertices):
 
     # Extract sub-faces as dictionary of list; one per face
     sub_faces = {face: sub_face_tables[face].loc[:, "sub_face"].tolist() for face in target_faces}
-
+    print(sub_faces)
+    print(len(sub_faces))
+    print(sub_face_tables[target_faces[0]].loc[:, target_vertices].to_numpy())
+    print(sub_face_tables[target_faces[1]].loc[:, target_vertices].to_numpy())
     # ILP select best pair of sub-faces
-    selected_sub_faces = ilp_choose_subface(
+    selected_sub_faces, sub_face_incidences = ilp_choose_subface(
         induced_cross_A=sub_face_tables[target_faces[0]].loc[:, target_vertices].to_numpy(),
         induced_cross_B=sub_face_tables[target_faces[1]].loc[:, target_vertices].to_numpy()
     )
     print(f"selected sub-face indices: {selected_sub_faces}")
+    print(f"selected sub-face incidences: {sub_face_incidences}")
+
+    sub_face_names = tuple([sub_faces[target_faces[i]][selected_sub_faces[i]] for i in range(0, 2)])
+    sub_face_neighbors
+    sub_face_neighbors = [tuple([target_vertices[i] for i in range(0, len(target_vertices))
+                                 if sub_face_incidences[i] == 1]) for j in range(0, 2)]
+    print(f"subface selection: {sub_face_names}")
+    print(f"subface neighbors: {sub_face_neighbors}")
 
     # Return tuple of sub-face's vertices frozen-sets
     return tuple([sub_faces[target_faces[i]][selected_sub_faces[i]] for i in range(0, 2)])
 
 
 def ilp_choose_subface(induced_cross_A, induced_cross_B):
+
+    #
     (W_a, T) = induced_cross_A.shape
     (W_b, T) = induced_cross_B.shape
 
@@ -52,7 +66,6 @@ def ilp_choose_subface(induced_cross_A, induced_cross_B):
     m.setObjective(obj, GRB.MINIMIZE)
 
     # Create constraints
-    # have to select one subface per face
     m.addConstr(gp.quicksum(cell_a) <= 1)
     m.addConstr(gp.quicksum(cell_b) <= 1)
 
@@ -65,7 +78,7 @@ def ilp_choose_subface(induced_cross_A, induced_cross_B):
         for i in range(W_b):
             assignment_amount.addTerms(1, edge_b[i, j])
 
-        m.addConstr(assignment_amount >= 1)
+        m.addConstr(assignment_amount == 1)
 
     # a task cannot be assigned to a unchosen worker
     for j in range(T):
@@ -77,26 +90,37 @@ def ilp_choose_subface(induced_cross_A, induced_cross_B):
     # Optimize model
     m.optimize()
 
-    index_A = 0
-    index_B = 0
-    subface_A = -1
-    subface_B = -1
+    index_A, index_B = 0, 0
+    subface_A, subface_B = -1, -1
 
     for v in m.getVars():
         if (v.x) == 1:
             print('%s %g' % (v.varName, v.x))
         if v.varName[0] == "c":
             if v.varName[1] == "a":
-                if (v.x) == 1:
+                if v.x == 1:
                     subface_A = index_A
                 index_A += 1
 
             if v.varName[1] == "b":
-                if (v.x) == 1:
+                if v.x == 1:
                     subface_B = index_B
                 index_B += 1
 
-    return (subface_A, subface_B)
+    # Get Assignments
+    assignment_a = [None] * induced_cross_A.shape[1]
+    assignment_b = [None] * induced_cross_B.shape[1]
+    regx_numbers = re.compile(r"[+-]?\d+(?:\.\d+)?")
+    for v in m.getVars():
+        if v.varName[0] != "e":
+            continue
+        row, column = [int(i) for i in regx_numbers.findall(v.varName)]
+        if v.varName[1] == "a" and row == subface_A:
+            assignment_a[column] = int(v.x)
+        elif v.varName[1] == "b" and row == subface_B:
+            assignment_b[column] = int(v.x)
+
+    return (subface_A, subface_B), (assignment_a, assignment_b)
 
 
 def ilp_choose_face(visibility_matrix):
