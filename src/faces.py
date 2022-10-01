@@ -328,9 +328,13 @@ def find_all_subfaces(target_faces, face_vertex_map, graph):
 
 
 def get_ordered_face_edges(faces, graph):
+    print(f"faces: {faces}")
     ordered_face_edges = dict.fromkeys(faces)
     for face in faces:
-        ordered_face_edges[face] = get_face_vertex_sequence(face, graph)
+        print(f"face: {face}")
+        vertex_sequence = list(face) if len(face) == 1 else get_face_vertex_sequence(face, graph)
+        print(f"vertex sequence: {vertex_sequence}")
+        ordered_face_edges[face] = vertex_sequence
     return ordered_face_edges
 
 
