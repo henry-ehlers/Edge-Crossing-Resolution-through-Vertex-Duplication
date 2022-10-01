@@ -51,7 +51,7 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
         positions=positions,
         is_cycle=is_cycle,
         bounds=bounds)
-
+    print(sight_cells)
     # Calculate the incidence of all sight cells to the outer face's target incident vertices
     outer_face = set().union(*outer_faces)
     outer_target_vertices = outer_face.intersection(target_vertices)
@@ -60,7 +60,10 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                            face_edges=sorted_outer_edges,
                                                            face_edge_map=edge_map,
                                                            positions=o_positions)
-
+    print( get_incidence_table(incidences=cell_incidences,
+                                               entry_type="cell",
+                                               outer=True))
+    input("look at table")
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
     sight_cells, vertex_map = merge_cells_wrapper(face_sight_cells=sight_cells,
@@ -340,7 +343,6 @@ if __name__ == '__main__':
     save_drawn_graph(f"{output_directory}/graph_3.png")
 
     sys.exit()
-
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
     print(f"\nUpdate Inner Face")
     update_faces_with_edge_map(inner_face_incidence, sorted_inner_face_edges, cell_graph_object["edge_map"])
@@ -458,13 +460,6 @@ if __name__ == '__main__':
     print(plane_graph_sub_faces)
     print(f"\nedge map:")
     print(plane_face_virtual_edge_map)
-
-    # TODO: merge sub-faces based on induced edge-crossing "incidence"
-    # plane_graph_sub_faces = sub_face_merge_wrapper(face_sub_faces=plane_graph_sub_faces,
-    #                                                face_sub_face_crossings=induced_edge_crossings,
-    #                                                face_sub_face_edge_set=subfaces_edge_sets,
-    #                                                graph=c_graph,
-    #                                                positions=c_positions)
 
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)

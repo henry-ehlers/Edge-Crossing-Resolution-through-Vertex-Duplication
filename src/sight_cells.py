@@ -687,19 +687,22 @@ def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, 
                             graph=graph)
 
 
-def update_sight_line_graph(edges, face_vertices, edge_to_virtual_vertices, graph, positions, outer=False):
+def update_sight_line_graph(face_vertices, edge_to_virtual_vertices, graph, positions, outer=False):
+
+    print(f"\nface vertices in edge crossing check: {face_vertices}")
 
     # Remove edges which have been intersected, and replace them with ordered virtual edges
     virtual_edge_map = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
     remove_edges(graph, edge_to_virtual_vertices.keys())
 
     # Locate Edge Crossings and Faces in Subgraph
+    print(f"\ngraph vertices: {graph.nodes}")
     face_positions = {key: positions.get(key) for key in face_vertices}
     face_graph = nx.Graph(graph.subgraph(nodes=face_vertices))
 
     # Find remaining edge crossings (between placed line-segments) and replace them with virtual vertices
     face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
-
+    print(f"\nedge crossings: {face_edge_crossings}")
     if face_edge_crossings:
         virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
         non_empty_virtual_edges = {k: v for k, v in virtual_edges.items() if v}
@@ -869,13 +872,15 @@ def update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, 
                                       edge_to_virtual_vertices, graph, positions, outer=False):
 
     # Update List of Vertices with added vertices and the set of edges which define the face
-    face_vertices = get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positions)
-    candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
-    face_vertices = face_vertices + added_vertices + list(set(unlist(candidate_edges)))
+    if outer:
+        face_vertices = graph.nodes
+    else:
+        face_vertices = get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positions)
+        candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
+        face_vertices = face_vertices + added_vertices + list(set(unlist(candidate_edges)))
 
     # Update the Graph and Its Positions
-    cells, virtual_edge_map = update_sight_line_graph(edges=candidate_edges,
-                                                      face_vertices=face_vertices,
+    cells, virtual_edge_map = update_sight_line_graph(face_vertices=face_vertices,
                                                       edge_to_virtual_vertices=edge_to_virtual_vertices,
                                                       graph=graph,
                                                       positions=positions,
@@ -917,17 +922,13 @@ def project_face_against_self(face, ordered_face_edges, face_edge_map, graph, po
 
 def project_outer_face_against_singleton(face, other_face, edge_map, ordered_face_edges, positions, graph, bounds):
     assert(len(other_face) == 1), \
-        f"Passed face {other_face} of length {len(other_face)} into singleton projection"
-
-
+        f"ERROR: Passed face {other_face} of length {len(other_face)} into singleton projection!"
 
     # Replace original edges with their virtual counterparts
     candidate_edges = unlist([edge_map.get(edge) for edge in edge_map.keys()])
     other_face_vertices = list(other_face)
     other_face_angles = {vertex: 360 for vertex in other_face_vertices}
-    print(other_face_angles)
-    print(other_face_vertices)
-    print(f"\npositions: {positions}")
+
     # Get Vertices and ensure they are listed in counter-clockwise order
     face_vertices = get_clockwise_face_vertices(face, ordered_face_edges, edge_map, positions, original=True)
     face_angles = calculate_face_outer_angles(face_vertices, positions)
@@ -964,8 +965,7 @@ def project_outer_face_against_another_face(face, other_face, edge_map, ordered_
     other_face_angles = calculate_face_outer_angles(other_face_vertices, positions)
 
     # Get Vertices and ensure they are listed in counter-clockwise order
-    face_vertices = list(face) if len(face) == 1 else \
-        get_clockwise_face_vertices(face, ordered_face_edges, edge_map, positions, original=True)
+    face_vertices = get_clockwise_face_vertices(face, ordered_face_edges, edge_map, positions, original=True)
     face_angles = {vertex: 360 for vertex in face_vertices} if len(face) == 1 else \
         calculate_face_outer_angles(face_vertices, positions)
 
@@ -1063,13 +1063,8 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
                 # TODO: if other face is not a cycle -> special visiblility checking of ONLY edge intersections
                 continue
             elif not is_cycle[other_face] and len(other_face) == 1:
-                print(f"HERE {other_face}")
                 edge_to_virtual_vertices, added_vertices, connected_vertices = project_outer_face_against_singleton(
                     face, other_face, face_edge_map, ordered_face_edges, outer_positions, outer_graph, bounds)
-                # TODO: if length(outer_face) == 1 -> only project single vertex
-                print(f"edge to virtual vertices: {edge_to_virtual_vertices}")
-                print(f"added vertices: {added_vertices}")
-                print(f"connected vertices: {connected_vertices}")
             else:
                 sys.exit("Non Accounted for Constellation of face!")
 
@@ -1086,11 +1081,13 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
     print(f"\nfinal map: {connected_vertex_map}")
 
     # Identify all faces (i.e. sight cells in outer face)
-    face_graph = nx.Graph(outer_graph.subgraph(nodes=list(set(unlist(unlist(list(face_edge_map.values())))))))
-    sight_cells = find_inner_faces(face_graph, positions=outer_positions)
+    # face_graph = nx.Graph(outer_graph.subgraph(nodes=list(set(unlist(unlist(list(face_edge_map.values())))))))
+    sight_cells = find_inner_faces(outer_graph, positions=outer_positions)
 
     # Remove the original set of faces that defined the outer face
-    [sight_cells.remove(cell) for cell in copy.copy(sight_cells) for face in selected_faces if face.issubset(cell)]
+    print(sight_cells)
+    [sight_cells.remove(cell) for cell in copy.copy(sight_cells) for face in selected_faces
+     if face.issubset(cell) and len(face) >= 2]
 
     # Return the identified sight cells and the subgraph
     return sight_cells, face_edge_map, connected_vertex_map, outer_graph, outer_positions
