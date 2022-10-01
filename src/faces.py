@@ -23,9 +23,7 @@ def get_face_sub_face_edge_sets(face_sub_cells, graph):
 def get_sub_face_edges(sub_faces, graph):
     edge_set = {sub_face: set() for sub_face in sub_faces}
     for sub_face in sub_faces:
-        print(f"sub-face: {sub_face}")
         cell_edges = get_face_vertex_sequence(sub_face, graph)
-        print(f"cell_edges: {cell_edges}")
         [edge_set[sub_face].add(frozenset(edge)) for edge in cell_edges]
     return edge_set
 
@@ -36,10 +34,8 @@ def sub_face_merge_wrapper(face_sub_faces, face_sub_face_crossings, face_sub_fac
     #face_sub_face_edge_map
 
     for face in face_sub_faces.keys():
-        print(f"\nface: {face}")
         # Try Merging Cells in non-convex face
         sub_faces = list(face_sub_faces[face])  # Reminder: cast is done to enable more efficient indexed looping
-        print(f"sub faces: {sub_faces}")
         merge_sub_faces(sub_faces=sub_faces,
                         sub_face_edge_set=face_sub_face_edge_set[face],
                         sub_face_crossings=face_sub_face_crossings[face],
@@ -343,20 +339,15 @@ def unlist(nested_list):
 
 
 def update_faces_with_edge_map(face_incidence_table, face_edge_map, edge_map):
-    print(f"\nedge map:  {edge_map}")
-    print(f"\nface edge map:  {face_edge_map}")
 
     for index, row in face_incidence_table.iterrows():
         face = row["identifier"]
-        print(f"face: {face}")
         face_edges = face_edge_map[face]
         new_face_edges = []
         for edge in face_edges:
             new_face_edges.append(edge_map.get(edge, [edge]))
         new_face_edges = unlist(new_face_edges)
-        print(f"new face edges: {new_face_edges}")
         new_face_identifier = frozenset(unlist(new_face_edges))
-        print(f"vertex set: {new_face_identifier}")
 
         face_edge_map.pop(face)
         face_edge_map[new_face_identifier] = new_face_edges
@@ -550,6 +541,7 @@ def find_outer_face(ordered_face_edges, graph, positions):
     faces = faces.union(vertices)
     [face_is_cycle.update({vertex: False}) for vertex in vertices]
 
+    print(f"outer faces: {faces}")
     # Return unique vertex sets from the found singleton edges
     return faces, face_edge_sets, face_is_cycle
 
@@ -578,8 +570,6 @@ def find_vertex_sets_from_edges(edge_sets):
 
 def build_face_to_edge_map(graph, faces):
 
-    # TODO: the face set now consists of shortest cycles, so this basic look-up should be acceptable for now
-    # TODO: however, for outer faces, there may be cycles within the the defined cycle that should not be included
     face_edge_map = dict()
     for face in faces:
         face_edge_map[face] = list()
@@ -642,9 +632,6 @@ def vector_angle(vector_1, vector_2):
 
     # Calculate Dot Product and Signed Angle in Radians
     dot_product = np.dot(unit_vector_1, unit_vector_2)
-    print(f"unit vector 1: {unit_vector_1}")
-    print(f"unit vector 2: {unit_vector_2}")
-    print(f"dot product: {dot_product}")
     angle = np.arccos(dot_product)
 
     # Return Angle in Degrees

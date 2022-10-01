@@ -35,10 +35,8 @@ def get_face_vertex_sequence(face, graph):
     for edge in graph.edges:
         common_vertices = face.intersection(set(edge))
         if len(common_vertices) == 2:
-            print(f"common edges: {common_vertices}")
             face_edges[current] = edge
             current += 1
-    print(f"found face edges: {face_edges}")
     sorted_face_edges = sort_face_edges(face_edges)
     return sorted_face_edges
 

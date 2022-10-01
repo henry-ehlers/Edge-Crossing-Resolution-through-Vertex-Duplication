@@ -151,7 +151,6 @@ def planarize_graph(graph, positions, edge_crossings, largest_index=None):
     # Extract basic properties of graph
     # TODO: THIS INDEX BREAK EVERYTHING SOMEHOW
     index = largest_index if largest_index is not None else max(graph.nodes)
-    print(f"starting index: {index}")
     edges = list(graph.edges)  # create list for easier indexing
 
     edge_to_virtual_vertex = {edge: set() for edge in edges}  # have to ensure

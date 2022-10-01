@@ -8,6 +8,7 @@ import numpy as np
 import timeit
 import sys
 
+from src.graph_simulation import *
 from src.vertex_splitting import *
 from src.sight_cells import *
 from src.faces import *
@@ -62,34 +63,12 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
-    print(f"\nsight-cells:")
-    [print(f"{key}") for key in sight_cells]
-    print(f"\ncell edge_map:")
-    print(edge_map)
-    print(f"\ncell outer_sight_cell_edges:")
-    print(outer_sight_cell_edges)
     sight_cells, vertex_map = merge_cells_wrapper(face_sight_cells=sight_cells,
                                                   cell_incidences=cell_incidences,
                                                   cells_edge_map=edge_map,
                                                   cells_edge_list=outer_sight_cell_edges,
                                                   positions=o_positions,
                                                   graph=o_graph)
-
-    # DEBUG
-    print(f"\n incidences MAP:")
-    [print(f"{cell} -> {inc}") for cell, inc in cell_incidences.items()]
-    print(f"----------------------------------------------------------")
-    print(f"\n face sight cells MAP:")
-    [print(f"{cell}") for cell in sight_cells]
-    print(f"----------------------------------------------------------")
-    print(f"\n face vertex map:")
-    [print(f"{key} -> {item}") for key, item in vertex_map.items()]
-    print(f"----------------------------------------------------------")
-    print(f"\ncell edge list:")
-    print(outer_sight_cell_edges)
-    print(f"----------------------------------------------------------")
-    print(f"\nedge map:")
-    print(edge_map)
 
     # Get Sorted Incidence Table of sight cells and their incidences
     cell_incidence_table = get_incidence_table(incidences=cell_incidences,
@@ -203,19 +182,31 @@ def get_inner_faces(target_vertices, graph, positions):
     # Identify the graph's inner faces
     inner_faces = find_inner_faces(graph=graph,
                                    positions=positions)
+    print(f"\ninner faces:")
+    print(inner_faces)
 
     # Identify each face's incidence (based not on visibility)
     inner_faces_incidences = find_face_vertex_incidence(faces=inner_faces,
                                                         target_vertices=target_vertices)
+
+    print(f"\ninner_faces_incidences")
+    print(inner_faces_incidences)
 
     # Create Pandas Data Table of Face Incidences
     inner_incidence_table = get_incidence_table(incidences=inner_faces_incidences,
                                                 entry_type="face",
                                                 outer=False)
 
+    print(f"\ninner_incidence_table:")
+    print(inner_incidence_table)
+
     # Get the Face's sorted Edges
     sorted_face_edges = get_ordered_face_edges(faces=inner_faces,
                                                graph=graph)
+
+
+    print(f"\nsorted face edges:")
+    print(sorted_face_edges)
 
     # Return both the incidence table and the sorted edges
     return inner_incidence_table, sorted_face_edges
@@ -238,51 +229,57 @@ if __name__ == '__main__':
     # TESTS ------------------------------------------------------------------------------------------------------------
 
     # Create Output Directory
-    output_directory = "./drawings/tests/test_test"
+    output_directory = f"./drawings/kamada_kawai/barabasi_albert_{n_vertices}_{m_edges}_{seed}"
     Path(output_directory).mkdir(parents=True, exist_ok=True)
 
     # Create or Load simulated graph
     print("\nCreation and Embedding of Graph")
-    # graph = create_barabasi_albert_graph(n=n_vertices, m=m_edges, seed=seed)
-    # positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
+    #
     # Specify vertices and edges
     # todo: the example below causes floating point crashes as all their x and y points are identical
     # coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
-    coordinates = [(0.001, 2.003), (1.001, 0.005), (2.003, 1.002), (3.004, 0.002),
-                   (4.003, 2.006), (2.001, 4.004)]
+    # coordinates = [(0.001, 2.003), (1.001, 0.005), (2.003, 1.002), (3.004, 0.002),
+    #                (4.003, 2.006), (2.001, 4.004)]
+    #
+    # vertices = range(0, len(coordinates))
+    # edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
+    #
+    # more_coordinates = [(-2.0004, 1.5004), (-1.16, 1.55), (-1.004, 0.507)]
+    # more_vertices = range(len(coordinates), len(coordinates) + len(more_coordinates))
+    #
+    # more_edges = ((more_vertices[index], more_vertices[(index + 1) % len(more_vertices)])
+    #               for index in range(0, len(more_vertices)))
+    # custom_edges = [(2, 5), (0, 4), (2, 0)]
+    # target_edges = [(9, 6), (9, 4), (9, 2), (9, 5)]
+    #
+    # # Create Graph
+    # graph = nx.Graph()
+    # for vertex in vertices:
+    #     graph.add_node(vertex, real=1)
+    # for vertex in more_vertices:
+    #     graph.add_node(vertex, real=1)
+    # v_index = max(graph.nodes) + 1
+    # graph.add_node(v_index, real=1)
+    # for edge in target_edges:
+    #     graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
+    #
+    # for edge in edges:
+    #     graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
+    # for edge in more_edges:
+    #     graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
+    # for edge in custom_edges:
+    #     graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
+    # positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
+    # positions.update(
+    #     {more_vertices[index]: np.array(more_coordinates[index]) for index in range(0, len(more_vertices))})
+    # positions.update({v_index: np.array((0.0, 1.0))})
+    #
+    # graph.add_node(10, real=1)
+    # graph.add_edge(u_of_edge=9, v_of_edge=10, real=1)
+    # positions[10] = (2.49, 2.55)
 
-    vertices = range(0, len(coordinates))
-    edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
-
-    more_coordinates = [(-2.0004, 1.5004), (-1.16, 1.55), (-1.004, 0.507)]
-    more_vertices = range(len(coordinates), len(coordinates) + len(more_coordinates))
-
-    more_edges = ((more_vertices[index], more_vertices[(index + 1) % len(more_vertices)])
-                  for index in range(0, len(more_vertices)))
-    custom_edges = [(2, 5), (0, 4), (2, 0)]
-    target_edges = [(9, 6), (9, 4), (9, 2), (9, 5)]
-
-    # Create Graph
-    graph = nx.Graph()
-    for vertex in vertices:
-        graph.add_node(vertex, real=1)
-    for vertex in more_vertices:
-        graph.add_node(vertex, real=1)
-    v_index = max(graph.nodes) + 1
-    graph.add_node(v_index, real=1)
-    for edge in target_edges:
-        graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
-
-    for edge in edges:
-        graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
-    for edge in more_edges:
-        graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
-    for edge in custom_edges:
-        graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
-    positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
-    positions.update(
-        {more_vertices[index]: np.array(more_coordinates[index]) for index in range(0, len(more_vertices))})
-    positions.update({v_index: np.array((0.0, 1.0))})
+    graph = create_barabasi_albert_graph(n=n_vertices, m=m_edges, seed=seed)
+    positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
 
     # MAIN -------------------------------------------------------------------------------------------------------------
 
@@ -327,7 +324,7 @@ if __name__ == '__main__':
     d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
     outer_bounds = get_embedding_square(graph=p_graph,
                                         positions=p_positions,
-                                        scaler=1.2)
+                                        scaler=1.5)
     outer_cell_incidence, cell_graph_object = decompose_outer_face(sorted_inner_face_edges=sorted_inner_face_edges,
                                                                    graph=p_graph,
                                                                    positions=p_positions,
@@ -341,6 +338,8 @@ if __name__ == '__main__':
 
     draw_graph(graph=d_graph, positions=d_positions)
     save_drawn_graph(f"{output_directory}/graph_3.png")
+
+    sys.exit()
 
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
     print(f"\nUpdate Inner Face")
@@ -461,17 +460,18 @@ if __name__ == '__main__':
     print(plane_face_virtual_edge_map)
 
     # TODO: merge sub-faces based on induced edge-crossing "incidence"
-    plane_graph_sub_faces = sub_face_merge_wrapper(face_sub_faces=plane_graph_sub_faces,
-                                                   face_sub_face_crossings=induced_edge_crossings,
-                                                   face_sub_face_edge_set=subfaces_edge_sets,
-                                                   graph=c_graph,
-                                                   positions=c_positions)
-    faces = list(plane_graph_sub_faces.keys())
-    print(f"\n merged subfaces")
-    print(f"\n FACE {faces[0]}")
-    [print(f"{subface} --> {induced_edge_crossings[faces[0]][subface]}") for subface in plane_graph_sub_faces[faces[0]]]
-    print(f"\n FACE {faces[1]}")
-    [print(f"{subface} --> {induced_edge_crossings[faces[1]][subface]}") for subface in plane_graph_sub_faces[faces[1]]]
+    # plane_graph_sub_faces = sub_face_merge_wrapper(face_sub_faces=plane_graph_sub_faces,
+    #                                                face_sub_face_crossings=induced_edge_crossings,
+    #                                                face_sub_face_edge_set=subfaces_edge_sets,
+    #                                                graph=c_graph,
+    #                                                positions=c_positions)
+
+    # Draw the segment graph
+    draw_graph(graph=c_graph, positions=c_positions)
+    save_drawn_graph(f"{output_directory}/graph_8.png")
+
+    # Place Copies
+    print(f"\nPLACING SPLIT VERTICES")
 
     # Calculate each subface's centroid
     subface_centroids = get_split_vertex_locations(positions=c_positions,
@@ -496,6 +496,6 @@ if __name__ == '__main__':
 
     # Draw the segment graph
     draw_graph(graph=n_graph, positions=n_positions)
-    save_drawn_graph(f"{output_directory}/graph_8.png")
+    save_drawn_graph(f"{output_directory}/graph_9.png")
 
     sys.exit()

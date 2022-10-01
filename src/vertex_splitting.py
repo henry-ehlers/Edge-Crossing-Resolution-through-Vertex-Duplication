@@ -25,7 +25,6 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
 
     # Extract all real edges
     real_edges = [edge for edge, real in nx.get_edge_attributes(G=graph, name="real").items() if real == 1]
-    print(f"real edges: {real_edges}")
 
     # Store all edge crossings
     induced_edge_crossings = {target_face: dict() for target_face in centroids.keys()}
@@ -35,7 +34,6 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
 
         # Iterate over all subfaces in the current target face
         for subface in centroids[target_face].keys():
-            print(f"\nSUBFACE {subface}")
             point_a = centroids[target_face][subface]
 
             # Store the number of intersections per neighbor
@@ -44,7 +42,7 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
             # Iterate over all neighbors that still need to be connected
             for neighbor_index, neighbor in enumerate(target_neighbors):
                 point_b = positions[neighbor]
-                print(f"target {neighbor}")
+
                 # Iterate over all edges in the graph
                 for (vertex_c, vertex_d) in real_edges:
 
@@ -57,11 +55,9 @@ def calculate_induced_edge_crossings(graph, positions, centroids, target_neighbo
 
                     # Calculate intersection and store if they do
                     if line_intersection(point_a, point_b, point_c, point_d) is not None:
-                        print(f"intersection with {(vertex_c, vertex_d)}")
                         intersections[neighbor_index] += 1
 
             # Store the number of edge crossings
-            print(f"intersections {tuple(intersections)}")
             induced_edge_crossings[target_face][subface] = tuple(intersections)
 
     # Return Complete Set
@@ -107,7 +103,6 @@ def get_subface_edge_crossing_table(face, subface_crossings, target_vertices):
     crossings = np.empty(shape=(len(subface_crossings), len(target_vertices)),
                          dtype=int)
     for index, subface in enumerate(sub_faces):
-        print(f"subface: {subface}")
         crossings[index, ...] = subface_crossings[subface]
 
     # Create crossing pandas data frame
@@ -188,7 +183,6 @@ def place_split_vertices(faces, selected_sub_faces, centroids, target_vertex, gr
     # TODO: fix the indexing to make sense
     second_index = (max(graph.nodes()) if max(graph.nodes()) > target_vertex else target_vertex) + 1
     new_indices = [target_vertex, second_index]
-    print(new_indices)
 
     # Add newly split vertices to the graph and positions
     [split_graph.add_node(node_for_adding=split_vertex, split=1, real=1) for split_vertex in new_indices]

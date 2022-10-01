@@ -24,7 +24,6 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
     # virtual_nodes, corner_nodes = nx.get_node_attributes(graph, "virtual"), nx.get_node_attributes(graph, "corner")
     # real_nodes = [v for v in segment_graph.nodes if (virtual_nodes.get(v, 0) != 1) and (corner_nodes.get(v, 0) != 1)]
     real_nodes = [node for node, real in nx.get_node_attributes(graph, "real").items() if real == 1]
-    print(f"real node dictionary: {real_nodes}")
     edges = frozenset([frozenset(edge) for edge in list(segment_graph.edges())])
 
     # Store the number of nodes and largest index
@@ -36,16 +35,13 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
         vertex_a = real_nodes[index_a]
         for index_b in range(index_a + 1, number_of_nodes):
             vertex_b = real_nodes[index_b]
-            print(f"\nvertices {vertex_a} and {vertex_b}")
             # Calculate intersections with boundary
             intersections = extend_line(segment_positions[vertex_a], segment_positions[vertex_b], bounds)
 
             # # Check if this particular combination of vertices is connected (by virtual edge sets)
             virtual_connection = [v_edge_set for v_edge_set in virtual_edge_set if {vertex_a, vertex_b} <= v_edge_set]
             if virtual_connection:
-                print(f"virtual_connection: {virtual_connection}")
                 virtual_edges = virtual_edge_set[virtual_connection[0]]
-                print(f"between edges: {virtual_edges}")
                 [segment_graph.add_edge(u_of_edge=e[0], v_of_edge=e[1], segment=1) for e in virtual_edges
                  if not segment_graph.has_edge(e[0], e[1])]
                 already_connected = 1
