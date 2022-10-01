@@ -24,6 +24,7 @@ def create_barabasi_albert_graph(n, m, seed, root_dir="data/simulated"):
 
     # Set Edge Attributes
     nx.set_edge_attributes(graph, 1, "real")
+    nx.set_node_attributes(graph, 1, "real")
 
     # Return graph object
     return graph

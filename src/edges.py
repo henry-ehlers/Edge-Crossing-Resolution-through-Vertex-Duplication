@@ -1,7 +1,8 @@
 def get_ordered_edges(edges, first_node=None):
 
     #
-    start_index = 0 if first_node is None else [i for i in range(0, len(edges)) if edges[i][0] == first_node][0]
+    start_index = 0 if first_node is None \
+        else [i for i in range(0, len(edges)) if edges[i][0] == first_node or edges[i][1] == first_node][0]
 
     #
     sorted_edges = [(None, None)] * len(edges)
@@ -22,8 +23,10 @@ def get_ordered_edges(edges, first_node=None):
 
 
 def get_vertex_sequence(edges, first_node=None, is_ordered=False):
+    print(f"first node: {first_node}")
     if not is_ordered:
         edges = get_ordered_edges(edges=edges, first_node=first_node)
+    print(f"edges: {edges}")
     vertex_sequence = [edge[0] for edge in edges] + [edges[-1][1]]
     return vertex_sequence
 

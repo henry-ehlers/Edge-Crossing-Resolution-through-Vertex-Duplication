@@ -24,6 +24,7 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
     # virtual_nodes, corner_nodes = nx.get_node_attributes(graph, "virtual"), nx.get_node_attributes(graph, "corner")
     # real_nodes = [v for v in segment_graph.nodes if (virtual_nodes.get(v, 0) != 1) and (corner_nodes.get(v, 0) != 1)]
     real_nodes = [node for node, real in nx.get_node_attributes(graph, "real").items() if real == 1]
+    print(f"real nodes: {real_nodes}")
     edges = frozenset([frozenset(edge) for edge in list(segment_graph.edges())])
 
     # Store the number of nodes and largest index
@@ -65,6 +66,8 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
                     # Check if any virtual edges exist between joint and extension terminus
                     extended_edges = virtual_edge_set.get(frozenset((joint, extended_vertex[0])), None)
                     if extended_edges is not None:
+                        print(f"\nextended edges for {vertex_a} and {vertex_b}: {extended_edges}")
+                        print(f"joint: {joint}")
                         connections = get_vertex_sequence(edges=extended_edges,
                                                           first_node=joint,
                                                           is_ordered=False)

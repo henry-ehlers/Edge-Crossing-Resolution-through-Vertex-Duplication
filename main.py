@@ -342,7 +342,6 @@ if __name__ == '__main__':
     draw_graph(graph=d_graph, positions=d_positions)
     save_drawn_graph(f"{output_directory}/graph_3.png")
 
-    sys.exit()
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
     print(f"\nUpdate Inner Face")
     update_faces_with_edge_map(inner_face_incidence, sorted_inner_face_edges, cell_graph_object["edge_map"])
@@ -371,13 +370,16 @@ if __name__ == '__main__':
     print(f"\nvirtual edge set:")
     [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]
     print(f"\n already extended:")
-    [print(f"{vertex}: {cell_graph_object['connected_nodes'][vertex]}") for vertex in cell_graph_object['connected_nodes'].keys()]
+    [print(f"{vertex}: {cell_graph_object['connected_nodes'][vertex]}")
+     for vertex in cell_graph_object['connected_nodes'].keys()]
+
     s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
                                                               positions=d_positions,
                                                               virtual_edge_set=edge_map,
                                                               bounds=outer_bounds,
                                                               already_extended=cell_graph_object['connected_nodes'])
-
+    print(f"\nS edge Map:")
+    [print(f"{k} - {v}") for k,v in s_edge_map.items()]
     # Draw the segment graph
     draw_graph(graph=s_graph, positions=s_positions)
     save_drawn_graph(f"{output_directory}/graph_4.png")
