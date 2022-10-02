@@ -152,6 +152,7 @@ def cull_all_line_segment_graph(target_faces, face_edge_map, face_vertex_map, se
 
             # Try mapping
             for (vertex_a, vertex_b) in sub_edges:
+
                 if len(face_vertex_map[face].intersection({vertex_a, vertex_b})) == 2:
                     print(f'found edge {(vertex_a, vertex_b)} in target face {face}')
                     edges_to_keep.add(frozenset((vertex_a, vertex_b)))
@@ -159,6 +160,7 @@ def cull_all_line_segment_graph(target_faces, face_edge_map, face_vertex_map, se
 
             #
             if found_in_vertex_set:
+                print(f"found segment {segment_edge} in face {face} vertices")
                 continue
 
             #
@@ -172,6 +174,7 @@ def cull_all_line_segment_graph(target_faces, face_edge_map, face_vertex_map, se
 
                 # Skip if the both edge vertices are virtual
                 if edge in virtual_edges:
+                    print("is virtual, and hence already part of a boundary")
                     continue
 
                 # Check Whether Edge Crosses the faces
@@ -198,13 +201,11 @@ def cull_all_line_segment_graph(target_faces, face_edge_map, face_vertex_map, se
                         if intersection_key not in face_intersection_map[face][edge].keys():
                             intersections_found += 1
                             face_intersection_map[face][edge][intersection_key] = intersection
-                print(f"intersection map")
-                print(face_intersection_map)
+                print(f"intersection map of face {face} with {intersections_found} intersections found")
+                print(face_intersection_map[face])
 
                 # If only one intersection was found, remove the edge -> not sufficient numbers
-                if intersections_found == 0:
-                    continue
-                elif intersections_found == 1:
+                if intersections_found == 1:
                     face_intersection_map[face].pop(edge)
 
     print(f"\nFACE[0]: {target_faces[0]}: {face_vertex_map[target_faces[0]]}")
@@ -212,10 +213,35 @@ def cull_all_line_segment_graph(target_faces, face_edge_map, face_vertex_map, se
 
     # Remove Edges and Vertices which did not intersect any face
     for edge in segment_edges:
+        print(f"segment edge: {edge}")
         intersected = [frozenset(edge) in face_intersection_map[face].keys() for face in target_faces]
         if frozenset(edge) in edges_to_keep or any(intersected):
             continue
+        print(f"removed")
         culled_graph.remove_edge(u=edge[0], v=edge[1])
+
+    real_edges = [set(e) for e, v in nx.get_edge_attributes(G=culled_graph, name="real").items() if v == 1]
+    target_edges = set([frozenset(e) for target_face in target_faces for e in face_edge_map.get(target_face)])
+    print(f"target edges: {target_edges}")
+    print(f"real edge: {real_edges}")
+    for face, face_edges in face_edge_map.items():
+        if face in target_faces:
+            continue
+
+        for face_edge in face_edges:
+
+            print(f"edge {face_edge} exists? -> {culled_graph.has_edge(u=face_edge[0], v=face_edge[1])}")
+            if not culled_graph.has_edge(u=face_edge[0], v=face_edge[1]):
+                continue
+
+            if {face_edge[0], face_edge[1]} in real_edges:
+                continue
+
+            # check if edge part of target faces
+            if {face_edge[0], face_edge[1]} in target_edges:
+                continue
+
+            culled_graph.remove_edge(u=face_edge[0], v=face_edge[1])
 
     # Remove all vertices with degree zero
     no_degree_nodes = [v for v in culled_graph.nodes if culled_graph.degree(v) == 0]
