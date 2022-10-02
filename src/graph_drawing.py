@@ -64,15 +64,12 @@ def get_graph_entity_data(entity_dictionary, entity_key, data_key, default_value
 def color_split_vertices(graph):
     node_color_map = []
     for vertex in graph:
-        if vertex == 9:
-            color = "red"
-        elif get_graph_entity_data(graph.nodes, vertex, "target", 0) == 1:
+        if get_graph_entity_data(graph.nodes, vertex, "split", 0) == 1:
             color = "red"
         elif get_graph_entity_data(graph.nodes, vertex, "boundary", 0) == 1:
             color = "blue"
         elif get_graph_entity_data(graph.nodes, vertex, "virtual", 0) == 1:
             color = "lightgrey"
-
         else:
             color = "lightgrey"
         node_color_map.append(color)
@@ -118,7 +115,7 @@ def save_drawn_graph(output_path):
     plt.clf()
 
 
-def draw_graph(graph, positions):
+def draw_graph(graph, positions, labels=None):
 
     # Color Map for both edges and vertices
     node_color_map = color_split_vertices(graph)
@@ -128,4 +125,7 @@ def draw_graph(graph, positions):
     # Draw Graph Embedding
     plt.figure(3, figsize=(20, 20))
     nx.draw(G=graph, pos=positions, node_color=node_color_map, edge_color=edge_color_map, node_shape='o', node_size=75)
-    nx.draw_networkx_labels(G=graph, pos=positions, font_size=12)
+    if labels is not None:
+        nx.draw_networkx_labels(G=graph, pos=positions, labels=labels, font_size=15)
+    else:
+        nx.draw_networkx_labels(G=graph, pos=positions, font_size=15)

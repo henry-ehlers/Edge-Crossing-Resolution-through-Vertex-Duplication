@@ -321,11 +321,12 @@ if __name__ == '__main__':
 
     graph = create_barabasi_albert_graph(n=n_vertices, m=m_edges, seed=seed)
     positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
+    labels = {node: node for node in graph.nodes}
 
     # MAIN -------------------------------------------------------------------------------------------------------------
 
     # Draw Initial Embedding
-    draw_graph(graph=graph, positions=positions)
+    draw_graph(graph=graph, positions=positions, labels=labels)
     save_drawn_graph(f"{output_directory}/graph_0.png")
 
     # Identify Target and Remove it from the embedding
@@ -405,7 +406,6 @@ if __name__ == '__main__':
                                 axis=0)
     print(f"incidence table:")
     print(incidence_table)
-    input("Please ENTER...")
     selected_cells = select_embedding_faces(incidence_table, target_adjacency)
     print(f"selected cells: {selected_cells}")
     print(f"index: {selected_cells.index}")
@@ -507,15 +507,6 @@ if __name__ == '__main__':
     subfaces_edge_sets = get_face_sub_face_edge_sets(face_sub_cells=plane_graph_sub_faces,
                                                      graph=c_graph)
 
-    print(f"\nsubfaces_edge_sets:")
-    print(subfaces_edge_sets)
-    print(f"\ninduced edge crossings")
-    print(induced_edge_crossings)
-    print(f"\nsubfaces:")
-    print(plane_graph_sub_faces)
-    print(f"\nedge map:")
-    print(plane_face_virtual_edge_map)
-
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)
     save_drawn_graph(f"{output_directory}/graph_8.png")
@@ -544,8 +535,15 @@ if __name__ == '__main__':
                                                 graph=r_graph,
                                                 positions=r_positions)
 
+    new_vertices = [v for v in n_graph.nodes() if v not in r_graph.nodes]
+    print(f"new vertices: {new_vertices}")
+    [labels.update({v: labels[target_vertex]}) for v in new_vertices]
+    print(labels)
+    print(f"labels:")
+    [print(f"{vertex} - {labels}") for vertex, label in labels.items()]
+
     # Draw the segment graph
-    draw_graph(graph=n_graph, positions=n_positions)
+    draw_graph(graph=n_graph, positions=n_positions, labels=labels)
     save_drawn_graph(f"{output_directory}/graph_9.png")
 
     sys.exit()
