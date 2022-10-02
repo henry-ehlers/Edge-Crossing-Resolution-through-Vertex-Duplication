@@ -367,17 +367,20 @@ def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
     # Get positions from polygon of ordered points of current cycle
     cycle_path = mpltPath.Path(cycle_coordinates[0:-1])
     for other_cycle in other_cycles:
-
+        print(f"\ncycle {cycle} and other cycle {other_cycle}")
         # Skip if the cycle == the other cycle
         if other_cycle == cycle:
+            print("SAME")
             continue
 
         vertex_intersection = cycle.intersection(other_cycle)
         if len(vertex_intersection) == 0:
+            print("NO OVERLAP")
             continue
 
         remaining_vertices = other_cycle - vertex_intersection
         if len(remaining_vertices) == 0:
+            print("100% OVERLAP")
             continue
 
         remaining_coordinates = [positions[vertex] for vertex in remaining_vertices]
@@ -392,13 +395,20 @@ def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
         if len(vertex_intersection) == 1:
             # TODO: fix this section -> edge order is unclear
             new_cycle = cycle.union(remaining_vertices)
+            print(f"new cycle: {new_cycle}")
             new_edge_list = get_face_vertex_sequence(new_cycle, graph)
 
         elif len(vertex_intersection) >= 2:
+            print(f"cycle {cycle} and other cycle {other_cycle}")
+
             cycle_edge_list = set([frozenset(edge) for edge in sorted_edges[cycle]])
             other_edge_list = set([frozenset(edge) for edge in sorted_edges[other_cycle]])
+            print(f"cycle_edge_list: {cycle_edge_list}")
+            print(f"other_edge_list: {other_edge_list}")
 
             new_edge_set = cycle_edge_list.symmetric_difference(other_edge_list)
+            print(f"new edge set: {new_edge_set}")
+            print(list([tuple(edge) for edge in new_edge_set]))
             new_edge_list = sort_face_edges(list([tuple(edge) for edge in new_edge_set]))
             new_cycle = frozenset().union(*new_edge_set)
 
@@ -430,7 +440,8 @@ def find_singleton_cycles(cycles, graph, as_set=True):
         if any(in_cycle):
             continue
         non_cycle_edges.add(frozenset(edge))
-
+    print(f"non cycle edges:")
+    print(non_cycle_edges)
     # Add found singleton cycles to identified ones
     if as_set:
         [cycles.add(singleton_cycle) for singleton_cycle in non_cycle_edges]
@@ -444,6 +455,8 @@ def find_inner_faces(graph, positions=None, as_set=True):
     # Identify the minimum cycle basis of the graph
     cycles = nx.minimum_cycle_basis(G=graph)
     cycles = set([frozenset(cycle) for cycle in cycles]) if as_set else [set(cycle) for cycle in cycles]
+    print(f"\n cycles:")
+    print(cycles)
 
     # Check for and add Singleton edges as singleton cycles
     find_singleton_cycles(cycles, graph, as_set)

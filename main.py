@@ -52,6 +52,7 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
         is_cycle=is_cycle,
         bounds=bounds)
     print(sight_cells)
+
     # Calculate the incidence of all sight cells to the outer face's target incident vertices
     outer_face = set().union(*outer_faces)
     outer_target_vertices = outer_face.intersection(target_vertices)
@@ -61,6 +62,8 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                            face_edges=sorted_outer_edges,
                                                            face_edge_map=edge_map,
                                                            positions=o_positions)
+    print(f"\ncell incidence:")
+    print(cell_incidences)
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
@@ -151,6 +154,7 @@ def decompose_outer_face(sorted_inner_face_edges, target_vertices, graph, positi
     # Find the Graph's Outer face(s)
     outer_faces, sorted_outer_face_edges, is_cycle = get_outer_face(
         sorted_inner_face_edges=sorted_inner_face_edges, graph=graph, positions=positions)
+    print(f'outer faces: {outer_faces}')
 
     # Decompose the Graph's Outer face
     cell_incidence_table, new_graph_object = get_outer_face_sight_cells(outer_faces=outer_faces,
@@ -256,6 +260,8 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print("\nIdentify Target Vertex and Remove it from the Embedding")
     target_vertex, target_adjacency, r_graph, r_positions, r_crossings = identify_target_vertex(
         graph=graph, positions=positions)
+
+    print(f"target vertex: {target_vertex}")
 
     if target_vertex is None:
         return False, graph, positions, labels

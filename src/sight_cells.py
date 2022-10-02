@@ -1084,10 +1084,12 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
             # Draw Initial Embedding
             draw_graph(graph=outer_graph, positions=outer_positions)
             save_drawn_graph(f"./graph_{face}+{other_face}.png")
+
     print(f"\nfinal map: {connected_vertex_map}")
+    draw_graph(graph=outer_graph, positions=outer_positions)
+    save_drawn_graph(f"./final_outer.png")
 
     # Identify all faces (i.e. sight cells in outer face)
-    # face_graph = nx.Graph(outer_graph.subgraph(nodes=list(set(unlist(unlist(list(face_edge_map.values())))))))
     sight_cells = find_inner_faces(outer_graph, positions=outer_positions)
 
     # Remove the original set of faces that defined the outer face
