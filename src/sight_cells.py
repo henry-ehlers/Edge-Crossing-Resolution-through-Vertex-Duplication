@@ -31,6 +31,7 @@ def get_sight_cell_edges(sight_cells, graph):
 def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, positions, bounds, outer):
 
     # Keep track of the added vertices, and in which edges they were added
+    real_nodes = [node for node, real in nx.get_node_attributes(graph, "real").items() if real == 1]
     added_vertices, edge_to_virtual_vertices = [], {}
 
     # Consider only those vertices whose angle is greater than 180 degrees
@@ -39,10 +40,21 @@ def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, pos
     boundary_edges = nx.get_edge_attributes(graph, "boundary")
 
     for joint_vertex in bend_vertices:
+
+        if joint_vertex not in real_nodes:
+            print("NOT REAL")
+            continue
+
         for connecting_vertex in vertices:
+            print(f"\njoint vertex: {joint_vertex} and connecting vertex: {connecting_vertex}")
 
             # Skip any vertex pair that is a) consists of the same vertex, or b) has already been investigated
             if connecting_vertex == joint_vertex:
+                print("THE SAME")
+                continue
+
+            if connecting_vertex not in real_nodes:
+                print("NOT REAL")
                 continue
 
             # Check whether bend and other vertex can 'see' each other
@@ -58,6 +70,7 @@ def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, pos
 
             # If they cannot see each other, skip to the next pair
             if not is_visible:
+                print("NOT VISIBLE")
                 continue
 
             # Extend the sight-line, producing a
@@ -74,7 +87,9 @@ def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, pos
 
             # Vertices can see one-another, but not produce a legal extension.
             if bisected_edge is None:
+                print("NO INTERSECTION")
                 continue
+            print(f"ADDED VERTEX {new_vertex}")
 
             # Keep track of what has been added
             added_vertices.append(new_vertex)
@@ -321,58 +336,6 @@ def update_merged_sight_cell_data(face_cells, face_cell_incidences, face_cell_ed
         [face_cell_edges[new_cell].remove(edge) for edge in edges if deleted_vertices.intersection(edge)]
 
 
-def find_minimal_sight_cell_set(cell_incidences):
-    """
-
-    :param cell_incidences: SUBSET OF ALL CELL INCIDENCES FOR A PARTICULAR FACE
-    :return:
-    """
-    # TODO: implement Anais' thing here instead. we don;t need one task per one worker, but multiple per worker
-    # todo: get target vertex list from list of unique vertices in incidences
-    # Initiate cost matrix of ones
-    # cost_matrix = np.ones(shape=(len(face_cells_incidence), len(target_vertices)), dtype=int)
-    #
-    # # Store sight cells in list to avoid ordering problems
-    # row_names = list(face_cells_incidence.keys())
-    # # Iterate over all sight cells and extract their incidences to build cost matrix
-    # for sight_cell in row_names:
-    #     row_index = row_names.index(sight_cell)
-    #     for visible_vertex in face_cells_incidence[sight_cell]:
-    #         col_index = target_vertices.index(visible_vertex)
-    #         cost_matrix[row_index, col_index] -= 1
-
-    # Find minimal assignment cost
-    incidence_number = {cell: len(cell_incidences[cell]) for cell in cell_incidences.keys()}
-    incidence_number = dict(sorted(incidence_number.items(), key=lambda item: item[1], reverse=True))
-    selected_cells = list(incidence_number)[0:2]  # todo: selection could be arbitrarily long
-    return {cell: cell_incidences[cell] for cell in selected_cells}
-
-
-def select_sight_cells(cell_incidences, target_vertices):
-    """"""
-
-    # # Get the incidence table
-    # incidence_table = get_sorted_sight_cell_incidence_table(cell_incidences)
-    # print(incidence_table)
-    #
-    # # Iterate over all cells and their incidences
-    # selected_cells, remaining_targets = {}, set(target_vertices)
-    # for index, row in incidence_table.iterrows():
-    #
-    #     # If no targets remain, return the selection
-    #     if len(remaining_targets) == 0:
-    #         return selected_cells
-    #
-    #     # If the current cell's incidence is not yet selected, select it and update remaining targets
-    #     if remaining_targets.intersection(row['incidence']):
-    #         remaining_targets -= row['incidence']
-    #         selected_cells.update({row['sight_cell']:  row['incidence']})
-    #
-    # # TODO: we should never return here; maybe cover this case somehow?
-    # return selected_cells
-    pass
-
-
 def match_cell_and_face_incidence(face_incidences, selected_sight_cell_incidences):
     # Indicator whether faces must be reranked (i.e if incidences did not match)
     rerank_faces = False
@@ -547,19 +510,11 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, cells
                            graph=graph)
     face_sight_cells = set(face_sight_cells)
 
-    # Draw Merged Embedding
-    draw_graph(graph=graph, positions=positions)
-    save_drawn_graph(f"./graph_outer_merged.png")
-
     # Update the face's cells, their incidents, and edges based on deleted vertices
     cell_vertex_map = update_merged_sight_cells(sight_cells=face_sight_cells,
                                                 cell_incidences=cell_incidences,
                                                 edge_map=cells_edge_map,
                                                 graph=graph)
-
-    # Draw Merged Embedding
-    draw_graph(graph=graph, positions=positions)
-    save_drawn_graph(f"./graph_outer_merged_updated.png")
 
     # Return updated sight cells, incidences, and edge map
     # TODO: inconsistency - we do not explicitly return graph or positions -> these are passed/altered by reference
@@ -927,7 +882,6 @@ def project_face_against_self(face, ordered_face_edges, face_edge_map, graph, po
 
     # Get the set of vertices which define the current face
     face_vertices = get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positions, original=True)
-    print(f"face vertices {face_vertices}")
 
     # Calculate Inner Angles to identify joint vertices
     if outer:

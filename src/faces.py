@@ -330,6 +330,13 @@ def unlist(nested_list):
 
 def update_faces_with_edge_map(face_incidence_table, face_edge_map, edge_map):
 
+    print(f"\nincidence table:")
+    print(face_incidence_table)
+    print(f"\nface edge map:")
+    print(face_edge_map)
+    print(f"\nedge map:")
+    print(edge_map)
+
     for index, row in face_incidence_table.iterrows():
         face = row["identifier"]
         face_edges = face_edge_map[face]

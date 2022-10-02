@@ -238,8 +238,9 @@ def get_inner_faces(target_vertices, graph, positions):
 
     print(f"\nface edge map:")
     print(face_edge_map)
-    print(f"\nvertex map:")
     vertex_map.update({face: face for face in convex_faces})
+    print(f"\nconnected_vertex_map:")
+    print(connected_vertex_map)
 
     # Return Everything if no single sight cell can realize the incidence of the face
     new_graph_object = {"cells": sight_cells,
@@ -357,26 +358,26 @@ if __name__ == '__main__':
     print(inner_face_incidence)
 
     # Get the Face's sorted Edges
-    sorted_face_edges = get_ordered_face_edges(faces=inner_face_incidence["identifier"].tolist(), graph=p_graph)
-    print(f"\n sorted inner edges: {sorted_face_edges}")
+    sorted_inner_face_edges = get_ordered_face_edges(faces=inner_face_incidence["identifier"].tolist(), graph=p_graph)
+    print(f"\n sorted inner edges: {sorted_inner_face_edges}")
 
     # Draw the inner sight cell decomposed graph
     draw_graph(graph=p_graph, positions=p_positions)
     save_drawn_graph(f"{output_directory}/graph_2.png")
 
-    sys.exit()
-
     # Decompose the outer face into sight cells and update the planar graph
     print("\nDecompose The Outer Face")
-    d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
-    outer_bounds = get_embedding_square(graph=p_graph,
-                                        positions=p_positions,
-                                        scaler=1.5)
+    outer_bounds = get_embedding_square(graph=p_graph,positions=p_positions,scaler=1.5)
     outer_cell_incidence, cell_graph_object = decompose_outer_face(sorted_inner_face_edges=sorted_inner_face_edges,
                                                                    graph=p_graph,
                                                                    positions=p_positions,
                                                                    target_vertices=target_adjacency,
                                                                    bounds=outer_bounds)
+
+    draw_graph(graph=cell_graph_object["graph"], positions=cell_graph_object["positions"])
+    save_drawn_graph(f"{output_directory}/graph_2.5.png")
+
+    d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
     update_graph_with_sight_cells(graph=d_graph,
                                   positions=d_positions,
                                   cell_graph=cell_graph_object["graph"],
@@ -386,9 +387,13 @@ if __name__ == '__main__':
     draw_graph(graph=d_graph, positions=d_positions)
     save_drawn_graph(f"{output_directory}/graph_3.png")
 
+    sys.exit()
+
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
     print(f"\nUpdate Inner Face")
-    update_faces_with_edge_map(inner_face_incidence, sorted_inner_face_edges, cell_graph_object["edge_map"])
+    update_faces_with_edge_map(inner_face_incidence,
+                               sorted_inner_face_edges,
+                               cell_graph_object["edge_map"])
     print(inner_face_incidence)
     print()
     print(sorted_inner_face_edges)
@@ -398,6 +403,9 @@ if __name__ == '__main__':
     incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence],
                                 ignore_index=True,
                                 axis=0)
+    print(f"incidence table:")
+    print(incidence_table)
+    input("Please ENTER...")
     selected_cells = select_embedding_faces(incidence_table, target_adjacency)
     print(f"selected cells: {selected_cells}")
     print(f"index: {selected_cells.index}")
@@ -417,11 +425,13 @@ if __name__ == '__main__':
     [print(f"{vertex}: {cell_graph_object['connected_nodes'][vertex]}")
      for vertex in cell_graph_object['connected_nodes'].keys()]
 
+    sys.exit()
+    connected_nodes = {**inner_graph_object['connected_nodes'], **cell_graph_object['connected_nodes']}
     s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
                                                               positions=d_positions,
                                                               virtual_edge_set=edge_map,
                                                               bounds=outer_bounds,
-                                                              already_extended=cell_graph_object['connected_nodes'])
+                                                              already_extended=connected_nodes)
     print(f"\nS edge Map:")
     [print(f"{k} - {v}") for k,v in s_edge_map.items()]
     # Draw the segment graph

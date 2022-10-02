@@ -36,6 +36,7 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
         vertex_a = real_nodes[index_a]
         for index_b in range(index_a + 1, number_of_nodes):
             vertex_b = real_nodes[index_b]
+
             # Calculate intersections with boundary
             intersections = extend_line(segment_positions[vertex_a], segment_positions[vertex_b], bounds)
 
