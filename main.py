@@ -470,7 +470,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     draw_graph(graph=n_graph, positions=n_positions, labels=labels)
     save_drawn_graph(f"{drawing_directory}/graph_9.png")
 
-    return True, graph, positions, labels
+    return True, n_graph, n_positions, labels
 
 
 # Press the green button in the gutter to run the script.
@@ -490,7 +490,6 @@ if __name__ == '__main__':
 
     # Create Output Directory
     output_directory = f"./drawings/kamada_kawai/barabasi_albert_{n_vertices}_{m_edges}_{seed}"
-    Path(output_directory).mkdir(parents=True, exist_ok=True)
 
     # Create or Load simulated graph
     print("\nCreation and Embedding of Graph")
@@ -542,9 +541,15 @@ if __name__ == '__main__':
     positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
     labels = {node: node for node in graph.nodes}
 
+    iteration_number = 0
     while True:
-        split, graph, positions, labels = split_vertex(graph, positions, labels, output_directory)
+        drawing_directory = f"./{output_directory}/{iteration_number}/"
+        Path(drawing_directory).mkdir(parents=True, exist_ok=True)
+        split, graph, positions, labels = split_vertex(graph, positions, labels, drawing_directory=drawing_directory)
         print(graph.nodes)
         print(positions)
+        print(labels)
+        input(f"Did it split -> {split}?")
+        iteration_number += 1
         if not split:
             break
