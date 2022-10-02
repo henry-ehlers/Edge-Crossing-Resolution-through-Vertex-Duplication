@@ -200,29 +200,22 @@ def get_inner_faces(target_vertices, graph, positions):
 
 
 
-    # Identify each face's incidence (based not on visibility)
-    convex_faces = inner_faces.intersection(cells)
-    print(f"\nconvex faces: {convex_faces}")
-
     # Create Pandas Data Table of Face Incidences
-    inner_faces_incidences = find_face_vertex_incidence(faces=convex_faces,
-                                                        target_vertices=target_vertices)
-    face_incidence_table = get_incidence_table(incidences=inner_faces_incidences,
-                                               entry_type="face",
-                                               outer=False)
-    print(face_incidence_table)
+    convex_faces = inner_faces.intersection(cells)
+    inner_faces_incidences = find_face_vertex_incidence(faces=convex_faces, target_vertices=target_vertices)
+    print(f"\ninner face incidence:")
+    print(inner_faces_incidences)
 
     # Get Incidence of Sight Cells Identified
     actual_cells = cells - convex_faces
-    print(f"\nactual sight cells:L {actual_cells}")
+    cell_edges = get_sight_cell_edges(actual_cells, graph)
     inner_cells_incidence = get_inner_face_sight_cell_incidences(sight_cells=actual_cells,
                                                                  target_vertices=target_vertices,
                                                                  face_edges=ordered_face_edges,
                                                                  face_edge_map=face_edge_map,
                                                                  positions=positions)
-    print(f"\ninner_faces_incidences")
+    print(f"\ninner_cells_incidence")
     print(inner_cells_incidence)
-    cell_edges = get_sight_cell_edges(actual_cells, graph)
     sight_cells, vertex_map = merge_cells_wrapper(face_sight_cells=actual_cells,
                                                   cell_incidences=inner_cells_incidence,
                                                   cells_edge_map=face_edge_map,
@@ -236,33 +229,27 @@ def get_inner_faces(target_vertices, graph, positions):
     draw_graph(graph=p_graph, positions=p_positions)
     save_drawn_graph(f"./testing_inner_sight_cells_merged.png")
 
-    # Create Pandas Data Table of Face Incidences
-    inner_incidence_table = get_incidence_table(incidences=inner_cells_incidence,
-                                                entry_type="cell",
-                                                outer=False)
-
+    # Get Combined Incidence Table
+    cell_incidence_table = get_incidence_table(incidences=inner_cells_incidence, entry_type="cell", outer=False)
+    face_incidence_table = get_incidence_table(incidences=inner_faces_incidences, entry_type="face", outer=False)
+    inner_incidence_table = pd.concat([face_incidence_table, cell_incidence_table])
     print(f"\ninner_incidence_table:")
     print(inner_incidence_table)
 
-    # Get the Face's sorted Edges
-    sorted_face_edges = get_ordered_face_edges(faces=inner_faces,
-                                               graph=graph)
-
-
-    print(f"\nsorted face edges:")
-    print(sorted_face_edges)
+    print(f"\nface edge map:")
+    print(face_edge_map)
+    print(f"\nvertex map:")
+    vertex_map.update({face: face for face in convex_faces})
 
     # Return Everything if no single sight cell can realize the incidence of the face
-    # new_graph_object = {"cells": sight_cells,
-    #                     "incidences": cell_incidences,
-    #                     "connected_nodes": connected_vertices,
-    #                     "edge_map": edge_map,
-    #                     "vertex_map": vertex_map,
-    #                     "graph": o_graph,
-    #                     "positions": o_positions}
+    new_graph_object = {"cells": sight_cells,
+                        "incidences": inner_cells_incidence,
+                        "connected_nodes": connected_vertex_map,
+                        "edge_map": face_edge_map,
+                        "vertex_map": vertex_map}
 
     # Return both the incidence table and the sorted edges
-    return inner_incidence_table, sorted_face_edges
+    return inner_incidence_table, new_graph_object
 
 
 # Press the green button in the gutter to run the script.
@@ -363,14 +350,15 @@ if __name__ == '__main__':
 
     # Get Inner Faces
     print(f"\nIdentify the Inner Faces")
-    inner_face_incidence, sorted_inner_face_edges = get_inner_faces(target_vertices=target_adjacency,
-                                                                    graph=p_graph,
-                                                                    positions=p_positions)
-    inner_face_edge_map = get_ordered_face_edges(faces=inner_face_incidence['identifier'].tolist(),
-                                                 graph=p_graph)
-    print(f"inner face edge map: {inner_face_edge_map}")
+    inner_face_incidence, inner_graph_object = get_inner_faces(target_vertices=target_adjacency,
+                                                               graph=p_graph,
+                                                               positions=p_positions)
+
     print(inner_face_incidence)
-    print(f"\n sorted inner edges: {sorted_inner_face_edges}")
+
+    # Get the Face's sorted Edges
+    sorted_face_edges = get_ordered_face_edges(faces=inner_face_incidence["identifier"].tolist(), graph=p_graph)
+    print(f"\n sorted inner edges: {sorted_face_edges}")
 
     # Draw the inner sight cell decomposed graph
     draw_graph(graph=p_graph, positions=p_positions)
