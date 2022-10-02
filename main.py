@@ -116,6 +116,9 @@ def identify_target_vertex(graph, positions):
 
     # Locate all edge crossings and rank all vertices accordingly
     edge_crossings, vertex_crossings = locate_edge_crossings(graph=graph, positions=positions)
+    if len(edge_crossings) == 0:
+        return None
+
     target_vertex = get_target_vertex(vertex_crossings=vertex_crossings, graph=graph)
     target_vertex_adjacency = list(graph.neighbors(target_vertex))
 
@@ -194,12 +197,6 @@ def get_inner_faces(target_vertices, graph, positions):
                                                                              graph=graph,
                                                                              positions=positions)
 
-    # Draw the planarized graph
-    draw_graph(graph=p_graph, positions=p_positions)
-    save_drawn_graph(f"./testing_inner_sight_cells.png")
-
-
-
     # Create Pandas Data Table of Face Incidences
     convex_faces = inner_faces.intersection(cells)
     inner_faces_incidences = find_face_vertex_incidence(faces=convex_faces, target_vertices=target_vertices)
@@ -225,10 +222,6 @@ def get_inner_faces(target_vertices, graph, positions):
     print(f"sight_cells: {sight_cells}")
     print(f"vertex map: {vertex_map}")
 
-    # Draw the planarized graph
-    draw_graph(graph=p_graph, positions=p_positions)
-    save_drawn_graph(f"./testing_inner_sight_cells_merged.png")
-
     # Get Combined Incidence Table
     cell_incidence_table = get_incidence_table(incidences=inner_cells_incidence, entry_type="cell", outer=False)
     face_incidence_table = get_incidence_table(incidences=inner_faces_incidences, entry_type="face", outer=False)
@@ -253,9 +246,235 @@ def get_inner_faces(target_vertices, graph, positions):
     return inner_incidence_table, new_graph_object
 
 
+def split_vertex(graph, positions, labels, drawing_directory="."):
+
+    # Draw Initial Embedding
+    draw_graph(graph=graph, positions=positions, labels=labels)
+    save_drawn_graph(f"{drawing_directory}/graph_0.png")
+
+    # Identify Target and Remove it from the embedding
+    print("\nIdentify Target Vertex and Remove it from the Embedding")
+    target_vertex, target_adjacency, r_graph, r_positions, r_crossings = identify_target_vertex(
+        graph=graph, positions=positions)
+
+    if target_vertex is None:
+        return False, graph, positions, labels
+
+    # Draw the remaining graph
+    draw_graph(graph=r_graph, positions=r_positions)
+    save_drawn_graph(f"{drawing_directory}/graph_1.png")
+
+    # Planarize Graph after removal of target vertex
+    print("\nPlanarize Remaining Graph after target removal")
+    p_graph, p_positions = copy.deepcopy(r_graph), copy.deepcopy(r_positions)
+    virtual_edge_set = planarize_graph(graph=p_graph,
+                                       positions=p_positions,
+                                       edge_crossings=r_crossings,
+                                       largest_index=max(graph.nodes))
+
+    # Draw the planarized graph
+    draw_graph(graph=p_graph, positions=p_positions)
+    save_drawn_graph(f"{drawing_directory}/graph_2.png")
+
+    # Get Inner Faces
+    print(f"\nIdentify the Inner Faces")
+    inner_face_incidence, inner_graph_object = get_inner_faces(target_vertices=target_adjacency,
+                                                               graph=p_graph,
+                                                               positions=p_positions)
+
+    print(inner_face_incidence)
+
+    # Get the Face's sorted Edges
+    sorted_inner_face_edges = get_ordered_face_edges(faces=inner_face_incidence["identifier"].tolist(), graph=p_graph)
+    print(f"\n sorted inner edges: {sorted_inner_face_edges}")
+
+    # Draw the inner sight cell decomposed graph
+    draw_graph(graph=p_graph, positions=p_positions)
+    save_drawn_graph(f"{drawing_directory}/graph_2.png")
+
+    # Decompose the outer face into sight cells and update the planar graph
+    print("\nDecompose The Outer Face")
+    outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=1.5)
+    outer_cell_incidence, cell_graph_object = decompose_outer_face(sorted_inner_face_edges=sorted_inner_face_edges,
+                                                                   graph=p_graph,
+                                                                   positions=p_positions,
+                                                                   target_vertices=target_adjacency,
+                                                                   bounds=outer_bounds)
+
+    draw_graph(graph=cell_graph_object["graph"], positions=cell_graph_object["positions"])
+    save_drawn_graph(f"{drawing_directory}/graph_2.5.png")
+
+    d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
+    update_graph_with_sight_cells(graph=d_graph,
+                                  positions=d_positions,
+                                  cell_graph=cell_graph_object["graph"],
+                                  cell_positions=cell_graph_object["positions"],
+                                  new_edge_map=cell_graph_object["edge_map"])
+
+    draw_graph(graph=d_graph, positions=d_positions)
+    save_drawn_graph(f"{drawing_directory}/graph_3.png")
+
+    # Create line-segments between all vertices now already connected by edges or virtual edge sets
+    print(f"\nUpdate Inner Face")
+    update_faces_with_edge_map(inner_face_incidence,
+                               sorted_inner_face_edges,
+                               cell_graph_object["edge_map"])
+    print(f"\ninner face incidence:")
+    print(inner_face_incidence)
+
+    print(f"\nouter face incidence:")
+    print(outer_cell_incidence)
+
+    # Select the targets within which to embed split vertices
+    print(f"\nSelect Embedding Cells/Faces")
+    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence],
+                                ignore_index=True,
+                                axis=0)
+    print(f"incidence table:")
+    print(incidence_table)
+    selected_cells = select_embedding_faces(incidence_table, target_adjacency)
+    print(f"selected cells: {selected_cells}")
+    print(f"index: {selected_cells.index}")
+    selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
+
+    print(f"selected faces: {selected_faces}")
+
+    print(f"\nDraw All-to-All line segments")
+    [virtual_edge_set.pop(cell) for cell in list(virtual_edge_set.keys()) if not virtual_edge_set[cell]]
+    edge_map = {**virtual_edge_set, **cell_graph_object["edge_map"]}
+    for edge in list(edge_map.keys()):
+        edge_map[frozenset(edge)] = edge_map[edge]
+        edge_map.pop(edge)
+    print(f"\nvirtual edge set:")
+    [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]
+    print(f"\n already extended:")
+    [print(f"{vertex}: {cell_graph_object['connected_nodes'][vertex]}")
+     for vertex in cell_graph_object['connected_nodes'].keys()]
+
+    connected_nodes = {**inner_graph_object['connected_nodes'], **cell_graph_object['connected_nodes']}
+    s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
+                                                              positions=d_positions,
+                                                              virtual_edge_set=edge_map,
+                                                              bounds=outer_bounds,
+                                                              already_extended=connected_nodes)
+    print(f"\nS edge Map:")
+    [print(f"{k} - {v}") for k, v in s_edge_map.items()]
+    # Draw the segment graph
+    draw_graph(graph=s_graph, positions=s_positions)
+    save_drawn_graph(f"{drawing_directory}/graph_4.png")
+
+    print(f"\nCull Non-Selected Line Segments")
+    print(f"cells: {incidence_table['identifier'].tolist()}")
+    # TODO: the cells of the decomposed outer face have not been updated, since we commented out the vertex deletion
+    #  subsequently, the ordered_face_edges function is looking for edges which no longer exist
+    #  i.e. edges that were merge edges -> these vertices (singletons) need to be removed from the incidence set
+    complete_cell_edge_map = get_ordered_face_edges(faces=incidence_table['identifier'].tolist(),
+                                                    graph=d_graph)
+    [print(f"{cell} - {complete_cell_edge_map[cell]}") for cell in complete_cell_edge_map.keys()]
+
+    print(f"\nFace edge map:")
+    print(complete_cell_edge_map)
+    c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
+        target_faces=selected_faces,
+        face_edge_map=complete_cell_edge_map,
+        face_vertex_map=cell_graph_object["vertex_map"],
+        segment_edge_map=s_edge_map,
+        graph=s_graph,
+        positions=s_positions)
+
+    # Draw the segment graph
+    draw_graph(graph=c_graph, positions=c_positions)
+    save_drawn_graph(f"{drawing_directory}/graph_5.png")
+
+    subface_edge_set, subface_vertex_map = create_subface_graph(
+        graph=c_graph,
+        positions=c_positions,
+        target_faces=selected_faces,
+        face_vertex_map=cell_graph_object["vertex_map"],
+        face_intersection_map=intersection_map)
+
+    # Draw the segment graph
+    draw_graph(graph=c_graph, positions=c_positions)
+    save_drawn_graph(f"{drawing_directory}/graph_6.png")
+
+    # Identify all edge crossings in the faces, planarize the graph, and update the face's vertex sets
+    print(f"\nSUBFACE CREATION")
+    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(graph=c_graph,
+                                                                       positions=c_positions)
+    plane_face_virtual_edge_map = planarize_graph(graph=c_graph,
+                                                  positions=c_positions,
+                                                  edge_crossings=face_edge_crossings)
+    update_face_vertex_map(vertex_map=subface_vertex_map,
+                           virtual_edge_map=plane_face_virtual_edge_map)
+
+    # Draw the segment graph
+    draw_graph(graph=c_graph, positions=c_positions)
+    save_drawn_graph(f"{drawing_directory}/graph_7.png")
+
+    # Select Subfaces
+    print(f"\nSUBFACE SELECTION")
+    plane_graph_sub_faces = find_all_subfaces(target_faces=selected_faces,
+                                              face_vertex_map=subface_vertex_map,
+                                              graph=c_graph)
+
+    # Calculate each subface's centroid
+    subface_centroids = get_split_vertex_locations(positions=c_positions,
+                                                   target_face_subfaces=plane_graph_sub_faces)
+
+    # Calculate the number of edge crossing induced by connected each subface to all target neighbors
+    induced_edge_crossings = calculate_induced_edge_crossings(graph=r_graph,
+                                                              positions=r_positions,
+                                                              centroids=subface_centroids,
+                                                              target_neighbors=target_adjacency)
+
+    # Get Sub_face's edge set
+    subfaces_edge_sets = get_face_sub_face_edge_sets(face_sub_cells=plane_graph_sub_faces,
+                                                     graph=c_graph)
+
+    # Draw the segment graph
+    draw_graph(graph=c_graph, positions=c_positions)
+    save_drawn_graph(f"{drawing_directory}/graph_8.png")
+
+    # Place Copies
+    print(f"\nPLACING SPLIT VERTICES")
+
+    # Calculate each subface's centroid
+    subface_centroids = get_split_vertex_locations(positions=c_positions,
+                                                   target_face_subfaces=plane_graph_sub_faces)
+
+    # Get the number of induced edge crossings in the form of a dictionary of pandas dataframes
+    induced_edge_crossing_table = get_edge_crossing_table(induced_edge_crossings=induced_edge_crossings,
+                                                          target_neighbors=target_adjacency)
+
+    #
+    selected_sub_faces = select_sub_faces(sub_face_tables=induced_edge_crossing_table,
+                                          target_faces=selected_faces,
+                                          target_vertices=target_adjacency)
+    print(f"selected sub_faces: {selected_sub_faces}")
+
+    n_graph, n_positions = place_split_vertices(faces=selected_faces,
+                                                selected_sub_faces=selected_sub_faces,
+                                                centroids=subface_centroids,
+                                                target_vertex=target_vertex,
+                                                graph=r_graph,
+                                                positions=r_positions)
+
+    new_vertices = [v for v in n_graph.nodes() if v not in r_graph.nodes]
+    print(f"new vertices: {new_vertices}")
+    [labels.update({v: labels[target_vertex]}) for v in new_vertices]
+    print(labels)
+    print(f"labels:")
+    [print(f"{vertex} - {labels}") for vertex, label in labels.items()]
+
+    # Draw the segment graph
+    draw_graph(graph=n_graph, positions=n_positions, labels=labels)
+    save_drawn_graph(f"{drawing_directory}/graph_9.png")
+
+    return True, graph, positions, labels
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-
     # Command Line Arguments
     cmd_args = sys.argv
     n_vertices, m_edges, seed = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
@@ -323,227 +542,9 @@ if __name__ == '__main__':
     positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
     labels = {node: node for node in graph.nodes}
 
-    # MAIN -------------------------------------------------------------------------------------------------------------
-
-    # Draw Initial Embedding
-    draw_graph(graph=graph, positions=positions, labels=labels)
-    save_drawn_graph(f"{output_directory}/graph_0.png")
-
-    # Identify Target and Remove it from the embedding
-    print("\nIdentify Target Vertex and Remove it from the Embedding")
-    target_vertex, target_adjacency, r_graph, r_positions, r_crossings = identify_target_vertex(
-        graph=graph, positions=positions)
-
-    # Draw the remaining graph
-    draw_graph(graph=r_graph, positions=r_positions)
-    save_drawn_graph(f"{output_directory}/graph_1.png")
-
-    # Planarize Graph after removal of target vertex
-    print("\nPlanarize Remaining Graph after target removal")
-    p_graph, p_positions = copy.deepcopy(r_graph), copy.deepcopy(r_positions)
-    virtual_edge_set = planarize_graph(graph=p_graph,
-                                       positions=p_positions,
-                                       edge_crossings=r_crossings,
-                                       largest_index=max(graph.nodes))
-
-    # Draw the planarized graph
-    draw_graph(graph=p_graph, positions=p_positions)
-    save_drawn_graph(f"{output_directory}/graph_2.png")
-
-    # Get Inner Faces
-    print(f"\nIdentify the Inner Faces")
-    inner_face_incidence, inner_graph_object = get_inner_faces(target_vertices=target_adjacency,
-                                                               graph=p_graph,
-                                                               positions=p_positions)
-
-    print(inner_face_incidence)
-
-    # Get the Face's sorted Edges
-    sorted_inner_face_edges = get_ordered_face_edges(faces=inner_face_incidence["identifier"].tolist(), graph=p_graph)
-    print(f"\n sorted inner edges: {sorted_inner_face_edges}")
-
-    # Draw the inner sight cell decomposed graph
-    draw_graph(graph=p_graph, positions=p_positions)
-    save_drawn_graph(f"{output_directory}/graph_2.png")
-
-    # Decompose the outer face into sight cells and update the planar graph
-    print("\nDecompose The Outer Face")
-    outer_bounds = get_embedding_square(graph=p_graph,positions=p_positions,scaler=1.5)
-    outer_cell_incidence, cell_graph_object = decompose_outer_face(sorted_inner_face_edges=sorted_inner_face_edges,
-                                                                   graph=p_graph,
-                                                                   positions=p_positions,
-                                                                   target_vertices=target_adjacency,
-                                                                   bounds=outer_bounds)
-
-    draw_graph(graph=cell_graph_object["graph"], positions=cell_graph_object["positions"])
-    save_drawn_graph(f"{output_directory}/graph_2.5.png")
-
-    d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
-    update_graph_with_sight_cells(graph=d_graph,
-                                  positions=d_positions,
-                                  cell_graph=cell_graph_object["graph"],
-                                  cell_positions=cell_graph_object["positions"],
-                                  new_edge_map=cell_graph_object["edge_map"])
-
-    draw_graph(graph=d_graph, positions=d_positions)
-    save_drawn_graph(f"{output_directory}/graph_3.png")
-
-    # Create line-segments between all vertices now already connected by edges or virtual edge sets
-    print(f"\nUpdate Inner Face")
-    update_faces_with_edge_map(inner_face_incidence,
-                               sorted_inner_face_edges,
-                               cell_graph_object["edge_map"])
-    print(f"\ninner face incidence:")
-    print(inner_face_incidence)
-
-    print(f"\nouter face incidence:")
-    print(outer_cell_incidence)
-
-    # Select the targets within which to embed split vertices
-    print(f"\nSelect Embedding Cells/Faces")
-    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence],
-                                ignore_index=True,
-                                axis=0)
-    print(f"incidence table:")
-    print(incidence_table)
-    selected_cells = select_embedding_faces(incidence_table, target_adjacency)
-    print(f"selected cells: {selected_cells}")
-    print(f"index: {selected_cells.index}")
-    selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
-
-    print(f"selected faces: {selected_faces}")
-
-    print(f"\nDraw All-to-All line segments")
-    [virtual_edge_set.pop(cell) for cell in list(virtual_edge_set.keys()) if not virtual_edge_set[cell]]
-    edge_map = {**virtual_edge_set, **cell_graph_object["edge_map"]}
-    for edge in list(edge_map.keys()):
-        edge_map[frozenset(edge)] = edge_map[edge]
-        edge_map.pop(edge)
-    print(f"\nvirtual edge set:")
-    [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]
-    print(f"\n already extended:")
-    [print(f"{vertex}: {cell_graph_object['connected_nodes'][vertex]}")
-     for vertex in cell_graph_object['connected_nodes'].keys()]
-
-    connected_nodes = {**inner_graph_object['connected_nodes'], **cell_graph_object['connected_nodes']}
-    s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
-                                                              positions=d_positions,
-                                                              virtual_edge_set=edge_map,
-                                                              bounds=outer_bounds,
-                                                              already_extended=connected_nodes)
-    print(f"\nS edge Map:")
-    [print(f"{k} - {v}") for k,v in s_edge_map.items()]
-    # Draw the segment graph
-    draw_graph(graph=s_graph, positions=s_positions)
-    save_drawn_graph(f"{output_directory}/graph_4.png")
-
-
-
-    print(f"\nCull Non-Selected Line Segments")
-    print(f"cells: {incidence_table['identifier'].tolist()}")
-    # TODO: the cells of the decomposed outer face have not been updated, since we commented out the vertex deletion
-    #  subsequently, the ordered_face_edges function is looking for edges which no longer exist
-    #  i.e. edges that were merge edges -> these vertices (singletons) need to be removed from the incidence set
-    complete_cell_edge_map = get_ordered_face_edges(faces=incidence_table['identifier'].tolist(),
-                                                    graph=d_graph)
-    [print(f"{cell} - {complete_cell_edge_map[cell]}") for cell in complete_cell_edge_map.keys()]
-
-    print(f"\nFace edge map:")
-    print(complete_cell_edge_map)
-    c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
-        target_faces=selected_faces,
-        face_edge_map=complete_cell_edge_map,
-        face_vertex_map=cell_graph_object["vertex_map"],
-        segment_edge_map=s_edge_map,
-        graph=s_graph,
-        positions=s_positions)
-
-    # Draw the segment graph
-    draw_graph(graph=c_graph, positions=c_positions)
-    save_drawn_graph(f"{output_directory}/graph_5.png")
-
-    subface_edge_set, subface_vertex_map = create_subface_graph(
-        graph=c_graph,
-        positions=c_positions,
-        target_faces=selected_faces,
-        face_vertex_map=cell_graph_object["vertex_map"],
-        face_intersection_map=intersection_map)
-
-    # Draw the segment graph
-    draw_graph(graph=c_graph, positions=c_positions)
-    save_drawn_graph(f"{output_directory}/graph_6.png")
-
-    # Identify all edge crossings in the faces, planarize the graph, and update the face's vertex sets
-    print(f"\nSUBFACE CREATION")
-    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(graph=c_graph,
-                                                                       positions=c_positions)
-    plane_face_virtual_edge_map = planarize_graph(graph=c_graph,
-                                                  positions=c_positions,
-                                                  edge_crossings=face_edge_crossings)
-    update_face_vertex_map(vertex_map=subface_vertex_map,
-                           virtual_edge_map=plane_face_virtual_edge_map)
-
-    # Draw the segment graph
-    draw_graph(graph=c_graph, positions=c_positions)
-    save_drawn_graph(f"{output_directory}/graph_7.png")
-
-    # Select Subfaces
-    print(f"\nSUBFACE SELECTION")
-    plane_graph_sub_faces = find_all_subfaces(target_faces=selected_faces,
-                                              face_vertex_map=subface_vertex_map,
-                                              graph=c_graph)
-
-    # Calculate each subface's centroid
-    subface_centroids = get_split_vertex_locations(positions=c_positions,
-                                                   target_face_subfaces=plane_graph_sub_faces)
-
-    # Calculate the number of edge crossing induced by connected each subface to all target neighbors
-    induced_edge_crossings = calculate_induced_edge_crossings(graph=r_graph,
-                                                              positions=r_positions,
-                                                              centroids=subface_centroids,
-                                                              target_neighbors=target_adjacency)
-
-    # Get Sub_face's edge set
-    subfaces_edge_sets = get_face_sub_face_edge_sets(face_sub_cells=plane_graph_sub_faces,
-                                                     graph=c_graph)
-
-    # Draw the segment graph
-    draw_graph(graph=c_graph, positions=c_positions)
-    save_drawn_graph(f"{output_directory}/graph_8.png")
-
-    # Place Copies
-    print(f"\nPLACING SPLIT VERTICES")
-
-    # Calculate each subface's centroid
-    subface_centroids = get_split_vertex_locations(positions=c_positions,
-                                                   target_face_subfaces=plane_graph_sub_faces)
-
-    # Get the number of induced edge crossings in the form of a dictionary of pandas dataframes
-    induced_edge_crossing_table = get_edge_crossing_table(induced_edge_crossings=induced_edge_crossings,
-                                                          target_neighbors=target_adjacency)
-
-    #
-    selected_sub_faces = select_sub_faces(sub_face_tables=induced_edge_crossing_table,
-                                          target_faces=selected_faces,
-                                          target_vertices=target_adjacency)
-    print(f"selected sub_faces: {selected_sub_faces}")
-
-    n_graph, n_positions = place_split_vertices(faces=selected_faces,
-                                                selected_sub_faces=selected_sub_faces,
-                                                centroids=subface_centroids,
-                                                target_vertex=target_vertex,
-                                                graph=r_graph,
-                                                positions=r_positions)
-
-    new_vertices = [v for v in n_graph.nodes() if v not in r_graph.nodes]
-    print(f"new vertices: {new_vertices}")
-    [labels.update({v: labels[target_vertex]}) for v in new_vertices]
-    print(labels)
-    print(f"labels:")
-    [print(f"{vertex} - {labels}") for vertex, label in labels.items()]
-
-    # Draw the segment graph
-    draw_graph(graph=n_graph, positions=n_positions, labels=labels)
-    save_drawn_graph(f"{output_directory}/graph_9.png")
-
-    sys.exit()
+    while True:
+        split, graph, positions, labels = split_vertex(graph, positions, labels, output_directory)
+        print(graph.nodes)
+        print(positions)
+        if not split:
+            break
