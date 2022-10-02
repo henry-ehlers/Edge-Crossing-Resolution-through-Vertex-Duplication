@@ -46,18 +46,7 @@ def sub_face_merge_wrapper(face_sub_faces, face_sub_face_crossings, face_sub_fac
         draw_graph(graph=graph, positions=positions)
         save_drawn_graph(f"./merged_sub_faces_{face}.png")
 
-        #'s cells, their incidents, and edges based on deleted vertices
-        # cell_vertex_map = update_merged_sight_cells(sight_cells=face_sight_cells,
-        #                                             cell_incidences=cell_incidences,
-        #                                             edge_map=cells_edge_map,
-        #                                             graph=graph)
-        #
-        # # Draw Merged Embedding
-        # draw_graph(graph=graph, positions=positions)
-        # save_drawn_graph(f"./graph_outer_merged_updated.png")
-
     # Return updated sight cells, incidences, and edge map
-    # TODO: inconsistency - we do not explicitly return graph or positions -> these are passed/altered by reference
     return face_sub_faces
 
 
@@ -328,12 +317,9 @@ def find_all_subfaces(target_faces, face_vertex_map, graph):
 
 
 def get_ordered_face_edges(faces, graph):
-    print(f"faces: {faces}")
     ordered_face_edges = dict.fromkeys(faces)
     for face in faces:
-        print(f"face: {face}")
         vertex_sequence = list(face) if len(face) == 1 else get_face_vertex_sequence(face, graph)
-        print(f"vertex sequence: {vertex_sequence}")
         ordered_face_edges[face] = vertex_sequence
     return ordered_face_edges
 
@@ -453,6 +439,7 @@ def find_inner_faces(graph, positions=None, as_set=True):
 
     # Get the ordered edge list per cycle
     cycle_ordered_edges = get_ordered_face_edges(cycles, graph)
+
     # For each Cycle recursively check that the face is indeed a face
     faces = copy.copy(cycles)
     for cycle in cycles:
@@ -504,6 +491,7 @@ def close_closed_face(convex_face_edge_list, graph):
 
 def find_outer_face(ordered_face_edges, graph, positions):
     # TODO: identify "faces" which consist of non-cycles, i.e. disconnected "lines" of vertices
+
     # Initialize a dictionary which maps edges to the number of faces they are in
     faces_per_edge = dict.fromkeys(list(graph.edges()), 0)
 
@@ -629,7 +617,7 @@ def cross_product(vector_a, vector_b):
 
 
 def vector_angle(vector_1, vector_2):
-    # TODO: runtime errors encountered sometimes
+
     # Calculate Unit Vectors of Input Vectors
     unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
     unit_vector_2 = vector_2 / np.linalg.norm(vector_2)

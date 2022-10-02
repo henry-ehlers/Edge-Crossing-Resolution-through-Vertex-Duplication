@@ -23,10 +23,8 @@ def get_ordered_edges(edges, first_node=None):
 
 
 def get_vertex_sequence(edges, first_node=None, is_ordered=False):
-    print(f"first node: {first_node}")
     if not is_ordered:
         edges = get_ordered_edges(edges=edges, first_node=first_node)
-    print(f"edges: {edges}")
     vertex_sequence = [edge[0] for edge in edges] + [edges[-1][1]]
     return vertex_sequence
 
@@ -39,8 +37,6 @@ def get_face_vertex_sequence(face, graph):
         common_vertices = face.intersection(set(edge))
         if len(common_vertices) == 2:
             face_edges.append(edge)
-    print(f"Face edges: {face_edges}")
-    print(f"length of edges {len(face_edges)} vs length of face {len(face)}")
     sorted_face_edges = sort_face_edges(face_edges)
     return sorted_face_edges
 
