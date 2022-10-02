@@ -707,6 +707,9 @@ def unlist(nested_list):
 def project_additional_sight_lines(edges, origin_vertices, origin_angles, target_vertices, target_angles, edge_map,
                                    graph, positions, bounds, outer=True):
 
+
+    real_nodes = [node for node, real in nx.get_node_attributes(graph, "real").items() if real == 1]
+
     # Keep track of the added vertices, and in which edges they were added
     added_vertices, edge_to_virtual_vertices = [], {}
 
@@ -721,8 +724,15 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
     #
     for joint_vertex in origin_joint_vertices:
         print(f"\nJoint Vertex: {joint_vertex}")
+
+        if joint_vertex not in real_nodes:
+            continue
+
         for target_vertex in target_joint_vertices:
             print(f"target vertex: {target_vertex}")
+
+            if target_vertex not in real_nodes:
+                continue
 
             # Check whether bend and other vertex can 'see' each other
             is_visible = is_vertex_visible(joint_vertex=joint_vertex,

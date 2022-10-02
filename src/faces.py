@@ -339,15 +339,23 @@ def update_faces_with_edge_map(face_incidence_table, face_edge_map, edge_map):
 
     for index, row in face_incidence_table.iterrows():
         face = row["identifier"]
+        print(f"\nface: {face}")
         face_edges = face_edge_map[face]
+        print(f"face edges: {face_edges}")
         new_face_edges = []
+
         for edge in face_edges:
             new_face_edges.append(edge_map.get(edge, [edge]))
         new_face_edges = unlist(new_face_edges)
         new_face_identifier = frozenset(unlist(new_face_edges))
+        print(f"new face id: {new_face_identifier}")
+        print(f"new face edges: {new_face_edges}")
 
         face_edge_map.pop(face)
         face_edge_map[new_face_identifier] = new_face_edges
+
+        print(f"table:")
+        print(face_incidence_table.at[index, "identifier"] )
         face_incidence_table.at[index, "identifier"] = new_face_identifier
 
 

@@ -232,7 +232,7 @@ def get_inner_faces(target_vertices, graph, positions):
     # Get Combined Incidence Table
     cell_incidence_table = get_incidence_table(incidences=inner_cells_incidence, entry_type="cell", outer=False)
     face_incidence_table = get_incidence_table(incidences=inner_faces_incidences, entry_type="face", outer=False)
-    inner_incidence_table = pd.concat([face_incidence_table, cell_incidence_table])
+    inner_incidence_table = pd.concat(objs=[face_incidence_table, cell_incidence_table], ignore_index=True)
     print(f"\ninner_incidence_table:")
     print(inner_incidence_table)
 
@@ -387,16 +387,16 @@ if __name__ == '__main__':
     draw_graph(graph=d_graph, positions=d_positions)
     save_drawn_graph(f"{output_directory}/graph_3.png")
 
-    sys.exit()
-
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
     print(f"\nUpdate Inner Face")
     update_faces_with_edge_map(inner_face_incidence,
                                sorted_inner_face_edges,
                                cell_graph_object["edge_map"])
+    print(f"\ninner face incidence:")
     print(inner_face_incidence)
-    print()
-    print(sorted_inner_face_edges)
+
+    print(f"\nouter face incidence:")
+    print(outer_cell_incidence)
 
     # Select the targets within which to embed split vertices
     print(f"\nSelect Embedding Cells/Faces")
@@ -425,7 +425,6 @@ if __name__ == '__main__':
     [print(f"{vertex}: {cell_graph_object['connected_nodes'][vertex]}")
      for vertex in cell_graph_object['connected_nodes'].keys()]
 
-    sys.exit()
     connected_nodes = {**inner_graph_object['connected_nodes'], **cell_graph_object['connected_nodes']}
     s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
                                                               positions=d_positions,
