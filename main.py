@@ -270,9 +270,16 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     draw_graph(graph=r_graph, positions=r_positions)
     save_drawn_graph(f"{drawing_directory}/graph_1.png")
 
+    rr_graph, rr_positions = copy.deepcopy(r_graph), copy.deepcopy(r_positions)
+    remove_singleton_vertex_edges(rr_graph)
+
+    # Draw the remaining graph
+    draw_graph(graph=rr_graph, positions=rr_positions)
+    save_drawn_graph(f"{drawing_directory}/graph_1.5.png")
+
     # Planarize Graph after removal of target vertex
     print("\nPlanarize Remaining Graph after target removal")
-    p_graph, p_positions = copy.deepcopy(r_graph), copy.deepcopy(r_positions)
+    p_graph, p_positions = copy.deepcopy(rr_graph), copy.deepcopy(rr_positions)
     virtual_edge_set = planarize_graph(graph=p_graph,
                                        positions=p_positions,
                                        edge_crossings=r_crossings,

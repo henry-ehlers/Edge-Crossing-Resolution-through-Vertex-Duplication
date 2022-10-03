@@ -12,6 +12,18 @@ import copy
 import sys
 
 
+def remove_singleton_vertex_edges(graph):
+
+    for vertex in graph.nodes:
+        if graph.degree(vertex) != 1:
+            continue
+        singleton_edge = list(graph.edges(vertex))[0]
+        print(f"removing edge: {singleton_edge}")
+        graph.remove_edge(u=singleton_edge[0],
+                          v=singleton_edge[1])
+        remove_singleton_vertex_edges(graph)
+
+
 def get_face_sub_face_edge_sets(face_sub_cells, graph):
     sight_cell_edge_list = {face: {} for face in face_sub_cells.keys()}
     for face in face_sub_cells.keys():
@@ -520,6 +532,19 @@ def close_closed_face(convex_face_edge_list, graph):
 
     # Return update list of unsorted face edges
     return face_edges
+
+
+def count_face_edge_occurrences(ordered_face_edges, graph):
+
+    # Initialize a dictionary which maps edges to the number of faces they are in
+    faces_per_edge = {frozenset(edge): 0 for edge in list(graph.edges())}
+
+    # Iterate over all faces and increment counts of edges within them
+    for face in ordered_face_edges.keys():
+        for edge in ordered_face_edges[face]:
+            faces_per_edge[{edge[0], edge[1]}] += 1
+
+    return faces_per_edge
 
 
 def find_outer_face(ordered_face_edges, graph, positions):
