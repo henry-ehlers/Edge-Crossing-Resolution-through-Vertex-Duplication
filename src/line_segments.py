@@ -142,6 +142,7 @@ def cull_all_line_segment_graph(target_faces, face_edge_map, face_vertex_map, se
 
     #
     for face in target_faces:
+        print(f"\nface: {face}")
 
         #
         for segment_edge, sub_edges in segment_edge_map.items():

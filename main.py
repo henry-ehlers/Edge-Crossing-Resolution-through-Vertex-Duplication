@@ -380,10 +380,18 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     print(f"\nFace edge map:")
     print(complete_cell_edge_map)
+    [print(f"{key} - {item}") for key, item in inner_graph_object["vertex_map"].items()]
+    input("check inner")
+    [print(f"{key} - {item}") for key, item in cell_graph_object["vertex_map"].items()]
+    input("check outer")
+
+    complete_vertex_map = {**inner_graph_object["vertex_map"], **cell_graph_object["vertex_map"]}
+    [print(f"{key} - {item}") for key, item in complete_vertex_map.items()]
+    input("check complete")
     c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
         target_faces=selected_faces,
         face_edge_map=complete_cell_edge_map,
-        face_vertex_map=cell_graph_object["vertex_map"],
+        face_vertex_map=complete_vertex_map,
         segment_edge_map=s_edge_map,
         graph=s_graph,
         positions=s_positions)
@@ -396,7 +404,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
         graph=c_graph,
         positions=c_positions,
         target_faces=selected_faces,
-        face_vertex_map=cell_graph_object["vertex_map"],
+        face_vertex_map=complete_vertex_map,
         face_intersection_map=intersection_map)
 
     # Draw the segment graph

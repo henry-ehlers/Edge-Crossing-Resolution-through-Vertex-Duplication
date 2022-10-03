@@ -1014,7 +1014,6 @@ def update(d, u):
 
 def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, positions, is_cycle, bounds):
     # TODO: a bisected REAL edge will not be extended since we are looking up the original edge sets, whcih don't
-    # TODO: exist anymore, i think. look at (7, 14) and (14, 8) not being extended in 1.5
 
     # Create lists of vertices and edges that define the outer face
     all_face_edges = unlist([ordered_face_edges.get(face) for face in selected_faces if len(face) > 1])

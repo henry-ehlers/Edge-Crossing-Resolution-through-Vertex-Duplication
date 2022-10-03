@@ -364,18 +364,21 @@ def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
     sorted_vertices = get_sorted_face_vertices(sorted_edges[cycle], is_sorted=True)
     cycle_coordinates = [positions[vertex] for vertex in sorted_vertices]
 
+    print(f"sorted vertices of cycle {cycle}: {sorted_vertices}")
+
     # Get positions from polygon of ordered points of current cycle
     cycle_path = mpltPath.Path(cycle_coordinates[0:-1])
     for other_cycle in other_cycles:
         print(f"\ncycle {cycle} and other cycle {other_cycle}")
+
         # Skip if the cycle == the other cycle
         if other_cycle == cycle:
             print("SAME")
             continue
 
         vertex_intersection = cycle.intersection(other_cycle)
-        if len(vertex_intersection) == 0:
-            print("NO OVERLAP")
+        if len(vertex_intersection) < 2:
+            print("NOT ENOUGH OVERLAP")
             continue
 
         remaining_vertices = other_cycle - vertex_intersection
@@ -390,27 +393,28 @@ def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
                 print("SHRINKING CYCLES are fucked")
             continue
 
+        # TODO: this section now only considers cycle mergers with at least one shared edge
+        #  does this cause problems in certain edge cases?
+        # new_cycle, new_edge_list = None, None
+        # if len(vertex_intersection) == 1:
+        #     # TODO: fix this section -> edge order is unclear
+        #     new_cycle = cycle.union(remaining_vertices)
+        #     print(f"new cycle: {new_cycle}")
+        #     new_edge_list = get_face_vertex_sequence(new_cycle, graph)
         #
-        new_cycle, new_edge_list = None, None
-        if len(vertex_intersection) == 1:
-            # TODO: fix this section -> edge order is unclear
-            new_cycle = cycle.union(remaining_vertices)
-            print(f"new cycle: {new_cycle}")
-            new_edge_list = get_face_vertex_sequence(new_cycle, graph)
+        # elif len(vertex_intersection) >= 2:
+        print(f"cycle {cycle} and other cycle {other_cycle}")
 
-        elif len(vertex_intersection) >= 2:
-            print(f"cycle {cycle} and other cycle {other_cycle}")
+        cycle_edge_list = set([frozenset(edge) for edge in sorted_edges[cycle]])
+        other_edge_list = set([frozenset(edge) for edge in sorted_edges[other_cycle]])
+        print(f"cycle_edge_list: {cycle_edge_list}")
+        print(f"other_edge_list: {other_edge_list}")
 
-            cycle_edge_list = set([frozenset(edge) for edge in sorted_edges[cycle]])
-            other_edge_list = set([frozenset(edge) for edge in sorted_edges[other_cycle]])
-            print(f"cycle_edge_list: {cycle_edge_list}")
-            print(f"other_edge_list: {other_edge_list}")
-
-            new_edge_set = cycle_edge_list.symmetric_difference(other_edge_list)
-            print(f"new edge set: {new_edge_set}")
-            print(list([tuple(edge) for edge in new_edge_set]))
-            new_edge_list = sort_face_edges(list([tuple(edge) for edge in new_edge_set]))
-            new_cycle = frozenset().union(*new_edge_set)
+        new_edge_set = cycle_edge_list.symmetric_difference(other_edge_list)
+        print(f"new edge set: {new_edge_set}")
+        print(list([tuple(edge) for edge in new_edge_set]))
+        new_edge_list = sort_face_edges(list([tuple(edge) for edge in new_edge_set]))
+        new_cycle = frozenset().union(*new_edge_set)
 
         # Mention that something is broken
         if (new_cycle is None) or (new_edge_list is None):
@@ -471,6 +475,7 @@ def find_inner_faces(graph, positions=None, as_set=True):
     # For each Cycle recursively check that the face is indeed a face
     faces = copy.copy(cycles)
     for cycle in cycles:
+        print(f"\cycle")
         shrink_cycle(cycle=cycle,
                      other_cycles=faces,
                      sorted_edges=cycle_ordered_edges,
