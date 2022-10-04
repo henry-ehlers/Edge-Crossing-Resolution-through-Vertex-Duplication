@@ -140,7 +140,8 @@ def get_outer_face(sorted_inner_face_edges, graph, positions):
 
     # Find Outer Face
     outer_faces, outer_face_edges, is_cycle = find_outer_face(sorted_inner_face_edges, graph, positions)
-
+    print(f"\nOuter Face: {outer_faces}")
+    print(f"\nOuter Face Edges: {outer_face_edges}")
     #
     # outer_face_identifier = frozenset(set.union(*[set(outer_face) for outer_face in outer_faces]))
     sorted_outer_face_edges = {outer_face: sort_face_edges(outer_face_edges[outer_face])
@@ -189,10 +190,10 @@ def update_graph_with_sight_cells(graph, positions, cell_graph, cell_positions, 
 def get_inner_faces(target_vertices, graph, positions):
 
     # Identify the graph's inner faces
-    inner_faces = find_inner_faces(graph=graph,
-                                   positions=positions)
-    print(f"\ninner faces:")
-    print(inner_faces)
+    inner_faces = find_inner_faces(graph=graph, positions=positions)
+    print(f"\nINNER FACES:")
+    [print(face) for face in inner_faces]
+    input(f"inner faces")
 
     # Decompose Inner Faces
     ordered_face_edges = get_ordered_face_edges(faces=inner_faces, graph=graph)
@@ -200,21 +201,24 @@ def get_inner_faces(target_vertices, graph, positions):
                                                                              ordered_face_edges=ordered_face_edges,
                                                                              graph=graph,
                                                                              positions=positions)
+    print(f"\nINNER CELLS:")
+    [print(cell) for cell in cells]
+    input(f"inner CELLS")
 
     # Create Pandas Data Table of Face Incidences
     convex_faces = inner_faces.intersection(cells)
     inner_faces_incidences = find_face_vertex_incidence(faces=convex_faces, target_vertices=target_vertices)
-    print(f"\ninner face incidence:")
-    print(inner_faces_incidences)
 
     # Get Incidence of Sight Cells Identified
     actual_cells = cells - convex_faces
+    print(f"actual cells: {actual_cells}")
     cell_edges = get_sight_cell_edges(actual_cells, graph)
     inner_cells_incidence = get_inner_face_sight_cell_incidences(sight_cells=actual_cells,
                                                                  target_vertices=target_vertices,
                                                                  face_edges=ordered_face_edges,
                                                                  face_edge_map=face_edge_map,
                                                                  positions=positions)
+
     print(f"\ninner_cells_incidence")
     print(inner_cells_incidence)
     sight_cells, vertex_map = merge_cells_wrapper(face_sight_cells=actual_cells,
@@ -228,7 +232,11 @@ def get_inner_faces(target_vertices, graph, positions):
 
     # Get Combined Incidence Table
     cell_incidence_table = get_incidence_table(incidences=inner_cells_incidence, entry_type="cell", outer=False)
+    print(cell_incidence_table)
+    input("...")
     face_incidence_table = get_incidence_table(incidences=inner_faces_incidences, entry_type="face", outer=False)
+    print(face_incidence_table)
+    input("...")
     inner_incidence_table = pd.concat(objs=[face_incidence_table, cell_incidence_table], ignore_index=True)
     print(f"\ninner_incidence_table:")
     print(inner_incidence_table)
@@ -388,9 +396,9 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print(f"\nFace edge map:")
     print(complete_cell_edge_map)
     [print(f"{key} - {item}") for key, item in inner_graph_object["vertex_map"].items()]
-    input("check inner")
+    print("check inner")
     [print(f"{key} - {item}") for key, item in cell_graph_object["vertex_map"].items()]
-    input("check outer")
+    print("check outer")
 
     complete_vertex_map = {**inner_graph_object["vertex_map"], **cell_graph_object["vertex_map"]}
     [print(f"{key} - {item}") for key, item in complete_vertex_map.items()]

@@ -18,13 +18,11 @@ def connect_singleton_vertex_edges(graph, positions):
     for vertex in graph.nodes:
         if graph.degree(vertex) != 1:
             continue
-        singleton_edge = list(graph.edges(vertex))[0]
-        print(f"singleton edge: {singleton_edge}")
         closest_target_vertex = find_closest_vertex(vertex, graph, positions)
-        input(f"connecting vertices {vertex} and {closest_target_vertex}")
         graph.add_edge(u_of_edge=vertex,
                        v_of_edge=closest_target_vertex,
                        virtual=1)
+        print(f"connected {vertex} to {closest_target_vertex}")
         return connect_singleton_vertex_edges(graph, positions)
 
 
@@ -34,10 +32,8 @@ def find_closest_vertex(vertex, graph, positions):
     distances = {node: float("inf") for node in graph.nodes}
     for node in graph.nodes:
         if node == vertex:
-            print(f"node == vertex")
             continue
         if {node, vertex} in edge_sets:
-            print(f"already connected")
             continue
 
         hypothetical_edge = (positions[vertex], positions[node])
@@ -46,7 +42,6 @@ def find_closest_vertex(vertex, graph, positions):
                                                                              graph=graph,
                                                                              positions=positions)
         if closest_intersection is not None:
-            print(f"INTERSECTION @ {closest_intersection}")
             continue
 
         distances[node] = squared_distance(point_a=positions[vertex],
@@ -59,7 +54,6 @@ def find_closest_vertex(vertex, graph, positions):
 def get_face_sub_face_edge_sets(face_sub_cells, graph):
     sight_cell_edge_list = {face: {} for face in face_sub_cells.keys()}
     for face in face_sub_cells.keys():
-        print(f"\nface: {face}")
         sight_cell_edge_list[face].update(get_sub_face_edges(face_sub_cells[face], graph))
     return sight_cell_edge_list
 
@@ -254,8 +248,6 @@ def ilp_choose_subface(induced_cross_A, induced_cross_B):
     subface_A, subface_B = -1, -1
 
     for v in m.getVars():
-        if (v.x) == 1:
-            print('%s %g' % (v.varName, v.x))
         if v.varName[0] == "c":
             if v.varName[1] == "a":
                 if v.x == 1:
@@ -374,65 +366,65 @@ def unlist(nested_list):
 
 def update_faces_with_edge_map(face_incidence_table, face_edge_map, edge_map):
 
-    print(f"\nincidence table:")
-    print(face_incidence_table)
-    print(f"\nface edge map:")
-    print(face_edge_map)
-    print(f"\nedge map:")
-    print(edge_map)
-
     for index, row in face_incidence_table.iterrows():
         face = row["identifier"]
-        print(f"\nface: {face}")
         face_edges = face_edge_map[face]
-        print(f"face edges: {face_edges}")
         new_face_edges = []
 
         for edge in face_edges:
             new_face_edges.append(edge_map.get(edge, [edge]))
         new_face_edges = unlist(new_face_edges)
         new_face_identifier = frozenset(unlist(new_face_edges))
-        print(f"new face id: {new_face_identifier}")
-        print(f"new face edges: {new_face_edges}")
 
         face_edge_map.pop(face)
         face_edge_map[new_face_identifier] = new_face_edges
 
-        print(f"table:")
-        print(face_incidence_table.at[index, "identifier"] )
         face_incidence_table.at[index, "identifier"] = new_face_identifier
 
 
 def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
 
-    sorted_vertices = get_sorted_face_vertices(sorted_edges[cycle], is_sorted=True)
+    print(f"\nnew cycle: {cycle}")
+
+    sorted_vertices = get_sorted_face_vertices(sorted_edges[cycle], is_sorted=False)
+    print(f"sorted vertices: {sorted_vertices}")
     cycle_coordinates = [positions[vertex] for vertex in sorted_vertices]
 
-    print(f"sorted vertices of cycle {cycle}: {sorted_vertices}")
+    cycle_coordinates.append(cycle_coordinates[0])
+    print(f"sorted coordinates: {cycle_coordinates}")
 
     # Get positions from polygon of ordered points of current cycle
-    cycle_path = mpltPath.Path(cycle_coordinates[0:-1])
+    cycle_path = mpltPath.Path(vertices=cycle_coordinates,
+                               codes=None,
+                               closed=True,
+                               readonly=True)
+    print(cycle_path)
     for other_cycle in other_cycles:
-        print(f"\ncycle {cycle} and other cycle {other_cycle}")
+        print(f"Other Cycle: {other_cycle}")
 
         # Skip if the cycle == the other cycle
         if other_cycle == cycle:
-            print("SAME")
+            print(f"the same")
             continue
 
         vertex_intersection = cycle.intersection(other_cycle)
         if len(vertex_intersection) < 2:
-            print("NOT ENOUGH OVERLAP")
+            print(f"NOT ENOUGH intersection: {vertex_intersection}")
             continue
 
         remaining_vertices = other_cycle - vertex_intersection
+        print(f"remaining vertices: {remaining_vertices}")
         if len(remaining_vertices) == 0:
-            print("100% OVERLAP")
+            print("lenght 0")
             continue
 
+        print(f"remaining vertices: {remaining_vertices}")
         remaining_coordinates = [positions[vertex] for vertex in remaining_vertices]
+        print(f"remaining coordinates: {remaining_coordinates}")
         in_side = cycle_path.contains_points(remaining_coordinates)
+        print(f"inside: {in_side}")
         if not all(in_side):
+            print(f"NOT ALL INSIDE")
             if not all(not in_side[index] for index in range(0, len(remaining_vertices))):
                 print("SHRINKING CYCLES are fucked")
             continue
@@ -447,18 +439,18 @@ def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
         #     new_edge_list = get_face_vertex_sequence(new_cycle, graph)
         #
         # elif len(vertex_intersection) >= 2:
-        print(f"cycle {cycle} and other cycle {other_cycle}")
 
         cycle_edge_list = set([frozenset(edge) for edge in sorted_edges[cycle]])
         other_edge_list = set([frozenset(edge) for edge in sorted_edges[other_cycle]])
-        print(f"cycle_edge_list: {cycle_edge_list}")
-        print(f"other_edge_list: {other_edge_list}")
+        print(f"cycle edge list: {cycle_edge_list}")
+        print(f"other edge list: {other_edge_list}")
+        if not cycle_edge_list.intersection(other_edge_list):
+            continue
 
         new_edge_set = cycle_edge_list.symmetric_difference(other_edge_list)
-        print(f"new edge set: {new_edge_set}")
-        print(list([tuple(edge) for edge in new_edge_set]))
         new_edge_list = sort_face_edges(list([tuple(edge) for edge in new_edge_set]))
         new_cycle = frozenset().union(*new_edge_set)
+        print(f"MERGING with {other_cycle} -> {new_cycle}")
 
         # Mention that something is broken
         if (new_cycle is None) or (new_edge_list is None):
@@ -488,8 +480,7 @@ def find_singleton_cycles(cycles, graph, as_set=True):
         if any(in_cycle):
             continue
         non_cycle_edges.add(frozenset(edge))
-    print(f"non cycle edges:")
-    print(non_cycle_edges)
+
     # Add found singleton cycles to identified ones
     if as_set:
         [cycles.add(singleton_cycle) for singleton_cycle in non_cycle_edges]
@@ -503,8 +494,6 @@ def find_inner_faces(graph, positions=None, as_set=True):
     # Identify the minimum cycle basis of the graph
     cycles = nx.minimum_cycle_basis(G=graph)
     cycles = set([frozenset(cycle) for cycle in cycles]) if as_set else [set(cycle) for cycle in cycles]
-    print(f"\n cycles:")
-    print(cycles)
 
     # Check for and add Singleton edges as singleton cycles
     find_singleton_cycles(cycles, graph, as_set)
@@ -516,16 +505,20 @@ def find_inner_faces(graph, positions=None, as_set=True):
     # Get the ordered edge list per cycle
     cycle_ordered_edges = get_ordered_face_edges(cycles, graph)
 
+    print(f"\n FIND INNER CYCLES")
+    [print(cycle) for cycle in cycles]
+
     # For each Cycle recursively check that the face is indeed a face
-    faces = copy.copy(cycles)
-    for cycle in cycles:
-        print(f"\cycle")
+    faces = copy.deepcopy(cycles)
+    for cycle in cycles:  # this construction is fine; we only ever edit the current cycle
+        print(f"trying cycle {cycle}")
         shrink_cycle(cycle=cycle,
                      other_cycles=faces,
                      sorted_edges=cycle_ordered_edges,
                      graph=graph,
                      positions=positions)
-
+    [print(cycle) for cycle in cycles]
+    input("check cycles")
     # Return set of faces (frozen sets of vertices)
     return faces
 
@@ -584,7 +577,6 @@ def find_outer_face(ordered_face_edges, graph, positions):
 
     # Initialize a dictionary which maps edges to the number of faces they are in
     faces_per_edge = dict.fromkeys(list(graph.edges()), 0)
-
     # Iterate over all faces and increment counts of edges within them
     for face in ordered_face_edges.keys():
         for edge in ordered_face_edges[face]:
@@ -623,7 +615,6 @@ def find_outer_face(ordered_face_edges, graph, positions):
     faces = faces.union(vertices)
     [face_is_cycle.update({vertex: False}) for vertex in vertices]
 
-    print(f"outer faces: {faces}")
     # Return unique vertex sets from the found singleton edges
     return faces, face_edge_sets, face_is_cycle
 

@@ -655,38 +655,30 @@ def remove_vertex_from_sight_cell(vertex, sight_cells):
         sight_cells.add(new_cell)
 
 
-def merge_all_face_cells(face_sight_cells, face_cell_edge_map, cell_incidences, graph):
-    # Iterate over all faces, and attempt to merge their faces
-    for face in face_sight_cells.keys():
-
-        # Skip convex faces
-        if len(face_sight_cells[face]) == 1:
-            continue
-
-        merge_cells_wrapper(face_sight_cells=face_sight_cells.get(face, None),
-                            cells_edge_list=face_cell_edge_map.get(face, None),
-                            cell_incidences=cell_incidences.get(face, None),
-                            graph=graph)
-
-
 def update_sight_line_graph(face_vertices, edge_to_virtual_vertices, graph, positions, outer=False):
 
     print(f"\nface vertices in edge crossing check: {face_vertices}")
 
     # Remove edges which have been intersected, and replace them with ordered virtual edges
     virtual_edge_map = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
+    print("virtual edge map:")
+    [print(f"{k} - {v}") for k, v in virtual_edge_map.items()]
     remove_edges(graph, edge_to_virtual_vertices.keys())
+    print(graph.edges)
+    input("...")
 
     # Locate Edge Crossings and Faces in Subgraph
-    print(f"\ngraph vertices: {graph.nodes}")
     face_positions = {key: positions.get(key) for key in face_vertices}
+    print(f"face positions: {face_positions}")
     face_graph = nx.Graph(graph.subgraph(nodes=face_vertices))
-
+    print(f"face graph vertices: {face_graph.nodes()}")
     # Find remaining edge crossings (between placed line-segments) and replace them with virtual vertices
     face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
     print(f"\nedge crossings: {face_edge_crossings}")
+    input("...")
     if face_edge_crossings:
         virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
+        print(f"virtual edges: {virtual_edges}")
         non_empty_virtual_edges = {k: v for k, v in virtual_edges.items() if v}
         virtual_edge_map.update(non_empty_virtual_edges)
         graph.update(face_graph)
@@ -694,7 +686,15 @@ def update_sight_line_graph(face_vertices, edge_to_virtual_vertices, graph, posi
         [graph.remove_edge(u=edge[0], v=edge[1]) for edge in virtual_edges.keys() if virtual_edges[edge]]
 
     # Define Sight Cells, i.e. faces
-    sight_cells = find_inner_faces(face_graph, positions=positions) if not outer else None
+    print(f"\nUPDATING SIGHT LINE GRAPH:")
+    print(graph.edges)
+    print()
+    print(face_positions)
+    sight_cells = find_inner_faces(graph=face_graph, positions=positions) if not outer else None
+    if sight_cells is not None:
+        print(f"\nplanarizing graph cycles:")
+        [print(cell) for cell in sight_cells]
+        input("...")
 
     # Return Sight Cells
     return sight_cells, virtual_edge_map
@@ -806,14 +806,8 @@ def add_boundary_to_graph(bounds, graph, positions, offset=0.2, largest_index=No
 def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, positions,
                                 bounds=((-1, -1), (-1, 1), (1, 1), (1, -1))):
 
-    print(f"\nGET INNER SIGHT CELLS")
-    print(f"ordered_face_edges: {ordered_face_edges}")
     # Create lists of vertices and edges that define the outer face
     all_face_edges = unlist([ordered_face_edges.get(face) for face in inner_faces if len(face) > 1])
-    outer_face_vertices = list(frozenset().union(*inner_faces))
-
-    print(f"\nselected faces: {inner_faces}")
-    print(f"\nouter face vertices: {outer_face_vertices}")
 
     face_edge_map = {edge: [edge] for edge in all_face_edges}
     connected_vertex_map = dict()
@@ -827,13 +821,11 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
             face, ordered_face_edges, face_edge_map, graph, positions, bounds, outer=False)
 
         if edge_to_virtual_vertices is None:
-            print(f"IS CONVEX")
             continue
 
         # Update Graph and Virtual Edge Map with New added vertices
-        print(f"\nconnected WITHIN FACE: {connected_vertices}")
+        print(f"\nconnected WITHIN FACE {face}: {connected_vertices}")
         update(connected_vertex_map, connected_vertices)
-        print(f"map: {connected_vertex_map}")
         update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
                                           edge_to_virtual_vertices, graph, positions, outer=False)
 
@@ -841,10 +833,11 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
         draw_graph(graph=graph, positions=positions)
         save_drawn_graph(f"./graph_{face}.png")
 
-    print(f"\nfinal map: {connected_vertex_map}")
-
     # Identify all faces (i.e. sight cells in outer face)
+    print(f"\nFIND SIGHT CELLS OF INNER FACES")
     sight_cells = find_inner_faces(graph=graph, positions=positions)
+    [print(cell) for cell in sight_cells]
+    input("...")
 
     # Return the identified sight cells and the subgraph
     return sight_cells, face_edge_map, connected_vertex_map
@@ -867,12 +860,7 @@ def update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, 
                                       edge_to_virtual_vertices, graph, positions, outer=False):
 
     # Update List of Vertices with added vertices and the set of edges which define the face
-    if outer:
-        face_vertices = graph.nodes
-    else:
-        face_vertices = get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positions)
-        candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
-        face_vertices = face_vertices + added_vertices + list(set(unlist(candidate_edges)))
+    face_vertices = graph.nodes
 
     # Update the Graph and Its Positions
     cells, virtual_edge_map = update_sight_line_graph(face_vertices=face_vertices,

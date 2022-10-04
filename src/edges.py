@@ -33,13 +33,13 @@ def get_face_vertex_sequence(face, graph):
     # todo: does not work if edges exist between elements of the face other than the minimal cycle
     #face_edges = [None] * len(face)
     face_edges = []
-    print(f"face: {face}")
+    # print(f"face: {face}")
     for edge in graph.edges:
-        print(f"edge: {edge}")
+        # print(f"edge: {edge}")
         common_vertices = face.intersection(set(edge))
         if len(common_vertices) == 2:  # TODO: this does not always produce the edge sequence if there is a triangle
             face_edges.append(edge)
-    print(f"face edges: {face_edges}")
+    # print(f"face edges: {face_edges}")
     sorted_face_edges = sort_face_edges(face_edges)
     return sorted_face_edges
 
