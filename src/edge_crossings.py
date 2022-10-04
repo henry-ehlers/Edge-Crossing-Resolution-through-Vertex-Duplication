@@ -234,7 +234,7 @@ def squared_distance(point_a, point_b):
 def find_closest_edge_intersection(edge_points, other_edges, graph, positions, must_be_real=False):
     intersections, distances = dict(), dict()
     point_a, point_b = edge_points
-
+    print(f"Points a and b: {point_b} - {point_b}")
     for edge in other_edges:
 
         # Check whether the intersection is with a real edge
@@ -247,11 +247,20 @@ def find_closest_edge_intersection(edge_points, other_edges, graph, positions, m
                 print(f"fields of edge {edge[0], edge[1]}: {fields}")  # todo: certain edges don't have data, which shouldn't happen
 
         # Find
+        print(f"current edge: {edge[0], edge[1]}")
         point_c, point_d = positions[edge[0]], positions[edge[1]]
+        print(f"Points c and d: {point_c} - {point_d}")
         intersection = line_intersection(point_a, point_b, point_c, point_d)
-        if intersection is None: continue
+        if intersection is None:
+            continue
         intersections[edge] = intersection
         distances[edge] = squared_distance(point_a, intersection)
+
+    # If no intersection was found, return none
+    if len(intersections) == 0 and len(distances) == 0:
+        return None, None
+
+    # Find closest intersection
     closest_intersection = min(distances, key=distances.get)
 
     # Return the Edge Name, and it's intersection as a tuple

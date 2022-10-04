@@ -120,7 +120,7 @@ def identify_target_vertex(graph, positions):
     # Locate all edge crossings and rank all vertices accordingly
     edge_crossings, vertex_crossings = locate_edge_crossings(graph=graph, positions=positions)
     if len(edge_crossings) == 0:
-        return None
+        return None, None, None, None, None
 
     target_vertex = get_target_vertex(vertex_crossings=vertex_crossings, graph=graph)
     target_vertex_adjacency = list(graph.neighbors(target_vertex))
@@ -271,7 +271,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     save_drawn_graph(f"{drawing_directory}/graph_1.png")
 
     rr_graph, rr_positions = copy.deepcopy(r_graph), copy.deepcopy(r_positions)
-    remove_singleton_vertex_edges(rr_graph)
+    connect_singleton_vertex_edges(rr_graph, rr_positions)
 
     # Draw the remaining graph
     draw_graph(graph=rr_graph, positions=rr_positions)

@@ -1,4 +1,5 @@
 from src.edges import *
+from src.edge_crossings import *
 from src.graph_drawing import *
 
 import matplotlib.path as mpltPath
@@ -12,16 +13,47 @@ import copy
 import sys
 
 
-def remove_singleton_vertex_edges(graph):
+def connect_singleton_vertex_edges(graph, positions):
 
     for vertex in graph.nodes:
         if graph.degree(vertex) != 1:
             continue
         singleton_edge = list(graph.edges(vertex))[0]
-        print(f"removing edge: {singleton_edge}")
-        graph.remove_edge(u=singleton_edge[0],
-                          v=singleton_edge[1])
-        remove_singleton_vertex_edges(graph)
+        print(f"singleton edge: {singleton_edge}")
+        closest_target_vertex = find_closest_vertex(vertex, graph, positions)
+        input(f"connecting vertices {vertex} and {closest_target_vertex}")
+        graph.add_edge(u_of_edge=vertex,
+                       v_of_edge=closest_target_vertex,
+                       virtual=1)
+        return connect_singleton_vertex_edges(graph, positions)
+
+
+def find_closest_vertex(vertex, graph, positions):
+    edge_list = [edge for edge in graph.edges()]
+    edge_sets = [frozenset(edge) for edge in edge_list]
+    distances = {node: float("inf") for node in graph.nodes}
+    for node in graph.nodes:
+        if node == vertex:
+            print(f"node == vertex")
+            continue
+        if {node, vertex} in edge_sets:
+            print(f"already connected")
+            continue
+
+        hypothetical_edge = (positions[vertex], positions[node])
+        closest_intersection, intersections = find_closest_edge_intersection(edge_points=hypothetical_edge,
+                                                                             other_edges=edge_list,
+                                                                             graph=graph,
+                                                                             positions=positions)
+        if closest_intersection is not None:
+            print(f"INTERSECTION @ {closest_intersection}")
+            continue
+
+        distances[node] = squared_distance(point_a=positions[vertex],
+                                           point_b=positions[node])
+    print(distances)
+    closest_vertex = min(distances, key=distances.get)
+    return closest_vertex
 
 
 def get_face_sub_face_edge_sets(face_sub_cells, graph):
