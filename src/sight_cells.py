@@ -835,7 +835,7 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
 
     # Identify all faces (i.e. sight cells in outer face)
     print(f"\nFIND SIGHT CELLS OF INNER FACES")
-    sight_cells = find_inner_faces(graph=graph, positions=positions)
+    sight_cells, ordered_vertices = find_inner_faces(graph=graph, positions=positions)
     [print(cell) for cell in sight_cells]
     input("...")
 
@@ -880,6 +880,7 @@ def project_face_against_self(face, ordered_face_edges, face_edge_map, graph, po
 
     # Get the set of vertices which define the current face
     face_vertices = get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positions, original=True)
+    print(f"face vertices: {face_vertices}")
 
     # Calculate Inner Angles to identify joint vertices
     if outer:

@@ -190,13 +190,14 @@ def update_graph_with_sight_cells(graph, positions, cell_graph, cell_positions, 
 def get_inner_faces(target_vertices, graph, positions):
 
     # Identify the graph's inner faces
-    inner_faces = find_inner_faces(graph=graph, positions=positions)
+    inner_faces, sorted_inner_face_vertices = find_inner_faces(graph=graph, positions=positions)
     print(f"\nINNER FACES:")
     [print(face) for face in inner_faces]
     input(f"inner faces")
 
     # Decompose Inner Faces
-    ordered_face_edges = get_ordered_face_edges(faces=inner_faces, graph=graph)
+    ordered_face_edges = get_ordered_face_edges(faces=inner_faces,
+                                                sorted_face_vertices=sorted_inner_face_vertices)
     cells, face_edge_map, connected_vertex_map = find_inner_face_sight_cells(inner_faces=inner_faces,
                                                                              ordered_face_edges=ordered_face_edges,
                                                                              graph=graph,
@@ -306,6 +307,8 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print(inner_face_incidence)
 
     # Get the Face's sorted Edges
+    # TODO: the get ordered face edges needs to get the ordered list from get_inner_faces()
+    #  FOR BOTH FACES AND SIGHT-CELLS
     sorted_inner_face_edges = get_ordered_face_edges(faces=inner_face_incidence["identifier"].tolist(), graph=p_graph)
     print(f"\n sorted inner edges: {sorted_inner_face_edges}")
 

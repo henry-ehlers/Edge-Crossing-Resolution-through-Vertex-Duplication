@@ -27,7 +27,7 @@ def get_ordered_edges(edges):
 def get_vertex_sequence(edges, first_node=None, is_ordered=False):
     if not is_ordered:
         edges = get_ordered_edges(edges=edges)
-    vertex_sequence = [edge[0] for edge in edges] + [edges[-1][1]]
+    vertex_sequence = [edge[0] for edge in edges]
     return vertex_sequence
 
 

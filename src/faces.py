@@ -352,11 +352,12 @@ def find_all_subfaces(target_faces, face_vertex_map, graph):
     return subfaces
 
 
-def get_ordered_face_edges(faces, graph):
+def get_ordered_face_edges(faces: [frozenset], sorted_face_vertices: {frozenset: []}):
     ordered_face_edges = dict.fromkeys(faces)
     for face in faces:
-        vertex_sequence = list(face) if len(face) == 1 else get_face_vertex_sequence(face, graph)
-        ordered_face_edges[face] = vertex_sequence
+        v = ordered_vertex_sequence = sorted_face_vertices[face]
+        edge_sequences = [(v[i], v[(i + 1) % len(v)]) for i in range(0, len(v))]
+        ordered_face_edges[face] = edge_sequences
     return ordered_face_edges
 
 
@@ -380,92 +381,6 @@ def update_faces_with_edge_map(face_incidence_table, face_edge_map, edge_map):
         face_edge_map[new_face_identifier] = new_face_edges
 
         face_incidence_table.at[index, "identifier"] = new_face_identifier
-
-
-def shrink_cycle(cycle, other_cycles, sorted_edges, graph, positions):
-
-    print(f"\nnew cycle: {cycle}")
-
-    sorted_vertices = get_sorted_face_vertices(sorted_edges[cycle], is_sorted=False)
-    print(f"sorted vertices: {sorted_vertices}")
-    cycle_coordinates = [positions[vertex] for vertex in sorted_vertices]
-
-    cycle_coordinates.append(cycle_coordinates[0])
-    print(f"sorted coordinates: {cycle_coordinates}")
-
-    # Get positions from polygon of ordered points of current cycle
-    cycle_path = mpltPath.Path(vertices=cycle_coordinates,
-                               codes=None,
-                               closed=True,
-                               readonly=True)
-    print(cycle_path)
-    for other_cycle in other_cycles:
-        print(f"Other Cycle: {other_cycle}")
-
-        # Skip if the cycle == the other cycle
-        if other_cycle == cycle:
-            print(f"the same")
-            continue
-
-        vertex_intersection = cycle.intersection(other_cycle)
-        if len(vertex_intersection) < 2:
-            print(f"NOT ENOUGH intersection: {vertex_intersection}")
-            continue
-
-        remaining_vertices = other_cycle - vertex_intersection
-        print(f"remaining vertices: {remaining_vertices}")
-        if len(remaining_vertices) == 0:
-            print("lenght 0")
-            continue
-
-        print(f"remaining vertices: {remaining_vertices}")
-        remaining_coordinates = [positions[vertex] for vertex in remaining_vertices]
-        print(f"remaining coordinates: {remaining_coordinates}")
-        in_side = cycle_path.contains_points(remaining_coordinates)
-        print(f"inside: {in_side}")
-        if not all(in_side):
-            print(f"NOT ALL INSIDE")
-            if not all(not in_side[index] for index in range(0, len(remaining_vertices))):
-                print("SHRINKING CYCLES are fucked")
-            continue
-
-        # TODO: this section now only considers cycle mergers with at least one shared edge
-        #  does this cause problems in certain edge cases?
-        # new_cycle, new_edge_list = None, None
-        # if len(vertex_intersection) == 1:
-        #     # TODO: fix this section -> edge order is unclear
-        #     new_cycle = cycle.union(remaining_vertices)
-        #     print(f"new cycle: {new_cycle}")
-        #     new_edge_list = get_face_vertex_sequence(new_cycle, graph)
-        #
-        # elif len(vertex_intersection) >= 2:
-
-        cycle_edge_list = set([frozenset(edge) for edge in sorted_edges[cycle]])
-        other_edge_list = set([frozenset(edge) for edge in sorted_edges[other_cycle]])
-        print(f"cycle edge list: {cycle_edge_list}")
-        print(f"other edge list: {other_edge_list}")
-        if not cycle_edge_list.intersection(other_edge_list):
-            continue
-
-        new_edge_set = cycle_edge_list.symmetric_difference(other_edge_list)
-        new_edge_list = sort_face_edges(list([tuple(edge) for edge in new_edge_set]))
-        new_cycle = frozenset().union(*new_edge_set)
-        print(f"MERGING with {other_cycle} -> {new_cycle}")
-
-        # Mention that something is broken
-        if (new_cycle is None) or (new_edge_list is None):
-            sys.exit("CYCLES FUCKED")
-
-        # Update the list of cycles
-        other_cycles.remove(cycle)
-        other_cycles.add(new_cycle)
-
-        # Update the cycle sorted edge dictionary
-        sorted_edges[new_cycle] = new_edge_list
-        sorted_edges.pop(cycle)
-
-        # Recurse and return
-        return shrink_cycle(new_cycle, other_cycles, sorted_edges, graph, positions)
 
 
 def find_singleton_cycles(cycles, graph, as_set=True):
@@ -501,7 +416,7 @@ def is_cycle_empty(ordered_cycle, graph, positions):
     in_side = cycle_path.contains_points([positions[node] for node in remaining_nodes])
 
     #
-    return any(in_side)
+    return not any(in_side)
 
 
 def calculate_midpoint(point_a, point_b):
@@ -533,14 +448,14 @@ def get_cycle_edges(cycle, graph):
     return [frozenset(edge) for edge in sub_graph.edges]
 
 
-def get_sorted_face_vertices(ordered_cycles, original_vertices):
+def get_sorted_face_vertices_from_cycle(ordered_cycles, original_vertices):
     ordered_faces = []
     for ordered_cycle_vertices in ordered_cycles:
         ordered_faces.append([vertex for vertex in ordered_cycle_vertices if vertex in original_vertices])
     return ordered_faces
 
 
-def find_inner_faces(graph, positions, as_set=True):
+def find_inner_faces(graph, positions):
 
     # Keep track of the original vertex set
     original_vertices = list(graph.nodes)
@@ -549,9 +464,13 @@ def find_inner_faces(graph, positions, as_set=True):
     midpoint_graph, midpoint_positions = copy.deepcopy(graph), copy.deepcopy(positions)
     place_virtual_midpoints(graph=midpoint_graph, positions=midpoint_positions)
 
+    draw_graph(graph=midpoint_graph, positions=midpoint_positions)
+    save_drawn_graph(f"./midpoint_graph.png")
+
     # Identify the minimum cycle basis of the graph
-    cycles = [frozenset(cycle) for cycle in nx.minimum_cycle_basis(G=graph)]
+    cycles = [frozenset(cycle) for cycle in nx.minimum_cycle_basis(G=midpoint_graph)]
     ordered_edges = {cycle: get_ordered_edges(get_cycle_edges(cycle=cycle, graph=midpoint_graph)) for cycle in cycles}
+    print(f"ordered edges: {ordered_edges}")
     ordered_nodes = [get_vertex_sequence(edges=ordered_edges[cycle], is_ordered=True) for cycle in cycles]
 
     # Check whether all identified faces are legal
@@ -560,10 +479,14 @@ def find_inner_faces(graph, positions, as_set=True):
             f"Cycle {ordered_nodes[cycle_index]} is not empty!"
 
     # Clean up Sorted Vertex and Edge lists from midpoint vertices
-    sorted_face_vertices = get_sorted_face_vertices(ordered_cycles=ordered_nodes, original_vertices=original_vertices)
+    sorted_faces = get_sorted_face_vertices_from_cycle(ordered_cycles=ordered_nodes,
+                                                       original_vertices=original_vertices)
+    faces = set([frozenset(sorted_face) for sorted_face in sorted_faces])
+    sorted_face_vertices = {frozenset(face): face for face in sorted_faces}
+    input(f"sorted face vertices: {sorted_face_vertices}")
 
     # Return set of faces (frozen sets of vertices)
-    return sorted_face_vertices
+    return faces, sorted_face_vertices
 
 
 def color_selected_faces(graph, face_set, face_edge_map):
@@ -745,10 +668,15 @@ def vector_angle(vector_1, vector_2):
     # Calculate Unit Vectors of Input Vectors
     unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
     unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
+    print(f"unit vector 1: {unit_vector_1}")
+    print(f"unit vector 2: {unit_vector_2}")
 
     # Calculate Dot Product and Signed Angle in Radians
     dot_product = np.dot(unit_vector_1, unit_vector_2)
+    print(f"dot product: {dot_product}")
+
     angle = np.arccos(dot_product)
+    print(f"angle: {angle}")
 
     # Return Angle in Degrees
     return np.degrees(angle)
@@ -802,7 +730,8 @@ def calculate_face_outer_angles(counter_clockwise_face_vertices, positions):
 def calculate_inner_angle(point_a, point_b, point_c):
 
     # Assumed that point b connects to both a and c
-    vector_1, vector_2 = point_a - point_b, point_c - point_b
+    vector_1 = point_a - point_b
+    vector_2 = point_c - point_b
 
     # Calculate Signed Angle between two Vectors
     signed_angle = vector_angle(vector_1, vector_2)
@@ -827,6 +756,10 @@ def calculate_face_inner_angles(counter_clockwise_face_vertices, positions):
         # Calculate Inner angle and store as with center vertex as key
         point_a, point_b, point_c = positions[vertex_a], positions[vertex_b], positions[vertex_c]
         inner_angles[vertex_b] = calculate_inner_angle(point_a, point_b, point_c)
+        print(f"point a: {point_a}")
+        print(f"point b: {point_b}")
+        print(f"point c: {point_c}")
+        print(f"angle of b {inner_angles[vertex_b]}")
 
     # Return all inner angles
     return inner_angles
