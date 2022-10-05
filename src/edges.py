@@ -1,22 +1,24 @@
-def get_ordered_edges(edges, first_node=None):
 
-    #
-    start_index = 0 if first_node is None \
-        else [i for i in range(0, len(edges)) if edges[i][0] == first_node or edges[i][1] == first_node][0]
+def get_ordered_edges(edges):
+
+    edges = [tuple(edge) for edge in edges]
 
     #
     sorted_edges = [(None, None)] * len(edges)
-    sorted_edges[0] = edges[start_index]
+    sorted_edges[0] = edges[0]
+    visited_edges = [{edges[0]}]
 
     #
     for i in range(1, len(edges)):
         for edge in edges:
+            if {edge} in visited_edges:
+                continue
             if edge[0] == sorted_edges[i-1][1] and (edge[0], edge[1] not in sorted_edges):
                 sorted_edges[i] = edge
-                continue
+                visited_edges.append({edge})
             elif edge[1] == sorted_edges[i-1][1] and (edge[1], edge[0] not in sorted_edges):
                 sorted_edges[i] = (edge[1], edge[0])
-                continue
+                visited_edges.append({edge})
 
     #
     return sorted_edges
@@ -24,7 +26,7 @@ def get_ordered_edges(edges, first_node=None):
 
 def get_vertex_sequence(edges, first_node=None, is_ordered=False):
     if not is_ordered:
-        edges = get_ordered_edges(edges=edges, first_node=first_node)
+        edges = get_ordered_edges(edges=edges)
     vertex_sequence = [edge[0] for edge in edges] + [edges[-1][1]]
     return vertex_sequence
 
