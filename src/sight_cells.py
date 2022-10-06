@@ -232,7 +232,7 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph):
     for index_a in range(0, len(cells) - 1):
         for index_b in range(index_a + 1, len(cells)):
             cell_a, cell_b = cells[index_a], cells[index_b]
-
+            print(f"trying to merge {cell_a} and {cell_b}")
             # Attempt to merge the two cells, return a boolean for success and a (possibly empty) vertex ID
             merge_successful = try_merge_two_sight_cells(cell_a=cell_a,
                                                          cell_b=cell_b,
@@ -243,7 +243,7 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph):
 
             # If the merge was successful, recurse
             if merge_successful:
-
+                print(f"merged")
                 # Recurse and repeat merging
                 merge_face_sight_cells(cells=cells,
                                        cells_edge_list=cells_edge_list,
@@ -266,11 +266,15 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
     non_overlapping_incidences = incidence_a ^ incidence_b
 
     if (non_overlapping_incidences) or (len(merge_edges)) == 0 or (merge_edges in real_edges):
+        print(f"no overlap or merge edge illegal")
         return False
 
     # Determine the new cell's vertex set and edge list
+    print(f"edge set of {cell_a}: {cells_edge_list[cell_a]}")
+    print(f"edge set of {cell_b}: {cells_edge_list[cell_b]}")
     new_edge_set = cells_edge_list[cell_a].union(cells_edge_list[cell_b]) - merge_edges
     new_cell = cell_a.union(cell_b)
+    print(f"edge set of NEW {new_cell}: {new_edge_set}")
 
     # Update the Cell List
     [cells.remove(cell) for cell in [cell_a, cell_b]]

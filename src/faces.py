@@ -415,8 +415,11 @@ def count_cycles_edge(cycle_edges, graph):
 
 def prune_cycle_graph(cycle_edges, graph):
     edge_counts = count_cycles_edge(cycle_edges, graph)
+    # TODO: since we are checking against ALL cycles, it is indeed possible for one edge to map MORE than twice
+    #  these are incorrect cycles (i.e. not faces), hence the messy mapping
     mapped_edges = [tuple(edge) for edge, count in edge_counts.items() if count == 2]
-    [sys.exit() for edge, count in edge_counts.items() if count > 2 or count == 0]
+    [print(f"{edge} - {count}") for edge, count in edge_counts.items()]
+    input("COUNTS ARE FUCKED")
     graph.remove_edges_from(mapped_edges)
 
 
@@ -489,7 +492,13 @@ def identify_faces(faces, graph, positions):
         if len(nodes_inside_cycle) == 0:
             faces.add(cycle)
         else:
-            sub_graph = graph.subgraph(nodes=nodes_inside_cycle).copy()
+            print(f"nodes in cycle: {nodes_inside_cycle}")
+            nodes_inside_cycle += list(cycle)
+            print(f"nodes in cycle: {nodes_inside_cycle}")
+            sub_graph = graph.subgraph(nodes=list(set(nodes_inside_cycle))).copy()
+            print(f"cycle: {cycle} is fucked")
+            print(f"nodes in cycle:{nodes_inside_cycle}")
+            print(f"nodes inside subgraph: {sub_graph.nodes}")
             input(f"length before: {len(graph.nodes)} and after {len(sub_graph.nodes)}")
             prune_cycle_graph(cycle_edges=ordered_edges, graph=sub_graph)
             sub_positions = {node: ordered_nodes.get(node) for node in nodes_inside_cycle}
