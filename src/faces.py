@@ -483,10 +483,19 @@ def find_inner_faces(graph, positions):
                                                        original_vertices=original_vertices)
     faces = set([frozenset(sorted_face) for sorted_face in sorted_faces])
     sorted_face_vertices = {frozenset(face): face for face in sorted_faces}
+    sorted_face_edges = {frozenset(face): get_ordered_edges_from_ordered_vertices(face) for face in sorted_faces}
     input(f"sorted face vertices: {sorted_face_vertices}")
+    input(f"sorted face edges   : {sorted_face_edges}")
 
-    # Return set of faces (frozen sets of vertices)
-    return faces, sorted_face_vertices
+    # Return set of faces (frozen sets of vertices), the sorted vertices, and sorted edges
+    return faces, sorted_face_vertices, sorted_face_edges
+
+
+def get_ordered_edges_from_ordered_vertices(ordered_vertices: []):
+    edges = [(None, None)] * len(ordered_vertices)
+    for index in range(0, len(ordered_vertices)):
+        edges[index] = (ordered_vertices[index], ordered_vertices[(index + 1) % len(ordered_vertices)])
+    return edges
 
 
 def color_selected_faces(graph, face_set, face_edge_map):

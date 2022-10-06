@@ -499,8 +499,16 @@ def check_vertex_visibility_by_crossing(vertex_a, vertex_b, candidate_edges, pos
     return True
 
 
-def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, cells_edge_list, positions, graph):
+def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, ordered_cell_edges, positions, graph):
     """"""
+
+    #
+    cells_edge_list = {cell: [] for cell in ordered_cell_edges.keys()}
+    for cell in ordered_cell_edges.keys():
+        cells_edge_list[cell] = set([frozenset(edge) for edge in ordered_cell_edges[cell]])
+    print(f"cell_edge_list:")
+    print(cells_edge_list)
+    input("CHECK")
 
     # Try Merging Cells in non-convex face
     face_sight_cells = list(face_sight_cells)  # Reminder: cast is done to enable more efficient indexed looping
@@ -516,8 +524,16 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, cells
                                                 edge_map=cells_edge_map,
                                                 graph=graph)
 
+    #
+    ordered_cell_edges = {cell: [] for cell in face_sight_cells}
+    for cell in face_sight_cells:
+        ordered_cell_edges[cell] = get_ordered_edges(edges=[tuple(edge) for edge in list(cells_edge_list[cell])])
+
+    print(f"ordered_cell_edges:")
+    print(ordered_cell_edges)
+    input("CHECK")
+
     # Return updated sight cells, incidences, and edge map
-    # TODO: inconsistency - we do not explicitly return graph or positions -> these are passed/altered by reference
     return face_sight_cells, cell_vertex_map
 
 
@@ -818,7 +834,13 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
 
         # Project sight-lines within the currently selected face against itself
         edge_to_virtual_vertices, added_vertices, connected_vertices = project_face_against_self(
-            face, ordered_face_edges, face_edge_map, graph, positions, bounds, outer=False)
+            face,
+            ordered_face_edges,
+            face_edge_map,
+            graph,
+            positions,
+            bounds,
+            outer=False)
 
         if edge_to_virtual_vertices is None:
             continue
@@ -826,8 +848,14 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
         # Update Graph and Virtual Edge Map with New added vertices
         print(f"\nconnected WITHIN FACE {face}: {connected_vertices}")
         update(connected_vertex_map, connected_vertices)
-        update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
-                                          edge_to_virtual_vertices, graph, positions, outer=False)
+        update_graph_and_virtual_edge_map(face,
+                                          added_vertices,
+                                          ordered_face_edges,
+                                          face_edge_map,
+                                          edge_to_virtual_vertices,
+                                          graph,
+                                          positions,
+                                          outer=False)
 
         # DEBUG: Draw Initial Embedding
         draw_graph(graph=graph, positions=positions)
@@ -835,12 +863,22 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
 
     # Identify all faces (i.e. sight cells in outer face)
     print(f"\nFIND SIGHT CELLS OF INNER FACES")
-    sight_cells, ordered_vertices = find_inner_faces(graph=graph, positions=positions)
-    [print(cell) for cell in sight_cells]
-    input("...")
+    sight_cells, ordered_vertices, ordered_edges = find_inner_faces(graph=graph, positions=positions)
+    # print(f"\nINNER SIGHT CELLS")
+    # print(f"cells:")
+    # [print(cell) for cell in sight_cells]
+    # input("...")
+    #
+    # print(f"ordered cell vertices:")
+    # [print(f"cell: {cell} - {vertices}") for cell, vertices in ordered_vertices.items()]
+    # input("...")
+    #
+    # print(f"ordered cell vertices:")
+    # [print(f"cell: {cell} - {vertices}") for cell, vertices in ordered_edges.items()]
+    # input("...")
 
     # Return the identified sight cells and the subgraph
-    return sight_cells, face_edge_map, connected_vertex_map
+    return sight_cells, ordered_vertices, ordered_edges, face_edge_map, connected_vertex_map
 
 
 def get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positions, original=False):

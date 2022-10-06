@@ -31,6 +31,9 @@ def get_vertex_sequence(edges, first_node=None, is_ordered=False):
     return vertex_sequence
 
 
+def get_sorted_edges_from_sorted_vertex_list(sorted_vertex_list):
+    pass
+
 def get_face_vertex_sequence(face, graph):
     # todo: does not work if edges exist between elements of the face other than the minimal cycle
     #face_edges = [None] * len(face)

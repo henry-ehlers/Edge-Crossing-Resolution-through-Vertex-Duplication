@@ -190,33 +190,43 @@ def update_graph_with_sight_cells(graph, positions, cell_graph, cell_positions, 
 def get_inner_faces(target_vertices, graph, positions):
 
     # Identify the graph's inner faces
-    inner_faces, sorted_inner_face_vertices = find_inner_faces(graph=graph, positions=positions)
+    inner_faces, sorted_inner_face_vertices, sorted_inner_face_edges = find_inner_faces(graph=graph,
+                                                                                        positions=positions)
     print(f"\nINNER FACES:")
     [print(face) for face in inner_faces]
     input(f"inner faces")
 
-    # Decompose Inner Faces
-    ordered_face_edges = get_ordered_face_edges(faces=inner_faces,
-                                                sorted_face_vertices=sorted_inner_face_vertices)
-    cells, face_edge_map, connected_vertex_map = find_inner_face_sight_cells(inner_faces=inner_faces,
-                                                                             ordered_face_edges=ordered_face_edges,
-                                                                             graph=graph,
-                                                                             positions=positions)
+    # Decompose Inner Faces into Sight Cells by sight line extension
+    cells, ordered_cell_vertices, ordered_cell_edges, face_edge_map, connected_vertex_map = find_inner_face_sight_cells(
+        inner_faces=inner_faces,
+        ordered_face_edges=sorted_inner_face_edges,
+        graph=graph,
+        positions=positions)
+
     print(f"\nINNER CELLS:")
     [print(cell) for cell in cells]
     input(f"inner CELLS")
 
+    print(f"ordered cell vertices:")
+    [print(f"cell: {cell} - {vertices}") for cell, vertices in ordered_cell_vertices.items()]
+    input("...")
+
+    print(f"ordered cell edges:")
+    [print(f"cell: {cell} - {edges}") for cell, edges in sorted_inner_face_edges.items()]
+    input("...")
+
     # Create Pandas Data Table of Face Incidences
     convex_faces = inner_faces.intersection(cells)
-    inner_faces_incidences = find_face_vertex_incidence(faces=convex_faces, target_vertices=target_vertices)
+    inner_faces_incidences = find_face_vertex_incidence(faces=convex_faces,
+                                                        target_vertices=target_vertices)
 
     # Get Incidence of Sight Cells Identified
     actual_cells = cells - convex_faces
     print(f"actual cells: {actual_cells}")
-    cell_edges = get_sight_cell_edges(actual_cells, graph)
+    # cell_edges = get_sight_cell_edges(actual_cells, graph)
     inner_cells_incidence = get_inner_face_sight_cell_incidences(sight_cells=actual_cells,
                                                                  target_vertices=target_vertices,
-                                                                 face_edges=ordered_face_edges,
+                                                                 face_edges=sorted_inner_face_edges,
                                                                  face_edge_map=face_edge_map,
                                                                  positions=positions)
 
@@ -225,7 +235,7 @@ def get_inner_faces(target_vertices, graph, positions):
     sight_cells, vertex_map = merge_cells_wrapper(face_sight_cells=actual_cells,
                                                   cell_incidences=inner_cells_incidence,
                                                   cells_edge_map=face_edge_map,
-                                                  cells_edge_list=cell_edges,
+                                                  ordered_cell_edges=ordered_cell_edges,
                                                   positions=positions,
                                                   graph=graph)
     print(f"sight_cells: {sight_cells}")
