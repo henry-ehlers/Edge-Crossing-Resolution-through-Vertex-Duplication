@@ -365,11 +365,11 @@ def unlist(nested_list):
     return list(it.chain.from_iterable(nested_list))
 
 
-def update_faces_with_edge_map(face_incidence_table, face_edge_map, edge_map):
+def update_faces_with_edge_map(face_incidence_table, sorted_face_edges, edge_map):
 
     for index, row in face_incidence_table.iterrows():
         face = row["identifier"]
-        face_edges = face_edge_map[face]
+        face_edges = sorted_face_edges[face]
         new_face_edges = []
 
         for edge in face_edges:
@@ -377,8 +377,8 @@ def update_faces_with_edge_map(face_incidence_table, face_edge_map, edge_map):
         new_face_edges = unlist(new_face_edges)
         new_face_identifier = frozenset(unlist(new_face_edges))
 
-        face_edge_map.pop(face)
-        face_edge_map[new_face_identifier] = new_face_edges
+        sorted_face_edges.pop(face)
+        sorted_face_edges[new_face_identifier] = new_face_edges
 
         face_incidence_table.at[index, "identifier"] = new_face_identifier
 
@@ -403,7 +403,24 @@ def find_singleton_cycles(cycles, graph, as_set=True):
         [cycles.append(singleton_cycle) for singleton_cycle in non_cycle_edges]
 
 
-def is_cycle_empty(ordered_cycle, graph, positions):
+def count_cycles_edge(cycle_edges, graph):
+    graph_edge_counts = {frozenset(edge): 0 for edge in graph.edges}
+    for cycle, cycle_edges in cycle_edges.items():
+        for cycle_edge in cycle_edges:
+            cycle_edge = frozenset(cycle_edge)
+            if cycle_edge in graph_edge_counts.keys():
+                graph_edge_counts[cycle_edge] += 1
+    return graph_edge_counts
+
+
+def prune_cycle_graph(cycle_edges, graph):
+    edge_counts = count_cycles_edge(cycle_edges, graph)
+    mapped_edges = [tuple(edge) for edge, count in edge_counts.items() if count == 2]
+    [sys.exit() for edge, count in edge_counts.items() if count > 2 or count == 0]
+    graph.remove_edges_from(mapped_edges)
+
+
+def get_nodes_in_cycle(ordered_cycle, graph, positions):
 
     #
     ordered_cycle_closed = ordered_cycle + [ordered_cycle[0]]
@@ -412,11 +429,12 @@ def is_cycle_empty(ordered_cycle, graph, positions):
     #
     cycle_path = mpltPath.Path(vertices=ordered_coordinates, codes=None, closed=True, readonly=True)
 
+    #
     remaining_nodes = [node for node in graph.nodes if node not in ordered_cycle]
     in_side = cycle_path.contains_points([positions[node] for node in remaining_nodes])
 
     #
-    return not any(in_side)
+    return [node for index, node in enumerate(remaining_nodes) if in_side[index]]
 
 
 def calculate_midpoint(point_a, point_b):
@@ -436,16 +454,15 @@ def place_virtual_midpoints(graph, positions, start_index=None):
 def get_cycle_edges(cycle, graph):
 
     # Extract Subgraph of only the vertices of the cycle
-    sub_graph = graph.copy()
-    sub_graph.remove_nodes_from([node for node in graph.nodes if node not in cycle])
+    graph_edges, cycle_edges = [frozenset(edge) for edge in graph.edges], []
+    [cycle_edges.append(edge) for edge in graph_edges if len(cycle.intersection(edge)) == 2]
 
-    # Count the degree of all vertices in the subgraph.
-    degrees = {node: sub_graph.degree(node) for node in sub_graph.nodes}
-    problem_nodes = set([node for node, degree in degrees.items() if degree > 2])
-    assert (len(problem_nodes) == 0), f"Not all vertices have degree of two: {problem_nodes}"
+    print(cycle)
+    print(graph_edges)
+    print(f"cycle {cycle}'s edges: {cycle_edges}")
 
     # Return Edges as list of frozensets
-    return [frozenset(edge) for edge in sub_graph.edges]
+    return cycle_edges
 
 
 def get_sorted_face_vertices_from_cycle(ordered_cycles, original_vertices):
@@ -453,6 +470,30 @@ def get_sorted_face_vertices_from_cycle(ordered_cycles, original_vertices):
     for ordered_cycle_vertices in ordered_cycles:
         ordered_faces.append([vertex for vertex in ordered_cycle_vertices if vertex in original_vertices])
     return ordered_faces
+
+
+def identify_faces(faces, graph, positions):
+
+    # Identify the minimum cycle basis of the graph
+    cycles = [frozenset(cycle) for cycle in nx.minimum_cycle_basis(G=graph)]
+    ordered_edges = {cycle: get_ordered_edges(get_cycle_edges(cycle=cycle, graph=graph)) for cycle in cycles}
+    ordered_nodes = {cycle: get_vertex_sequence(edges=ordered_edges[cycle], is_ordered=True) for cycle in cycles}
+
+    #
+    for cycle in cycles:
+        if cycle in faces:
+            continue
+
+        #
+        nodes_inside_cycle = get_nodes_in_cycle(ordered_nodes[cycle], graph, positions)
+        if len(nodes_inside_cycle) == 0:
+            faces.add(cycle)
+        else:
+            sub_graph = graph.subgraph(nodes=nodes_inside_cycle).copy()
+            input(f"length before: {len(graph.nodes)} and after {len(sub_graph.nodes)}")
+            prune_cycle_graph(cycle_edges=ordered_edges, graph=sub_graph)
+            sub_positions = {node: ordered_nodes.get(node) for node in nodes_inside_cycle}
+            identify_faces(faces, sub_graph, sub_positions)
 
 
 def find_inner_faces(graph, positions):
@@ -467,16 +508,12 @@ def find_inner_faces(graph, positions):
     draw_graph(graph=midpoint_graph, positions=midpoint_positions)
     save_drawn_graph(f"./midpoint_graph.png")
 
-    # Identify the minimum cycle basis of the graph
-    cycles = [frozenset(cycle) for cycle in nx.minimum_cycle_basis(G=midpoint_graph)]
-    ordered_edges = {cycle: get_ordered_edges(get_cycle_edges(cycle=cycle, graph=midpoint_graph)) for cycle in cycles}
-    print(f"ordered edges: {ordered_edges}")
-    ordered_nodes = [get_vertex_sequence(edges=ordered_edges[cycle], is_ordered=True) for cycle in cycles]
+    identified_faces = set()
+    identify_faces(faces=identified_faces, graph=midpoint_graph, positions=midpoint_positions)
 
-    # Check whether all identified faces are legal
-    for cycle_index in range(0, len(ordered_nodes)):
-        assert(is_cycle_empty(ordered_nodes[cycle_index], midpoint_graph, midpoint_positions)), \
-            f"Cycle {ordered_nodes[cycle_index]} is not empty!"
+    # Identify Each Face's Ordered Edge and Node List
+    ordered_edges = {face: get_ordered_edges(get_cycle_edges(cycle=face, graph=graph)) for face in identified_faces}
+    ordered_nodes = {face: get_vertex_sequence(edges=ordered_edges[face], is_ordered=True) for face in identified_faces}
 
     # Clean up Sorted Vertex and Edge lists from midpoint vertices
     sorted_faces = get_sorted_face_vertices_from_cycle(ordered_cycles=ordered_nodes,
@@ -484,8 +521,9 @@ def find_inner_faces(graph, positions):
     faces = set([frozenset(sorted_face) for sorted_face in sorted_faces])
     sorted_face_vertices = {frozenset(face): face for face in sorted_faces}
     sorted_face_edges = {frozenset(face): get_ordered_edges_from_ordered_vertices(face) for face in sorted_faces}
-    input(f"sorted face vertices: {sorted_face_vertices}")
-    input(f"sorted face edges   : {sorted_face_edges}")
+    [print(f"face: {face}") for face in identified_faces]
+    input(f"sorted face vertices: {ordered_nodes}")
+    input(f"sorted face edges   : {ordered_edges}")
 
     # Return set of faces (frozen sets of vertices), the sorted vertices, and sorted edges
     return faces, sorted_face_vertices, sorted_face_edges

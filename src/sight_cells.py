@@ -1112,11 +1112,13 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
             save_drawn_graph(f"./graph_{face}+{other_face}.png")
 
     print(f"\nfinal map: {connected_vertex_map}")
-    draw_graph(graph=outer_graph, positions=outer_positions)
+    draw_graph(graph=outer_graph,
+               positions=outer_positions)
     save_drawn_graph(f"./final_outer.png")
 
     # Identify all faces (i.e. sight cells in outer face)
-    sight_cells = find_inner_faces(outer_graph, positions=outer_positions)
+    sight_cells, ordered_cell_nodes, ordered_cell_edges = find_inner_faces(graph=outer_graph,
+                                                                           positions=outer_positions)
 
     # Remove the original set of faces that defined the outer face
     print(sight_cells)
@@ -1124,7 +1126,7 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
      if face.issubset(cell) and len(face) >= 2]
 
     # Return the identified sight cells and the subgraph
-    return sight_cells, face_edge_map, connected_vertex_map, outer_graph, outer_positions
+    return sight_cells, ordered_cell_edges, face_edge_map, connected_vertex_map, outer_graph, outer_positions
 
 
 def deep_update_of_virtual_edge_map(complete_map, new_map):
