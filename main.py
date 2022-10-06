@@ -156,6 +156,7 @@ def decompose_outer_face(sorted_inner_face_edges, target_vertices, graph, positi
     outer_faces, sorted_outer_face_edges, is_cycle = get_outer_face(
         sorted_inner_face_edges=sorted_inner_face_edges, graph=graph, positions=positions)
     print(f'outer faces: {outer_faces}')
+    input("......")
 
     # Decompose the Graph's Outer face
     cell_incidence_table, new_graph_object = get_outer_face_sight_cells(outer_faces=outer_faces,
@@ -273,7 +274,7 @@ def get_inner_faces(target_vertices, graph, positions):
     new_graph_object = {"cells": sight_cells,
                         "incidences": inner_cells_incidence,
                         "connected_nodes": connected_vertex_map,
-                        "ordered_cel_edges": ordered_edges,
+                        "ordered_cycle_edges": ordered_edges,
                         "edge_map": face_edge_map,
                         "vertex_map": vertex_map}
 
@@ -328,24 +329,21 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     print(inner_face_incidence)
 
-    # Get the Face's sorted Edges
-    # TODO: the get ordered face edges needs to get the ordered list from get_inner_faces()
-    #  FOR BOTH FACES AND SIGHT-CELLS
-    sorted_inner_face_edges = get_ordered_face_edges(faces=inner_face_incidence["identifier"].tolist(), graph=p_graph)
-    print(f"\n sorted inner edges: {sorted_inner_face_edges}")
-
     # Draw the inner sight cell decomposed graph
     draw_graph(graph=p_graph, positions=p_positions)
     save_drawn_graph(f"{drawing_directory}/graph_2.png")
 
     # Decompose the outer face into sight cells and update the planar graph
     print("\nDecompose The Outer Face")
-    outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=1.5)
-    outer_cell_incidence, cell_graph_object = decompose_outer_face(sorted_inner_face_edges=sorted_inner_face_edges,
-                                                                   graph=p_graph,
-                                                                   positions=p_positions,
-                                                                   target_vertices=target_adjacency,
-                                                                   bounds=outer_bounds)
+    outer_bounds = get_embedding_square(graph=p_graph,
+                                        positions=p_positions,
+                                        scaler=1.5)
+    outer_cell_incidence, cell_graph_object = decompose_outer_face(
+        sorted_inner_face_edges=inner_graph_object["ordered_cycle_edges"],
+        graph=p_graph,
+        positions=p_positions,
+        target_vertices=target_adjacency,
+        bounds=outer_bounds)
 
     draw_graph(graph=cell_graph_object["graph"], positions=cell_graph_object["positions"])
     save_drawn_graph(f"{drawing_directory}/graph_2.5.png")
