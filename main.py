@@ -232,14 +232,25 @@ def get_inner_faces(target_vertices, graph, positions):
 
     print(f"\ninner_cells_incidence")
     print(inner_cells_incidence)
-    sight_cells, vertex_map = merge_cells_wrapper(face_sight_cells=actual_cells,
-                                                  cell_incidences=inner_cells_incidence,
-                                                  cells_edge_map=face_edge_map,
-                                                  ordered_cell_edges=ordered_cell_edges,
-                                                  positions=positions,
-                                                  graph=graph)
+    sight_cells, ordered_cell_edges, vertex_map = merge_cells_wrapper(face_sight_cells=actual_cells,
+                                                                      cell_incidences=inner_cells_incidence,
+                                                                      cells_edge_map=face_edge_map,
+                                                                      ordered_cell_edges=ordered_cell_edges,
+                                                                      positions=positions,
+                                                                      graph=graph)
     print(f"sight_cells: {sight_cells}")
     print(f"vertex map: {vertex_map}")
+    ordered_edges = {**{face: sorted_inner_face_edges[face] for face in convex_faces},
+                     **{cell: ordered_cell_edges[cell] for cell in actual_cells}}
+    print(f"ordered face edges:")
+    [print(f"cell: {face} - {edges}") for face, edges in sorted_inner_face_edges.items()]
+    input("...")
+    print(f"ordered cell edges:")
+    [print(f"cell: {cell} - {edges}") for cell, edges in ordered_cell_edges.items()]
+    input("...")
+    print(f"ordered cell edges:")
+    [print(f"cell: {key} - {edges}") for key, edges in ordered_edges.items()]
+    input("...")
 
     # Get Combined Incidence Table
     cell_incidence_table = get_incidence_table(incidences=inner_cells_incidence, entry_type="cell", outer=False)
@@ -262,6 +273,7 @@ def get_inner_faces(target_vertices, graph, positions):
     new_graph_object = {"cells": sight_cells,
                         "incidences": inner_cells_incidence,
                         "connected_nodes": connected_vertex_map,
+                        "ordered_cel_edges": ordered_edges,
                         "edge_map": face_edge_map,
                         "vertex_map": vertex_map}
 

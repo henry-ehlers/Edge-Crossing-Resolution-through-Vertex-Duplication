@@ -534,7 +534,7 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, order
     input("CHECK")
 
     # Return updated sight cells, incidences, and edge map
-    return face_sight_cells, cell_vertex_map
+    return face_sight_cells, ordered_cell_edges, cell_vertex_map
 
 
 def update_merged_sight_cells(sight_cells, cell_incidences, edge_map, graph):
