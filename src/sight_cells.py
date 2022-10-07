@@ -124,6 +124,7 @@ def get_faces_sight_cell_incidences(sight_cells, target_vertices, face_edges, fa
 
 
 def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edges, face_edge_map, positions):
+
     # Initialize an empty map of sight cell to incidence
     sight_cell_incidences = {sight_cell: set() for sight_cell in sight_cells}
 

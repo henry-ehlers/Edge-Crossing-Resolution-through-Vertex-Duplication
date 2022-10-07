@@ -78,8 +78,8 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                                       positions=o_positions,
                                                                       graph=o_graph)
 
-    draw_graph(graph, positions)
-    save_drawn_graph("/merged_outer_graph.png")
+    draw_graph(o_graph, o_positions)
+    save_drawn_graph("./merged_outer_graph.png")
 
     # Get Sorted Incidence Table of sight cells and their incidences
     cell_incidence_table = get_incidence_table(incidences=cell_incidences,

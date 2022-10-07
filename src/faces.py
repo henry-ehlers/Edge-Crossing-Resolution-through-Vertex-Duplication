@@ -468,10 +468,12 @@ def get_cycle_edges(cycle, graph):
     return cycle_edges
 
 
-def get_sorted_face_vertices_from_cycle(ordered_cycles, original_vertices):
+def get_sorted_face_vertices_from_cycle(ordered_cycle_nodes, original_vertices):
     ordered_faces = []
-    for ordered_cycle_vertices in ordered_cycles:
+    for cycle, ordered_cycle_vertices in ordered_cycle_nodes.items():
+        print(f"ordered cycle vertices: {ordered_cycle_vertices}")
         ordered_faces.append([vertex for vertex in ordered_cycle_vertices if vertex in original_vertices])
+        print(f"ordered filtered nodes: {ordered_faces[-1]}")
     return ordered_faces
 
 
@@ -520,19 +522,33 @@ def find_inner_faces(graph, positions):
     identified_faces = set()
     identify_faces(faces=identified_faces, graph=midpoint_graph, positions=midpoint_positions)
 
+    print(f"CYCLES:")
+    [print(f"{cycle}") for cycle in identified_faces]
+
     # Identify Each Face's Ordered Edge and Node List
-    ordered_edges = {face: get_ordered_edges(get_cycle_edges(cycle=face, graph=graph)) for face in identified_faces}
+    ordered_edges = {face: get_ordered_edges(get_cycle_edges(cycle=face, graph=midpoint_graph)) for face in identified_faces}
     ordered_nodes = {face: get_vertex_sequence(edges=ordered_edges[face], is_ordered=True) for face in identified_faces}
+    print(f"EDGES:")
+    [print(f"{face} - {edges}") for face, edges in ordered_edges.items()]
+    print(f"NODES:")
+    [print(f"{face} - {nodes}") for face, nodes in ordered_nodes.items()]
+    input("LOOK AT IDENTIFIED FACES IN MIDPOINT GRAPH")
 
     # Clean up Sorted Vertex and Edge lists from midpoint vertices
-    sorted_faces = get_sorted_face_vertices_from_cycle(ordered_cycles=ordered_nodes,
+    sorted_faces = get_sorted_face_vertices_from_cycle(ordered_cycle_nodes=ordered_nodes,
                                                        original_vertices=original_vertices)
+    print(f"SORTED FACES:")
+    [print(f"{face}") for face in sorted_faces]
     faces = set([frozenset(sorted_face) for sorted_face in sorted_faces])
     sorted_face_vertices = {frozenset(face): face for face in sorted_faces}
     sorted_face_edges = {frozenset(face): get_ordered_edges_from_ordered_vertices(face) for face in sorted_faces}
-    [print(f"face: {face}") for face in identified_faces]
-    input(f"sorted face vertices: {ordered_nodes}")
-    input(f"sorted face edges   : {ordered_edges}")
+    print(f"FACES:")
+    [print(f"{face}") for face in sorted_faces]
+    print(f"EDGES:")
+    [print(f"{face} - {edges}") for face, edges in sorted_face_vertices.items()]
+    print(f"NODES:")
+    [print(f"{face} - {nodes}") for face, nodes in sorted_face_edges.items()]
+    input("IDENTIFIED EDGES IN NORMAL GRAPH")
 
     # Return set of faces (frozen sets of vertices), the sorted vertices, and sorted edges
     return faces, sorted_face_vertices, sorted_face_edges

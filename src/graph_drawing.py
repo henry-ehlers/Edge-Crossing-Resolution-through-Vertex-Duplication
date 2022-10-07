@@ -123,7 +123,7 @@ def draw_graph(graph, positions, labels=None):
     # node_shape_map = shape_split_vertices(graph)  # CAN ONLY BE IMPLEMEMENTED USING MULTIPLE PASSES
 
     # Draw Graph Embedding
-    plt.figure(3, figsize=(20, 20))
+    plt.figure(3, figsize=(30, 30))
     nx.draw(G=graph, pos=positions, node_color=node_color_map, edge_color=edge_color_map, node_shape='o', node_size=75)
     if labels is not None:
         nx.draw_networkx_labels(G=graph, pos=positions, labels=labels, font_size=15)
