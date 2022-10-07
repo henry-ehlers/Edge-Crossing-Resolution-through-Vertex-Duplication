@@ -24,8 +24,8 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
     # virtual_nodes, corner_nodes = nx.get_node_attributes(graph, "virtual"), nx.get_node_attributes(graph, "corner")
     # real_nodes = [v for v in segment_graph.nodes if (virtual_nodes.get(v, 0) != 1) and (corner_nodes.get(v, 0) != 1)]
     real_nodes = [node for node, real in nx.get_node_attributes(graph, "real").items() if real == 1]
-    print(f"real nodes: {real_nodes}")
     edges = frozenset([frozenset(edge) for edge in list(segment_graph.edges())])
+    print(f"real nodes: {real_nodes}")
 
     # Store the number of nodes and largest index
     vertex_index = start_index if start_index else max(graph.nodes)

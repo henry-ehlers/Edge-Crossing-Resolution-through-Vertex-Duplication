@@ -336,6 +336,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Get Inner Faces
     print(f"\nIdentify the Inner Faces")
+    # REMEMBER: the inner_graph_object does not produce a new graph/position pair. the input graph is modified in place
     inner_face_incidence, inner_graph_object = get_inner_faces(target_vertices=target_adjacency,
                                                                graph=p_graph,
                                                                positions=p_positions)
@@ -348,9 +349,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Decompose the outer face into sight cells and update the planar graph
     print("\nDecompose The Outer Face")
-    outer_bounds = get_embedding_square(graph=p_graph,
-                                        positions=p_positions,
-                                        scaler=1.5)
+    outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=1.5)
     outer_cell_incidence, cell_graph_object = decompose_outer_face(
         sorted_inner_face_edges=inner_graph_object["ordered_cycle_edges"],
         graph=p_graph,
@@ -360,8 +359,6 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     draw_graph(graph=cell_graph_object["graph"], positions=cell_graph_object["positions"])
     save_drawn_graph(f"{drawing_directory}/graph_2.5.png")
-
-    input("DOES THE OUTER FACE DECOMPOSITION WORK?")
 
     d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
     update_graph_with_sight_cells(graph=d_graph,
@@ -373,7 +370,8 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     draw_graph(graph=d_graph, positions=d_positions)
     save_drawn_graph(f"{drawing_directory}/graph_3.png")
 
-    input("DOES THE OUTER FACE UPDATE WORK?")
+    # TODO: fix the projection to now work with the data structures of edges
+    # TODO: fix subface identification to work with new face detection function and produced data structures
 
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
     print(f"\nUpdate Inner Face")
@@ -418,8 +416,16 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print(f"\n already extended:")
     [print(f"{vertex}: {cell_graph_object['connected_nodes'][vertex]}")
      for vertex in cell_graph_object['connected_nodes'].keys()]
-
+    print("-------------------------------------------------------------------------------------------")
     connected_nodes = {**inner_graph_object['connected_nodes'], **cell_graph_object['connected_nodes']}
+    [print(f"{key} - {items}") for key, items in connected_nodes.items()]
+    input("CONNECTED NODES")
+    # TODO: already connected nodes are missing the extensions to define the sightlines of the inner faces
+    #  see, for example, the missing 4 - > 10 -> 11 mapping
+    [print(f"{key} - {items}") for key, items in edge_map.items()]
+    # TODO: edge map is incomplete. virtual INNER faace nodes are missing
+    #  okk at {8, 6} which only maps tp {6, 10} and {10, 8}, but is missing does not incude the connections via node 11
+    input("EDGE MAP")
     s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
                                                               positions=d_positions,
                                                               virtual_edge_set=edge_map,
@@ -427,6 +433,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
                                                               already_extended=connected_nodes)
     print(f"\nS edge Map:")
     [print(f"{k} - {v}") for k, v in s_edge_map.items()]
+
     # Draw the segment graph
     draw_graph(graph=s_graph, positions=s_positions)
     save_drawn_graph(f"{drawing_directory}/graph_4.png")
