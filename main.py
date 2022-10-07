@@ -440,9 +440,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     print(f"\nCull Non-Selected Line Segments")
     print(f"cells: {incidence_table['identifier'].tolist()}")
-    # TODO: the cells of the decomposed outer face have not been updated, since we commented out the vertex deletion
-    #  subsequently, the ordered_face_edges function is looking for edges which no longer exist
-    #  i.e. edges that were merge edges -> these vertices (singletons) need to be removed from the incidence set
+    # TODO: get rid of this ordered face call -> extract it from the two graph objects
     complete_cell_edge_map = get_ordered_face_edges(faces=incidence_table['identifier'].tolist(),
                                                     graph=d_graph)
     [print(f"{cell} - {complete_cell_edge_map[cell]}") for cell in complete_cell_edge_map.keys()]
@@ -457,6 +455,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     complete_vertex_map = {**inner_graph_object["vertex_map"], **cell_graph_object["vertex_map"]}
     [print(f"{key} - {item}") for key, item in complete_vertex_map.items()]
     input("check complete")
+    #
     c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
         target_faces=selected_faces,
         face_edge_map=complete_cell_edge_map,
@@ -468,7 +467,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)
     save_drawn_graph(f"{drawing_directory}/graph_5.png")
-
+    # TODO: fix sub-face identification using inner_face call
     subface_edge_set, subface_vertex_map = create_subface_graph(
         graph=c_graph,
         positions=c_positions,
