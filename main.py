@@ -192,7 +192,10 @@ def update_graph_with_sight_cells(graph, positions, cell_graph, cell_positions, 
     print(f"New Nodes: {cell_graph.nodes()}")
 
     # Remove edges replaced with sets of virtual edges, should they already exist in the graph
-    [graph.remove_edge(u=e[0], v=e[1]) for e in new_edge_map.keys() if graph.has_edge(u=e[0], v=e[1])]
+    for virtualized_edge in new_edge_map.keys():
+        virtualized_edge = tuple(virtualized_edge)
+        if graph.has_edge(u=virtualized_edge[0], v=virtualized_edge[1]):
+            graph.remove_edge(u=virtualized_edge[0], v=virtualized_edge[1])
 
     # Update the position list of vertices (i.e. add new ones; old ones do not change)
     positions.update(cell_positions)
