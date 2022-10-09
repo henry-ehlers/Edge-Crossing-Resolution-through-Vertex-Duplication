@@ -371,6 +371,11 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     draw_graph(graph=p_graph, positions=p_positions)
     save_drawn_graph(f"{drawing_directory}/graph_2.png")
 
+    test = deep_update_of_virtual_edge_map(virtual_edge_map, inner_graph_object["edge_map"])
+    [print(f"{cell} - {edges}") for cell, edges in test.items()]
+
+    sys.exit()
+
     # Decompose the outer face into sight cells and update the planar graph
     print("\nDecompose The Outer Face")
     outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=1.5)

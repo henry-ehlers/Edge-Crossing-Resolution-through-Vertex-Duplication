@@ -1223,8 +1223,13 @@ def find_outer_face_sight_cells(selected_faces: {frozenset},
     return sight_cells, ordered_cell_edges, face_edge_map, connected_vertex_map, outer_graph, outer_positions
 
 
-def merge_edge_map(edge_map_a: {frozenset: {frozenset}}, edge_map_b: {frozenset: {frozenset}}, graph):
-    pass
+def merge_edge_map(old_edge_map: {frozenset: {frozenset}}, new_edge_map: {frozenset: {frozenset}}):
+    old_edge_keys, new_edge_keys = set(list(old_edge_map.keys())), set(list(new_edge_map.keys()))
+    complete_edge_keys = old_edge_keys.union(new_edge_keys)
+    complete_edge_map = {edge: {edge} for edge in complete_edge_keys}
+    deep_update_of_virtual_edge_map(complete_edge_map, old_edge_map)
+    deep_update_of_virtual_edge_map(complete_edge_map, new_edge_map)
+    return complete_edge_map
 
 
 def deep_update_of_virtual_edge_map(complete_map: {frozenset: {frozenset}}, new_map: {frozenset: {frozenset}}):
