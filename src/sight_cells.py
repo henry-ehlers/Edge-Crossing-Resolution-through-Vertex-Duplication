@@ -365,8 +365,8 @@ def match_cell_and_face_incidence(face_incidences, selected_sight_cell_incidence
     return rerank_faces
 
 
-def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, edge_map, vertices, edges,
-                      graph, positions, bounds, outer):
+def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, edge_map: {frozenset: {frozenset}},
+                      vertices, edges, graph, positions, bounds, outer):
 
     # Calculate intersections of extended line with boundaries in both directions
     bound_intersections = extend_line(positions[joint_vertex], positions[connecting_vertex], bounds)
@@ -411,8 +411,8 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, edge_map, v
     return closest_edge, new_vertex_index
 
 
-def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, edge_map, graph, vertices, edges, positions,
-                      outer):
+def is_vertex_visible(joint_vertex, connecting_vertex, inner_angles, edge_map: {frozenset: {frozenset}},
+                      graph, vertices, edges, positions, outer):
     # If vertices are neighbors, they can see one-another
     if are_vertices_adjacent(joint_vertex, connecting_vertex, graph) or \
             are_vertices_adjacent_virtually(joint_vertex, connecting_vertex, edge_map):
@@ -725,7 +725,8 @@ def unlist(nested_list):
     return list(it.chain.from_iterable(nested_list))
 
 
-def project_additional_sight_lines(edges, origin_vertices, origin_angles, target_vertices, target_angles, edge_map,
+def project_additional_sight_lines(edges, origin_vertices, origin_angles, target_vertices, target_angles,
+                                   edge_map: {frozenset: {frozenset}},
                                    graph, positions, bounds, outer=True):
 
 
@@ -996,10 +997,10 @@ def project_outer_face_against_non_face():
     pass
 
 
-def project_outer_face_against_another_face(face, other_face, edge_map, ordered_face_edges, positions, graph, bounds):
+def project_outer_face_against_another_face(face, other_face, edge_map: {frozenset: {frozenset}}, ordered_face_edges, positions, graph, bounds):
 
     # Replace original edges with their virtual counterparts
-    candidate_edges = unlist([edge_map.get(edge) for edge in edge_map.keys()])
+    candidate_edges = unlist([tuple(edge) for edge_key in edge_map.keys() for edge in edge_map.get(edge_key)])
     other_face_vertices = get_clockwise_face_vertices(
         other_face, ordered_face_edges, edge_map, positions, original=True)
     other_face_angles = calculate_face_outer_angles(other_face_vertices, positions)
@@ -1185,5 +1186,5 @@ def are_vertices_adjacent(vertex_a, vertex_b, graph):
     return adjacent
 
 
-def are_vertices_adjacent_virtually(vertex_a, vertex_b, edge_map):
-    return ((vertex_a, vertex_b) in edge_map.keys()) or ((vertex_b, vertex_a) in edge_map.keys())
+def are_vertices_adjacent_virtually(vertex_a, vertex_b, edge_map):  # TODO: rename function to are_real_vertices...
+    return {vertex_a, vertex_b} in edge_map.keys()
