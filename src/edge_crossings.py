@@ -117,10 +117,15 @@ def remove_edges(graph, edges_to_be_removed):
         graph.remove_edge(u=edge[0], v=edge[1])
 
 
-def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
+def add_virtual_edges(graph, positions, edge_to_virtual_vertex) -> {frozenset: {frozenset}}:
 
     # A Map of virtual edges which describe the same edge
-    virtual_edge_set = {frozenset(edge): [] for edge in edge_to_virtual_vertex}
+    virtual_edge_set = {frozenset(edge): set() for edge in edge_to_virtual_vertex.keys()}
+    print("fvirtual edge set:")
+    [print(f"{key} - {item}") for key, item in virtual_edge_set.items()]
+    print(f"edge_to_vitrual vertex:")
+    [print(f"{key} - {item}") for key, item in edge_to_virtual_vertex.items()]
+    input("????")
 
     # Iterate over all edges in the graph
     for edge in edge_to_virtual_vertex.keys():
@@ -137,7 +142,7 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex):
         # Connect vertices in sort order (undirected edges so order doesn't matter)
         for index in range(1, len(sorted_vertex_targets)):
             vertex_a, vertex_b = sorted_vertex_targets[index-1], sorted_vertex_targets[index]
-            virtual_edge_set[frozenset(edge)].append(frozenset((vertex_a, vertex_b)))
+            virtual_edge_set[frozenset(edge)].add(frozenset((vertex_a, vertex_b)))
             graph.add_edge(u_of_edge=vertex_a,
                            v_of_edge=vertex_b,
                            virtual=1,

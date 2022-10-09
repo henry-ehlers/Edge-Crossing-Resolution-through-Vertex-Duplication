@@ -226,7 +226,7 @@ def get_inner_faces(target_vertices, graph, positions):
     input("...")
 
     print(f"ordered cell edges:")
-    [print(f"cell: {cell} - {edges}") for cell, edges in sorted_inner_face_edges.items()]
+    [print(f"cell: {cell} - {edges}") for cell, edges in ordered_cell_edges.items()]
     input("...")
 
     # Create Pandas Data Table of Face Incidences
@@ -445,6 +445,8 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     # TODO: edge map is incomplete. virtual INNER faace nodes are missing
     #  okk at {8, 6} which only maps tp {6, 10} and {10, 8}, but is missing does not incude the connections via node 11
     input("EDGE MAP")
+    sys.exit()
+
     s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
                                                               positions=d_positions,
                                                               virtual_edge_set=edge_map,
