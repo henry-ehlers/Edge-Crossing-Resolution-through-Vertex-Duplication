@@ -204,7 +204,9 @@ def update_graph_with_sight_cells(graph, positions, cell_graph, cell_positions, 
     graph.update(cell_graph)
 
 
-def get_inner_faces(target_vertices, graph, positions):
+def get_inner_faces(target_vertices: [int],
+                    graph,
+                    positions):
 
     # Identify the graph's inner faces
     inner_faces, sorted_inner_face_vertices, sorted_inner_face_edges = find_inner_faces(graph=graph,
@@ -220,6 +222,9 @@ def get_inner_faces(target_vertices, graph, positions):
         graph=graph,
         positions=positions)
 
+    print(f"\n connected nodes:")
+    [print(f"cell: {cell} - {vertices}") for cell, vertices in connected_vertex_map.items()]
+
     print(f"\nINNER CELLS:")
     [print(cell) for cell in cells]
     input(f"inner CELLS")
@@ -230,6 +235,10 @@ def get_inner_faces(target_vertices, graph, positions):
 
     print(f"ordered cell edges:")
     [print(f"cell: {cell} - {edges}") for cell, edges in ordered_cell_edges.items()]
+    input("...")
+
+    print(f"face edge map:")
+    [print(f"cell: {cell} - {edges}") for cell, edges in face_edge_map.items()]
     input("...")
 
     # Create Pandas Data Table of Face Incidences
@@ -337,10 +346,13 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     # Planarize Graph after removal of target vertex
     print("\nPlanarize Remaining Graph after target removal")
     p_graph, p_positions = copy.deepcopy(rr_graph), copy.deepcopy(rr_positions)
-    virtual_edge_set = planarize_graph(graph=p_graph,
+    virtual_edge_map = planarize_graph(graph=p_graph,
                                        positions=p_positions,
                                        edge_crossings=r_crossings,
                                        largest_index=max(graph.nodes))
+    print(f"virtual edge set:")
+    [print(f"{key} - {item}") for key, item in virtual_edge_map.items()]
+
 
     # Draw the planarized graph
     draw_graph(graph=p_graph, positions=p_positions)
@@ -418,18 +430,24 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print(f"\nDraw All-to-All line segments")
 
     print("pre deletion:")
-    [print(f"{edge} - {virtual_edge_set[edge]}") for edge in virtual_edge_set.keys()]
+    [print(f"{edge} - {virtual_edge_map[edge]}") for edge in virtual_edge_map.keys()]
 
     #
-    [virtual_edge_set.pop(cell) for cell in list(virtual_edge_set.keys()) if not virtual_edge_set[cell]]
+    [virtual_edge_map.pop(cell) for cell in list(virtual_edge_map.keys()) if not virtual_edge_map[cell]]
 
     print("Post deletion:")
-    [print(f"{edge} - {virtual_edge_set[edge]}") for edge in virtual_edge_set.keys()]
+    [print(f"{edge} - {virtual_edge_map[edge]}") for edge in virtual_edge_map.keys()]
 
     print("outer graph:")
     [print(f"{edge} - {cell_graph_object[edge]}") for edge in cell_graph_object.keys()]
 
-    edge_map = {**virtual_edge_set, **cell_graph_object["edge_map"]}
+    print(f"\nA:")
+    [print(f"{key} - {item}") for key, item in inner_graph_object["edge_map"].items()]
+    print(f"\nB")
+    [print(f"{key} - {item}") for key, item in cell_graph_object["edge_map"].items()]
+    sys.exit()
+
+    edge_map = {**inner_graph_object["edge_map"], **cell_graph_object["edge_map"]}
     for edge in list(edge_map.keys()):
         edge_map[frozenset(edge)] = edge_map[edge]
         edge_map.pop(edge)

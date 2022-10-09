@@ -151,10 +151,9 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex) -> {frozenset: {
     return virtual_edge_set
 
 
-def planarize_graph(graph, positions, edge_crossings, largest_index=None):
+def planarize_graph(graph, positions, edge_crossings, largest_index=None) -> {frozenset: {frozenset}}:
 
     # Extract basic properties of graph
-    # TODO: THIS INDEX BREAK EVERYTHING SOMEHOW
     index = largest_index if largest_index is not None else max(graph.nodes)
     edges = list(graph.edges)  # create list for easier indexing
 

@@ -171,8 +171,10 @@ def get_inner_face_sight_cell_incidences(sight_cells: {frozenset},
         visibility = [None] * len(face_edges.keys())
 
         for face_index, face in enumerate(face_edges.keys()):
+
             # Extract all edges in the face, i.e. the virtual edges formed by virtual edge bisection
             face_edge_list = [tuple(e) for key_edge in face_edges[face] for e in face_edge_map[frozenset(key_edge)]]
+
             print(f"face edge list: {face_edge_list}")
 
             # Get Incidences of sight cells in current face
@@ -871,7 +873,6 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
 
     # Create lists of vertices and edges that define the outer face
     all_face_edges = unlist([ordered_face_edges.get(face) for face in inner_faces if len(face) > 1])
-
     face_edge_map = {frozenset(edge): {frozenset(edge)} for edge in all_face_edges}
     connected_vertex_map = dict()
 
@@ -1220,6 +1221,10 @@ def find_outer_face_sight_cells(selected_faces: {frozenset},
 
     # Return the identified sight cells and the subgraph
     return sight_cells, ordered_cell_edges, face_edge_map, connected_vertex_map, outer_graph, outer_positions
+
+
+def merge_edge_map(edge_map_a: {frozenset: {frozenset}}, edge_map_b: {frozenset: {frozenset}}, graph):
+    pass
 
 
 def deep_update_of_virtual_edge_map(complete_map: {frozenset: {frozenset}}, new_map: {frozenset: {frozenset}}):
