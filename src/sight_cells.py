@@ -123,7 +123,13 @@ def get_faces_sight_cell_incidences(sight_cells, target_vertices, face_edges, fa
     return sight_cell_incidences
 
 
-def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edges, face_edge_map, positions):
+def get_outer_face_sight_cell_incidences(sight_cells: {frozenset},
+                                         target_vertices: [int],
+                                         face_edges: {frozenset: [(int, int)]},
+                                         face_edge_map: {frozenset: {frozenset}},
+                                         positions):
+    [print(f"{key} - {item}") for key, item in face_edge_map.items()]
+    input("+++++++++++++++++++++++++++++++++")
 
     # Initialize an empty map of sight cell to incidence
     sight_cell_incidences = {sight_cell: set() for sight_cell in sight_cells}
@@ -132,10 +138,12 @@ def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edge
     for cell in sight_cells:
         visibility = [None] * len(face_edges.keys())
 
+        #
         for face_index, face in enumerate(face_edges.keys()):
-            # Extract all edges in the face, i.e. the virtual edges formed by virtual edge bisection
-            face_edge_list = unlist([face_edge_map[edge] for edge in face_edges[face]])
 
+            # Extract all edges in the face, i.e. the virtual edges formed by virtual edge bisection
+            face_edge_list = [tuple(e) for edge in face_edges[face] for e in face_edge_map[frozenset(edge)]]
+            print(f"face {face} edge list: {face_edge_list}")
             # Get Incidences of sight cells in current face
             visibility[face_index] = get_sight_cell_incidence(sight_cell_vertices=cell,
                                                               target_vertices=target_vertices,
@@ -149,7 +157,7 @@ def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edge
 
 def get_inner_face_sight_cell_incidences(sight_cells: {frozenset},
                                          target_vertices: [int],
-                                         face_edges: {frozenset: [(np.array, np.array)]},
+                                         face_edges: {frozenset: [(int, int)]},
                                          face_edge_map: {frozenset: {frozenset}},
                                          positions: {int: np.array}):
 
@@ -516,7 +524,7 @@ def check_vertex_visibility_by_crossing(vertex_a, vertex_b, candidate_edges, pos
 def merge_cells_wrapper(face_sight_cells: {frozenset},
                         cell_incidences: {frozenset: frozenset},
                         cells_edge_map: {frozenset: {frozenset}},
-                        ordered_cell_edges: {frozenset: [(np.array, np.array)]},
+                        ordered_cell_edges: {frozenset: [(int, int)]},
                         positions,
                         graph):
     """"""
@@ -957,7 +965,7 @@ def update_graph_and_virtual_edge_map(face_edge_map: {frozenset: {frozenset}}, e
 
 
 def project_face_against_self(face: frozenset,
-                              ordered_face_edges: {frozenset: [(np.array, np.array)]},
+                              ordered_face_edges: {frozenset: [(int, int)]},
                               face_edge_map: {frozenset: {frozenset}},
                               graph,
                               positions,
@@ -1004,7 +1012,7 @@ def project_face_against_self(face: frozenset,
 def project_outer_face_against_singleton(face: frozenset,
                                          other_face: frozenset,
                                          edge_map: {frozenset: {frozenset}},
-                                         ordered_face_edges: {frozenset: [(np.array, np.array)]},
+                                         ordered_face_edges: {frozenset: [(int, int)]},
                                          positions,
                                          graph,
                                          bounds):
@@ -1094,7 +1102,7 @@ def update(d, u):
 
 
 def find_outer_face_sight_cells(selected_faces: {frozenset},
-                                ordered_face_edges: {frozenset: [(np.array, np.array)]},
+                                ordered_face_edges: {frozenset: [(int, int)]},
                                 graph,
                                 positions: {int: np.array},
                                 is_cycle: [bool],
