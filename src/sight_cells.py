@@ -886,14 +886,17 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
     return sight_cells, ordered_vertices, ordered_edges, face_edge_map, connected_vertex_map
 
 
-def get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positions, original=False):
+def get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map: {frozenset: {frozenset}}, positions,
+                                original=False):
     if len(face) == 1:
         return list(face)
     if not original:
         face_edges = unlist([face_edge_map.get(edge) for edge in ordered_face_edges[face]])  # TODO: edges busted
+        face_edges = [tuple(edge) for edge in face_edges]
+        print(f"mapped face edges of face {face} = {face_edges}")
     else:
         face_edges = [edge for edge in ordered_face_edges[face]]
-    face_vertices = get_sorted_face_vertices(face_edges, is_sorted=True)
+    face_vertices = get_sorted_face_vertices(face_edges, is_sorted=False)
     if calculate_face_signed_area(face_vertices, positions) < 0:
         face_vertices = list(reversed(face_vertices))
     return face_vertices
@@ -1079,8 +1082,11 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
             print(f"\nconnected WITHIN FACE: {connected_vertices}")
             update(connected_vertex_map, connected_vertices)
             print(f"map: {connected_vertex_map}")
-            update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
-                                              edge_to_virtual_vertices, outer_graph, outer_positions, outer=True)
+            update_graph_and_virtual_edge_map(face_edge_map=face_edge_map,
+                                              edge_to_virtual_vertices=edge_to_virtual_vertices,
+                                              graph=outer_graph,
+                                              positions=outer_positions,
+                                              outer=True)
 
             # DEBUG: Draw Initial Embedding
             draw_graph(graph=outer_graph, positions=outer_positions)
@@ -1134,9 +1140,6 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
 
 
 def deep_update_of_virtual_edge_map(complete_map: {frozenset: {frozenset}}, new_map: {frozenset: {frozenset}}):
-
-    # TODO: edges must be frozensets -> mapping of (x, y) does not work for (y, x)
-    #  maybe revamp this whole framework to just work on frozensets instead of tuples?
 
     for intersected_edge, virtual_edges in new_map.items():
         mapped = [real_edge for real_edge in complete_map.keys() if intersected_edge in complete_map[real_edge]]
