@@ -1,7 +1,9 @@
+import copy
+
 
 def get_ordered_edges(edges):
 
-    edges = [tuple(edge) for edge in edges]
+    edges = [tuple(edge) for edge in edges]  # TODO: length differs for cycle vs sequence?
 
     #
     sorted_edges = [(None, None)] * len(edges)
@@ -24,15 +26,18 @@ def get_ordered_edges(edges):
     return sorted_edges
 
 
-def get_vertex_sequence(edges, first_node=None, is_ordered=False):
-    if not is_ordered:
-        edges = get_ordered_edges(edges=edges)
-    vertex_sequence = [edge[0] for edge in edges]
+def get_vertex_sequence(edges, is_ordered=False):
+    ordered_edges = copy.deepcopy(edges) if is_ordered else get_ordered_edges(edges=edges)
+    # TODO: need to count how often a vertex is in an edge -> those that are featured only once HAVE to be the start
+    #  point, since we are not NECESSARILY dealing with vertex/edge cycles
+    # if any([edge is None for edge in ordered_edges]):
+    #     print(f"turning edges: {edges}")
+    #     edges[0] = (edges[0][1], edges[0][0])
+    #     print(f"turning edges: {edges}")
+    #     ordered_edges = get_ordered_edges(edges=edges)
+    vertex_sequence = [edge[0] for edge in ordered_edges]
     return vertex_sequence
 
-
-def get_sorted_edges_from_sorted_vertex_list(sorted_vertex_list):
-    pass
 
 def get_face_vertex_sequence(face, graph):
     # todo: does not work if edges exist between elements of the face other than the minimal cycle

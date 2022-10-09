@@ -14,7 +14,12 @@ def get_nested_key(dictionary, key_a, key_b):
         return None
 
 
-def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_extended, start_index=None):
+def draw_all_line_segments(graph,
+                           positions,
+                           virtual_edge_set: {frozenset: {int: (int, int)}},
+                           bounds,
+                           already_extended: {frozenset: {frozenset}},
+                           start_index=None):
 
     # Create new graph and positions objects
     segment_graph, segment_positions = copy.deepcopy(graph), copy.deepcopy(positions)
@@ -36,24 +41,33 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
         vertex_a = real_nodes[index_a]
         for index_b in range(index_a + 1, number_of_nodes):
             vertex_b = real_nodes[index_b]
+            print(f"\nVertices {vertex_a} and {vertex_b}")
 
             # Calculate intersections with boundary
             intersections = extend_line(segment_positions[vertex_a], segment_positions[vertex_b], bounds)
 
-            # # Check if this particular combination of vertices is connected (by virtual edge sets)
+            # Check if this particular combination of vertices is connected (by virtual edge sets)
             virtual_connection = [v_edge_set for v_edge_set in virtual_edge_set if {vertex_a, vertex_b} <= v_edge_set]
+            print(f"virtual connections: {virtual_connection}")
+
             if virtual_connection:
-                virtual_edges = virtual_edge_set[virtual_connection[0]]
+                virtual_edges = [tuple(edge) for edge in virtual_edge_set[virtual_connection[0]]]
+                print(f"virtual edges with which to check edges: {virtual_edges}")
                 [segment_graph.add_edge(u_of_edge=e[0], v_of_edge=e[1], segment=1) for e in virtual_edges
                  if not segment_graph.has_edge(e[0], e[1])]
                 already_connected = 1
+                virtual_edges = [set(edge) for edge in virtual_edge_set[virtual_connection[0]]]
             else:
                 already_connected = 1 if {real_nodes[index_a], real_nodes[index_b]} in edges else 0
                 virtual_edges = [{real_nodes[index_a], real_nodes[index_b]}] if already_connected else []
 
             # If the two vertices are not yet connected, connect them with a segment edge
+            print(f"connected:     {already_connected}")
+            print(f"connections A: {virtual_edges}")
             if already_connected == 0:
-                segment_graph.add_edge(u_of_edge=vertex_a, v_of_edge=vertex_b, segment=1)
+                segment_graph.add_edge(u_of_edge=vertex_a,
+                                       v_of_edge=vertex_b,
+                                       segment=1)
                 virtual_edges = [{vertex_a, vertex_b}]
 
             # Project vertex-a onto vertex-b and vice-versa
@@ -62,24 +76,26 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
 
                 # Check if vertex pair has already been extended
                 extended_vertex = get_nested_key(already_extended, target, joint)
+                print(f"extended vertex: {extended_vertex}")
                 if extended_vertex is not None:
 
                     # Check if any virtual edges exist between joint and extension terminus
-                    extended_edges = virtual_edge_set.get(frozenset((joint, extended_vertex[0])), None)
-                    if extended_edges is not None:
-                        print(f"\nextended edges for {vertex_a} and {vertex_b}: {extended_edges}")
-                        print(f"joint: {joint}")
+                    extended_edges = [tuple(e) for e in virtual_edge_set.get(frozenset((joint, extended_vertex[0])), [])]
+                    print(f"extended edges: {extended_edges}")
+                    if len(extended_edges) > 0:
                         connections = get_vertex_sequence(edges=extended_edges,
-                                                          first_node=joint,
                                                           is_ordered=False)
+                        print(f"vertex sequence: {connections}")
 
                     # If no additional vertices exist, then connect only the joint and the
                     else:
                         connections = [joint, extended_vertex[0]]
+                        print(f"connections because no extension existed: {connections}")
 
                 # If no connections exist, the keep and empty list
                 else:
                     connections = [joint]
+                    print(f"connections because no connections exist: {connections}")
 
                 # Add another virtual vertex beyond the boundary
                 vertex_index += 1
@@ -89,7 +105,7 @@ def draw_all_line_segments(graph, positions, virtual_edge_set, bounds, already_e
                 connections.append(vertex_index)
 
                 # Add new edges (line segments) to graph if the edge does not yet exist
-                print(f"connections: {connections}")
+                print(f"connections to be connected: {connections}")
                 for index in range(1, len(connections)):
                     # edge = {connections[index - 1], connections[index]}
                     connection_a, connection_b = connections[index - 1], connections[index]

@@ -1235,15 +1235,12 @@ def merge_edge_map(old_edge_map: {frozenset: {frozenset}}, new_edge_map: {frozen
 def merge_connected_nodes(list_connected_nodes):
     all_connected_nodes = {}
     for connected_nodes in list_connected_nodes:
-        [print(f"{key} - {items}") for key, items in connected_nodes.items()]
         for connected_vertex in connected_nodes.keys():
-            print(f"connection vertex: {connected_vertex}")
             if connected_vertex not in all_connected_nodes.keys():
-                print(f"added")
                 all_connected_nodes[connected_vertex] = {}
             all_connected_nodes[connected_vertex].update(connected_nodes[connected_vertex])
-            [print(f"{key} - {items}") for key, items in all_connected_nodes.items()]
-    [all_connected_nodes.pop(v) for v in all_connected_nodes.keys() if len(all_connected_nodes.get(v)) == 0]
+    vertices = list(all_connected_nodes.keys())
+    [all_connected_nodes.pop(v) for v in vertices if len(all_connected_nodes.get(v)) == 0]
     return all_connected_nodes
 
 
@@ -1256,7 +1253,6 @@ def deep_update_of_virtual_edge_map(complete_map: {frozenset: {frozenset}}, new_
     input("CHECK STATUS")
     for intersected_edge, virtual_edges in new_map.items():
         mapped = [real_edge for real_edge in complete_map.keys() if intersected_edge in complete_map[real_edge]]
-        print(f"\nmapped {intersected_edge} to {mapped}")
 
         # Ensure that the new virtual edge mapped only to a single existing edge
         # assert(len(mapped) <= 1), \
