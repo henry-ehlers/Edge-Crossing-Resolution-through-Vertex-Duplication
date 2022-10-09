@@ -371,10 +371,10 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     draw_graph(graph=p_graph, positions=p_positions)
     save_drawn_graph(f"{drawing_directory}/graph_2.png")
 
-    test = deep_update_of_virtual_edge_map(virtual_edge_map, inner_graph_object["edge_map"])
+    test = merge_edge_map(virtual_edge_map, inner_graph_object["edge_map"])
     [print(f"{cell} - {edges}") for cell, edges in test.items()]
 
-    sys.exit()
+    # sys.exit()
 
     # Decompose the outer face into sight cells and update the planar graph
     print("\nDecompose The Outer Face")
@@ -433,44 +433,28 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print(f"selected faces: {selected_faces}")
 
     print(f"\nDraw All-to-All line segments")
-
-    print("pre deletion:")
-    [print(f"{edge} - {virtual_edge_map[edge]}") for edge in virtual_edge_map.keys()]
-
-    #
-    [virtual_edge_map.pop(cell) for cell in list(virtual_edge_map.keys()) if not virtual_edge_map[cell]]
-
-    print("Post deletion:")
-    [print(f"{edge} - {virtual_edge_map[edge]}") for edge in virtual_edge_map.keys()]
-
-    print("outer graph:")
-    [print(f"{edge} - {cell_graph_object[edge]}") for edge in cell_graph_object.keys()]
-
-    print(f"\nA:")
-    [print(f"{key} - {item}") for key, item in inner_graph_object["edge_map"].items()]
-    print(f"\nB")
-    [print(f"{key} - {item}") for key, item in cell_graph_object["edge_map"].items()]
-    sys.exit()
-
-    edge_map = {**inner_graph_object["edge_map"], **cell_graph_object["edge_map"]}
-    for edge in list(edge_map.keys()):
-        edge_map[frozenset(edge)] = edge_map[edge]
-        edge_map.pop(edge)
-    print(f"\nvirtual edge set:")
-    [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]
-    print(f"\n already extended:")
-    [print(f"{v}: {cell_graph_object['connected_nodes'][v]}")for v in cell_graph_object['connected_nodes'].keys()]
+    # edge_map = {**inner_graph_object["edge_map"], **cell_graph_object["edge_map"]}
+    # for edge in list(edge_map.keys()):
+    #     edge_map[frozenset(edge)] = edge_map[edge]
+    #     edge_map.pop(edge)
 
     print("-------------------------------------------------------------------------------------------")
-    connected_nodes = {**inner_graph_object['connected_nodes'], **cell_graph_object['connected_nodes']}
-    [print(f"{key} - {items}") for key, items in connected_nodes.items()]
     input("CONNECTED NODES")
-    # TODO: already connected nodes are missing the extensions to define the sightlines of the inner faces
-    #  see, for example, the missing 4 - > 10 -> 11 mapping
-    [print(f"{key} - {items}") for key, items in edge_map.items()]
-    # TODO: edge map is incomplete. virtual INNER faace nodes are missing
-    #  okk at {8, 6} which only maps tp {6, 10} and {10, 8}, but is missing does not incude the connections via node 11
+    print(f"\nA")
+    [print(f"{key} - {items}") for key, items in inner_graph_object['connected_nodes'].items()]
+    print(f"\nB")
+    [print(f"{key} - {items}") for key, items in cell_graph_object['connected_nodes'].items()]
+
+    connected_nodes = merge_connected_nodes([inner_graph_object['connected_nodes'],
+                                             cell_graph_object['connected_nodes']])
+    print(f"\nC")
+    [print(f"{key} - {items}") for key, items in connected_nodes.items()]
+
+
     input("EDGE MAP")
+    complete_edge_map = merge_edge_map(old_edge_map=inner_graph_object['connected_nodes'],
+                                       new_edge_map=cell_graph_object['connected_nodes'])
+    [print(f"{key} - {items}") for key, items in complete_edge_map.items()]
     sys.exit()
 
     s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,

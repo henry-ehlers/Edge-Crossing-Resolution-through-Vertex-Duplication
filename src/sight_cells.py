@@ -1232,6 +1232,21 @@ def merge_edge_map(old_edge_map: {frozenset: {frozenset}}, new_edge_map: {frozen
     return complete_edge_map
 
 
+def merge_connected_nodes(list_connected_nodes):
+    all_connected_nodes = {}
+    for connected_nodes in list_connected_nodes:
+        [print(f"{key} - {items}") for key, items in connected_nodes.items()]
+        for connected_vertex in connected_nodes.keys():
+            print(f"connection vertex: {connected_vertex}")
+            if connected_vertex not in all_connected_nodes.keys():
+                print(f"added")
+                all_connected_nodes[connected_vertex] = {}
+            all_connected_nodes[connected_vertex].update(connected_nodes[connected_vertex])
+            [print(f"{key} - {items}") for key, items in all_connected_nodes.items()]
+    [all_connected_nodes.pop(v) for v in all_connected_nodes.keys() if len(all_connected_nodes.get(v)) == 0]
+    return all_connected_nodes
+
+
 def deep_update_of_virtual_edge_map(complete_map: {frozenset: {frozenset}}, new_map: {frozenset: {frozenset}}):
 
     print("-------------------------------------------------------------")
@@ -1244,20 +1259,21 @@ def deep_update_of_virtual_edge_map(complete_map: {frozenset: {frozenset}}, new_
         print(f"\nmapped {intersected_edge} to {mapped}")
 
         # Ensure that the new virtual edge mapped only to a single existing edge
-        assert(len(mapped) <= 1), \
-            f"Virtual Edge Map found too many mappings of new virtual edge {intersected_edge} to {mapped}"
+        # assert(len(mapped) <= 1), \
+        #     f"Virtual Edge Map found too many mappings of new virtual edge {intersected_edge} to {mapped}"
 
         # Replace already virtual edge with a new list of virtual edges
-        if len(mapped) == 1:
+        if len(mapped) >= 1:
 
-            # Extract the intersected edge and identify where it is in the complete map
-            existing_edge = mapped.pop(0)  # can only be of length 1
-            print(f"mapped to existing edge: {existing_edge} @ {intersected_edge}")
-            complete_map[existing_edge].remove(intersected_edge)  # remove virtual edge from list of complete map\
-            print(f"virtual edges to be added: {virtual_edges}")
-            print(f"original edges in the set: {complete_map[existing_edge]}")
-            complete_map[existing_edge] = complete_map[existing_edge].union(virtual_edges)
-            print(f"edges after merger: {complete_map[existing_edge]}")
+            for existing_edge in mapped:
+                # Extract the intersected edge and identify where it is in the complete map
+                # existing_edge = mapped.pop(0)  # can only be of length 1
+                print(f"mapped to existing edge: {existing_edge} @ {intersected_edge}")
+                complete_map[existing_edge].remove(intersected_edge)  # remove virtual edge from list of complete map\
+                print(f"virtual edges to be added: {virtual_edges}")
+                print(f"original edges in the set: {complete_map[existing_edge]}")
+                complete_map[existing_edge] = complete_map[existing_edge].union(virtual_edges)
+                print(f"edges after merger: {complete_map[existing_edge]}")
 
         # Connection between two vertices which were previously unconnected
         else:
