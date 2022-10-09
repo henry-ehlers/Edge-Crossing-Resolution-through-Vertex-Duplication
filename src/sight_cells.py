@@ -830,7 +830,7 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
     # Create lists of vertices and edges that define the outer face
     all_face_edges = unlist([ordered_face_edges.get(face) for face in inner_faces if len(face) > 1])
 
-    face_edge_map = {edge: [edge] for edge in all_face_edges}
+    face_edge_map = {frozenset(edge): {frozenset(edge)} for edge in all_face_edges}
     connected_vertex_map = dict()
 
     # Iterate over all faces
@@ -899,8 +899,7 @@ def get_clockwise_face_vertices(face, ordered_face_edges, face_edge_map, positio
     return face_vertices
 
 
-def update_graph_and_virtual_edge_map(face, added_vertices, ordered_face_edges, face_edge_map,
-                                      edge_to_virtual_vertices, graph, positions, outer=False):
+def update_graph_and_virtual_edge_map(face_edge_map: {frozenset: {frozenset}}, edge_to_virtual_vertices, graph, positions, outer=False):
 
     # Update List of Vertices with added vertices and the set of edges which define the face
     face_vertices = graph.nodes
@@ -1134,25 +1133,32 @@ def find_outer_face_sight_cells(selected_faces, ordered_face_edges, graph, posit
     return sight_cells, ordered_cell_edges, face_edge_map, connected_vertex_map, outer_graph, outer_positions
 
 
-def deep_update_of_virtual_edge_map(complete_map, new_map):
+def deep_update_of_virtual_edge_map(complete_map: {frozenset: {frozenset}}, new_map: {frozenset: {frozenset}}):
 
     # TODO: edges must be frozensets -> mapping of (x, y) does not work for (y, x)
     #  maybe revamp this whole framework to just work on frozensets instead of tuples?
-    for virtual_edge in new_map.keys():
-        is_mapped = lambda edge, edge_list: frozenset(list(edge)) in [frozenset(e) for e in edge_list]
-        mapped = [real_edge for real_edge in complete_map.keys() if is_mapped(virtual_edge, complete_map[real_edge])]
 
+    for intersected_edge, virtual_edges in new_map.items():
+        mapped = [real_edge for real_edge in complete_map.keys() if intersected_edge in complete_map[real_edge]]
+        print(f"mapped {intersected_edge} to {mapped}")
+
+        # Ensure that the new virtual edge mapped only to a single existing edge
+        assert(len(mapped) == 1), \
+            f"Virtual Edge Map found too many mappings of new virtual edge {intersected_edge} to {mapped}"
+
+        # Replace already virtual edge with a new list of virtual edges
         if len(mapped) == 1:
-            real_edge = mapped[0]
-            real_edge_set_map = [frozenset(edge) for edge in complete_map[real_edge]]
-            index = real_edge_set_map.index(frozenset(virtual_edge))
-            real_edge_set_map[index:index] = new_map[virtual_edge]
-            real_edge_set_map.remove(frozenset(virtual_edge))
-            complete_map[real_edge] = [tuple(edge) for edge in real_edge_set_map]
-        elif len(mapped) > 1:
-            sys.exit("SHIT'S FUCKED")
+
+            # Extract the intersected edge and identify where it is in the complete map
+            existing_edge = mapped.pop(0)  # can only be of length 1
+            complete_map[existing_edge].remove(intersected_edge)  # remove virtual edge from list of complete map
+            complete_map[existing_edge].add(virtual_edges)  # insert new virtual edges (list of fset)
+
+        # Connection between two vertices which were previously unconnected
         else:
-            complete_map.update({virtual_edge: new_map[virtual_edge]})
+
+            # Update the complete edge map with a new dictionary entry and list of virtual edges
+            complete_map.update({intersected_edge: virtual_edges})
 
 
 def is_convex(inner_angles):

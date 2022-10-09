@@ -237,6 +237,7 @@ def get_inner_faces(target_vertices, graph, positions):
     # Get Incidence of Sight Cells Identified
     actual_cells = cells - convex_faces
     print(f"actual cells: {actual_cells}")
+
     # cell_edges = get_sight_cell_edges(actual_cells, graph)
     inner_cells_incidence = get_inner_face_sight_cell_incidences(sight_cells=actual_cells,
                                                                  target_vertices=target_vertices,
@@ -253,9 +254,14 @@ def get_inner_faces(target_vertices, graph, positions):
                                                                       positions=positions,
                                                                       graph=graph)
     print(f"sight_cells: {sight_cells}")
-    print(f"vertex map: {vertex_map}")
+    print(f"ordered edges:")
     ordered_edges = {**{face: sorted_inner_face_edges[face] for face in convex_faces},
                      **{cell: ordered_cell_edges[cell] for cell in actual_cells}}
+    [print(f"{cell} - {item}") for cell, item in ordered_edges.items()]
+    input("------------------------------------")
+    print(f"\nvertex map:")
+    [print(f"{cell} - {item}") for cell, item in face_edge_map.items()]
+    input(".....")
     print(f"ordered face edges:")
     [print(f"cell: {face} - {edges}") for face, edges in sorted_inner_face_edges.items()]
     input("...")
@@ -290,6 +296,8 @@ def get_inner_faces(target_vertices, graph, positions):
                         "ordered_cycle_edges": ordered_edges,
                         "edge_map": face_edge_map,
                         "vertex_map": vertex_map}
+
+    sys.exit()
 
     # Return both the incidence table and the sorted edges
     return inner_incidence_table, new_graph_object
@@ -393,9 +401,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Select the targets within which to embed split vertices
     print(f"\nSelect Embedding Cells/Faces")
-    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence],
-                                ignore_index=True,
-                                axis=0)
+    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence], ignore_index=True, axis=0)
     print(f"incidence table:")
     print(incidence_table)
     selected_cells = select_embedding_faces(incidence_table, target_adjacency)
@@ -406,7 +412,19 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print(f"selected faces: {selected_faces}")
 
     print(f"\nDraw All-to-All line segments")
+
+    print("pre deletion:")
+    [print(f"{edge} - {virtual_edge_set[edge]}") for edge in virtual_edge_set.keys()]
+
+    #
     [virtual_edge_set.pop(cell) for cell in list(virtual_edge_set.keys()) if not virtual_edge_set[cell]]
+
+    print("Post deletion:")
+    [print(f"{edge} - {virtual_edge_set[edge]}") for edge in virtual_edge_set.keys()]
+
+    print("outer graph:")
+    [print(f"{edge} - {cell_graph_object[edge]}") for edge in cell_graph_object.keys()]
+
     edge_map = {**virtual_edge_set, **cell_graph_object["edge_map"]}
     for edge in list(edge_map.keys()):
         edge_map[frozenset(edge)] = edge_map[edge]
@@ -414,8 +432,8 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print(f"\nvirtual edge set:")
     [print(f"{edge} - {edge_map[edge]}") for edge in edge_map.keys()]
     print(f"\n already extended:")
-    [print(f"{vertex}: {cell_graph_object['connected_nodes'][vertex]}")
-     for vertex in cell_graph_object['connected_nodes'].keys()]
+    [print(f"{v}: {cell_graph_object['connected_nodes'][v]}")for v in cell_graph_object['connected_nodes'].keys()]
+
     print("-------------------------------------------------------------------------------------------")
     connected_nodes = {**inner_graph_object['connected_nodes'], **cell_graph_object['connected_nodes']}
     [print(f"{key} - {items}") for key, items in connected_nodes.items()]
