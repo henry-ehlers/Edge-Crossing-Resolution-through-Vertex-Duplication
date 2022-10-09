@@ -147,7 +147,11 @@ def get_outer_face_sight_cell_incidences(sight_cells, target_vertices, face_edge
     return sight_cell_incidences
 
 
-def get_inner_face_sight_cell_incidences(sight_cells, target_vertices, face_edges, face_edge_map, positions):
+def get_inner_face_sight_cell_incidences(sight_cells: {frozenset},
+                                         target_vertices: [int],
+                                         face_edges: {frozenset: [(np.array, np.array)]},
+                                         face_edge_map: {frozenset: {frozenset}},
+                                         positions: {int: np.array}):
 
     # Initialize an empty map of sight cell to incidence
     sight_cell_incidences = {sight_cell: set() for sight_cell in sight_cells}
@@ -160,7 +164,8 @@ def get_inner_face_sight_cell_incidences(sight_cells, target_vertices, face_edge
 
         for face_index, face in enumerate(face_edges.keys()):
             # Extract all edges in the face, i.e. the virtual edges formed by virtual edge bisection
-            face_edge_list = unlist([face_edge_map[edge] for edge in face_edges[face]])
+            face_edge_list = [tuple(e) for key_edge in face_edges[face] for e in face_edge_map[frozenset(key_edge)]]
+            print(f"face edge list: {face_edge_list}")
 
             # Get Incidences of sight cells in current face
             visibility[face_index] = get_sight_cell_incidence(sight_cell_vertices=cell,
@@ -394,8 +399,12 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, edge_map: {
     extended_line = (positions[joint_vertex], closest_intersection_to_joint)
     # TODO: check also whether edge is part of virtual map => block all those as well
     candidate_edges = [edge for edge in edges if not set(edge).intersection((joint_vertex, connecting_vertex))]
-    closest_edge, crossing_point = find_closest_edge_intersection(
-        extended_line, candidate_edges, graph, positions, must_be_real=True)
+    print(f"candidate edges: {candidate_edges}")
+    closest_edge, crossing_point = find_closest_edge_intersection(edge_points=extended_line,
+                                                                  other_edges=candidate_edges,
+                                                                  graph=graph,
+                                                                  positions=positions,
+                                                                  must_be_real=True)
 
     # Add Virtual Vertex at Point of Intersection and a virtual edge between it and the origin
     origin_vertex, new_vertex_index = joint_vertex, max(graph.nodes) + 1
@@ -504,7 +513,12 @@ def check_vertex_visibility_by_crossing(vertex_a, vertex_b, candidate_edges, pos
     return True
 
 
-def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, ordered_cell_edges, positions, graph):
+def merge_cells_wrapper(face_sight_cells: {frozenset},
+                        cell_incidences: {frozenset: frozenset},
+                        cells_edge_map: {frozenset: {frozenset}},
+                        ordered_cell_edges: {frozenset: [(np.array, np.array)]},
+                        positions,
+                        graph):
     """"""
 
     #
@@ -542,11 +556,14 @@ def merge_cells_wrapper(face_sight_cells, cell_incidences, cells_edge_map, order
     return face_sight_cells, ordered_cell_edges, cell_vertex_map
 
 
-def update_merged_sight_cells(sight_cells, cell_incidences, edge_map, graph):
+def update_merged_sight_cells(sight_cells: {frozenset},
+                              cell_incidences: {frozenset: frozenset},
+                              edge_map: {frozenset: {frozenset}},
+                              graph):
 
     # Replace all vertices which are virtual, have a degree of 2, and connected only to virtual vertices
     virtual_nodes = nx.get_node_attributes(graph, "virtual")
-    cell_vertex_map = {copy.copy(cell): copy.copy(cell) for cell in sight_cells}
+    cell_vertex_map = {copy.deepcopy(cell): copy.deepcopy(cell) for cell in sight_cells}
 
     # Iterate over all vertices to determine whether it must be removed
     for node in list(graph.nodes()):
@@ -563,9 +580,12 @@ def update_merged_sight_cells(sight_cells, cell_incidences, edge_map, graph):
             continue
 
         # Remove Edge from edge map and vertex from sight cell
-        remove_elements_from_dictionary_frozenset_key(element=node, dictionary=cell_incidences)
-        remove_elements_from_dictionary_frozenset_key(element=node, dictionary=cell_vertex_map)
-        remove_vertex_from_sight_cell(vertex=node, sight_cells=sight_cells)
+        remove_elements_from_dictionary_frozenset_key(element=node,
+                                                      dictionary=cell_incidences)
+        remove_elements_from_dictionary_frozenset_key(element=node,
+                                                      dictionary=cell_vertex_map)
+        remove_vertex_from_sight_cell(vertex=node,
+                                      sight_cells=sight_cells)
 
     return cell_vertex_map
 
@@ -626,7 +646,7 @@ def remove_elements_from_dictionary_frozenset_key(element, dictionary):
         #
         new_key = set(key)
         new_key.remove(element)
-        dictionary[frozenset(new_key)] = copy.copy(dictionary[key])
+        dictionary[frozenset(new_key)] = copy.deepcopy(dictionary[key])
         dictionary.pop(key)
 
 
@@ -681,7 +701,7 @@ def update_sight_line_graph(face_vertices, edge_to_virtual_vertices, graph, posi
     print(f"\nface vertices in edge crossing check: {face_vertices}")
 
     # Remove edges which have been intersected, and replace them with ordered virtual edges
-    virtual_edge_map = add_virtual_edges(graph, positions, edge_to_virtual_vertices)
+    virtual_edge_map = add_virtual_edges(graph, positions, edge_to_virtual_vertices)  # TODO
     print("virtual edge map:")
     [print(f"{k} - {v}") for k, v in virtual_edge_map.items()]
     remove_edges(graph, edge_to_virtual_vertices.keys())
@@ -700,7 +720,8 @@ def update_sight_line_graph(face_vertices, edge_to_virtual_vertices, graph, posi
     if face_edge_crossings:
         virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
         print(f"virtual edges: {virtual_edges}")
-        non_empty_virtual_edges = {k: v for k, v in virtual_edges.items() if v}
+        non_empty_virtual_edges = {frozenset(k): [frozenset(v) for v in vs] for k, vs in virtual_edges.items() if vs}
+        print(f"non_empty edges: {non_empty_virtual_edges}")
         virtual_edge_map.update(non_empty_virtual_edges)
         graph.update(face_graph)
         positions.update(face_positions)
@@ -757,6 +778,7 @@ def project_additional_sight_lines(edges, origin_vertices, origin_angles, target
                 continue
 
             # Check whether bend and other vertex can 'see' each other
+            print(f"edges: {edges}")
             is_visible = is_vertex_visible(joint_vertex=joint_vertex,
                                            connecting_vertex=target_vertex,
                                            inner_angles=origin_angles,
@@ -854,10 +876,7 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
         # Update Graph and Virtual Edge Map with New added vertices
         print(f"\nconnected WITHIN FACE {face}: {connected_vertices}")
         update(connected_vertex_map, connected_vertices)
-        update_graph_and_virtual_edge_map(face,
-                                          added_vertices,
-                                          ordered_face_edges,
-                                          face_edge_map,
+        update_graph_and_virtual_edge_map(face_edge_map,
                                           edge_to_virtual_vertices,
                                           graph,
                                           positions,
@@ -915,6 +934,10 @@ def update_graph_and_virtual_edge_map(face_edge_map: {frozenset: {frozenset}}, e
                                                       positions=positions,
                                                       outer=outer)
 
+    #
+    print(f"virtual edge map:")
+    [print(f"{key} - {item}") for key, item in virtual_edge_map.items()]
+
     # Update the map of real to virtual edge maps
     deep_update_of_virtual_edge_map(complete_map=face_edge_map,
                                     new_map=virtual_edge_map)
@@ -941,7 +964,7 @@ def project_face_against_self(face, ordered_face_edges, face_edge_map, graph, po
     print(f"face angles in project_face_against_self: {face_angles}")
 
     # Replace original edges with their virtual counterparts
-    candidate_edges = unlist([face_edge_map.get(edge) for edge in face_edge_map.keys()])
+    candidate_edges = [tuple(edge) for edge_key in face_edge_map.keys() for edge in face_edge_map.get(edge_key)]
     print(f"candidate edges: {candidate_edges}")
 
     # Extend all sight lines, add new vertices where necessary, and keep track of edge bisection
@@ -1147,7 +1170,7 @@ def deep_update_of_virtual_edge_map(complete_map: {frozenset: {frozenset}}, new_
         print(f"mapped {intersected_edge} to {mapped}")
 
         # Ensure that the new virtual edge mapped only to a single existing edge
-        assert(len(mapped) == 1), \
+        assert(len(mapped) <= 1), \
             f"Virtual Edge Map found too many mappings of new virtual edge {intersected_edge} to {mapped}"
 
         # Replace already virtual edge with a new list of virtual edges
@@ -1155,8 +1178,11 @@ def deep_update_of_virtual_edge_map(complete_map: {frozenset: {frozenset}}, new_
 
             # Extract the intersected edge and identify where it is in the complete map
             existing_edge = mapped.pop(0)  # can only be of length 1
-            complete_map[existing_edge].remove(intersected_edge)  # remove virtual edge from list of complete map
-            complete_map[existing_edge].add(virtual_edges)  # insert new virtual edges (list of fset)
+            complete_map[existing_edge].remove(intersected_edge)  # remove virtual edge from list of complete map\
+            print(f"virtual edges to be added: {virtual_edges}")
+            print(f"original edges in the set: {complete_map[existing_edge]}")
+            complete_map[existing_edge] = complete_map[existing_edge].union(virtual_edges)
+            print(f"edges after merger: {complete_map[existing_edge]}")
 
         # Connection between two vertices which were previously unconnected
         else:
@@ -1186,5 +1212,7 @@ def are_vertices_adjacent(vertex_a, vertex_b, graph):
     return adjacent
 
 
-def are_vertices_adjacent_virtually(vertex_a, vertex_b, edge_map):  # TODO: rename function to are_real_vertices...
-    return {vertex_a, vertex_b} in edge_map.keys()
+def are_vertices_adjacent_virtually(vertex_a, vertex_b, edge_map: {frozenset: {frozenset}}):  # TODO: rename function to are_real_vertices...
+    print(f"keys; {list(edge_map.keys())}")
+    print(f"edge: {frozenset((vertex_a, vertex_b))}")
+    return frozenset((vertex_a, vertex_b)) in list(edge_map.keys())

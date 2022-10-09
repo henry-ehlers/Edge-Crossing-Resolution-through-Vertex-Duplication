@@ -259,8 +259,11 @@ def get_inner_faces(target_vertices, graph, positions):
                      **{cell: ordered_cell_edges[cell] for cell in actual_cells}}
     [print(f"{cell} - {item}") for cell, item in ordered_edges.items()]
     input("------------------------------------")
-    print(f"\nvertex map:")
+    print(f"\nedge map:")
     [print(f"{cell} - {item}") for cell, item in face_edge_map.items()]
+    input(".....")
+    print(f"\nvertex map:")
+    [print(f"{cell} - {item}") for cell, item in vertex_map.items()]
     input(".....")
     print(f"ordered face edges:")
     [print(f"cell: {face} - {edges}") for face, edges in sorted_inner_face_edges.items()]
@@ -296,8 +299,6 @@ def get_inner_faces(target_vertices, graph, positions):
                         "ordered_cycle_edges": ordered_edges,
                         "edge_map": face_edge_map,
                         "vertex_map": vertex_map}
-
-    sys.exit()
 
     # Return both the incidence table and the sorted edges
     return inner_incidence_table, new_graph_object
