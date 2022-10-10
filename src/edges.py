@@ -161,13 +161,14 @@ def get_vertex_sequence(edges, starting_vertex=None, is_ordered=False):
     else:
         ordered_edges = get_ordered_edges(edges=edges, starting_vertex=starting_vertex)
 
-    # Check whether the ordered edge list's first and last vertices are the same -> it's a cycle
-    if ordered_edges[0][0] == ordered_edges[-1][1]:
-        vertex_sequence = [edge[0] for edge in ordered_edges]
+    # Extract the vertex sequence consisting of the first vertex of each edge
+    vertex_sequence = [edge[0] for edge in ordered_edges]
+    print(f"sorted vertex sequence: {vertex_sequence}")
 
-    # If it is not a cycle, the end vertices must be treated differently
-    else:
-        vertex_sequence = [edge[0] for edge in ordered_edges] + ordered_edges[-1][1]
+    # If the edge list is not cyclical, it must be a sequence, so append the final vertex as well
+    if ordered_edges[0][0] != ordered_edges[-1][1]:
+        vertex_sequence.append(ordered_edges[-1][1])
+        print(f"sorted vertex sequence post append: {vertex_sequence}")
 
     # Return the ordered vertex sequence
     return vertex_sequence
