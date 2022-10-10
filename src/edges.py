@@ -82,7 +82,7 @@ def get_first_edge(edges: [(int, int)], starting_vertex: int) -> (int, int):
     assert True, f"Starting Vertex {starting_vertex} mapped to no edge {edges}"
 
 
-def get_ordered_edges(edges: [(int, int)], starting_vertex: int = None) -> [(int, int)]:
+def get_ordered_edges(edges, starting_vertex: int = None) -> [(int, int)]:
     """
     A function to sort a list of edges provided as tuples, such that the second vertex of an edge corresponds to the
     first vertex of the next edge, i.e. (a, c) (c, b) (b, a)
@@ -91,6 +91,9 @@ def get_ordered_edges(edges: [(int, int)], starting_vertex: int = None) -> [(int
     :return: a sorted list of edges
     """
 
+    # Convert input edges to tuples to accommodate set types
+    edges = [edge if type(edge) is tuple else tuple(edge) for edge in edges]
+    print(f"edges: {edges}")
     # Get a valid starting vertex / Ensure the provided one is valid
     starting_vertex = get_valid_starting_vertex(edges, starting_vertex)
 

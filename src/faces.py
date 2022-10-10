@@ -481,10 +481,7 @@ def identify_faces(faces, graph, positions):
 
     # Identify the minimum cycle basis of the graph
     cycles = [frozenset(cycle) for cycle in nx.minimum_cycle_basis(G=graph)]
-    cycle_edge_sets = {cycle: get_cycle_edges(cycle=cycle, graph=graph) for cycle in cycles}
-    print(f"CYCLED EDGES SETS ------------------------------ \n{cycle_edge_sets}")
-    ordered_edges = {cycle: get_ordered_edges([tuple(edge) for edge in cycle_edge_sets[cycle]]) for cycle in cycles}
-    print(f"ORDERED EDGES ------------------------------ \n{ordered_edges}")
+    ordered_edges = {cycle: get_ordered_edges(get_cycle_edges(cycle=cycle, graph=graph)) for cycle in cycles}
     ordered_nodes = {cycle: get_vertex_sequence(edges=ordered_edges[cycle], is_ordered=True) for cycle in cycles}
 
     #
