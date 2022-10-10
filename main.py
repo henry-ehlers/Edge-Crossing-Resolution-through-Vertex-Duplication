@@ -89,15 +89,20 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
     print(cell_incidence_table)
     input("__________________")
 
+    print(f"\nedge map:")
+    [print(f"{key} - {item}") for key, item in edge_map.items()]
+    print(f"\n\nedges:")
+    [print(f"{key} - {item}") for key, item in ordered_cell_edges.items()]
+
     # Return Everything if no single sight cell can realize the incidence of the face
-    new_graph_object = {"cells":           sight_cells,
-                        "incidences":      cell_incidences,
-                        "connected_nodes": connected_vertices,
-                        "ordered_cycle_edges": ordered_cell_edges,
-                        "edge_map":        edge_map,
-                        "vertex_map":      vertex_map,
-                        "graph":           o_graph,
-                        "positions":       o_positions}
+    new_graph_object = {"cells":                sight_cells,
+                        "incidences":           cell_incidences,
+                        "connected_nodes":      connected_vertices,
+                        "ordered_cycle_edges":  ordered_cell_edges,
+                        "edge_map":             edge_map,
+                        "vertex_map":           vertex_map,
+                        "graph":                o_graph,
+                        "positions":            o_positions}
 
     return cell_incidence_table, new_graph_object
 
@@ -440,7 +445,6 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     # Select the targets within which to embed split vertices
     print(f"\nSelect Embedding Cells/Faces")
     incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence], ignore_index=True, axis=0)
-    print(incidence_table)
     selected_cells = select_embedding_faces(incidence_table, target_adjacency)
     selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
     input("Start All Line Segmentation")
@@ -458,29 +462,33 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     draw_graph(graph=s_graph, positions=s_positions)
     save_drawn_graph(f"{drawing_directory}/graph_4.png")
 
-    sys.exit()
-
     print(f"\nCull Non-Selected Line Segments")
     print(f"cells: {incidence_table['identifier'].tolist()}")
-    # TODO: get rid of this ordered face call -> extract it from the two graph objects
-    complete_cell_edge_map = get_ordered_face_edges(faces=incidence_table['identifier'].tolist(),
-                                                    graph=d_graph)
-    [print(f"{cell} - {complete_cell_edge_map[cell]}") for cell in complete_cell_edge_map.keys()]
 
-    print(f"\nFace edge map:")
-    print(complete_cell_edge_map)
+    print(f"A ------------------------------------------------------------------------")
     [print(f"{key} - {item}") for key, item in inner_graph_object["vertex_map"].items()]
-    print("check inner")
+    print(f"B ------------------------------------------------------------------------")
     [print(f"{key} - {item}") for key, item in cell_graph_object["vertex_map"].items()]
-    print("check outer")
-
     complete_vertex_map = {**inner_graph_object["vertex_map"], **cell_graph_object["vertex_map"]}
+    print(f"C ------------------------------------------------------------------------")
     [print(f"{key} - {item}") for key, item in complete_vertex_map.items()]
     input("check complete")
-    #
+
+    # TODO: this merger MAY be incomplete? -> if an inner face's outer edge was bisected by an outer face's sight
+    #  extension, this may not be accounted for
+    complete_face_edges = {**inner_graph_object["ordered_cycle_edges"], **cell_graph_object["ordered_cycle_edges"]}
+    print(f"A ------------------------------------------------------------------------")
+    [print(f"{key} - {item}") for key, item in inner_graph_object["ordered_cycle_edges"].items()]
+    print(f"B ------------------------------------------------------------------------")
+    [print(f"{key} - {item}") for key, item in cell_graph_object["ordered_cycle_edges"].items()]
+    print(f"C ------------------------------------------------------------------------")
+    [print(f"{key} - {item}") for key, item in complete_face_edges.items()]
+    input("CHECK")
+
+    # Cull all segments which do not intersect the two selected faces
     c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
         target_faces=selected_faces,
-        face_edge_map=complete_cell_edge_map,
+        face_edge_map=complete_face_edges,
         face_vertex_map=complete_vertex_map,
         segment_edge_map=s_edge_map,
         graph=s_graph,
@@ -489,7 +497,19 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)
     save_drawn_graph(f"{drawing_directory}/graph_5.png")
-    # TODO: fix sub-face identification using inner_face call
+
+    # Create Subface Graph ---------------------------------------------------------------------------------------------
+
+    # TODO: debug this!
+    # Traceback (most recent call last):
+    #   File "main.py", line 662, in <module>
+    #     split, graph, positions, labels = split_vertex(graph, positions, labels, drawing_directory=drawing_directory)
+    #   File "main.py", line 503, in split_vertex
+    #     subface_edge_set, subface_vertex_map = create_subface_graph(
+    #   File "/home/hehlers/Documents/PhD Visualization/projects/Edge Crossing Resolution through Vertex Duplications/src/line_segments.py", line 295, in create_subface_graph
+    #     face_vertex_map[target_face].add(vertex_index)
+    # AttributeError: 'frozenset' object has no attribute 'add'
+
     subface_edge_set, subface_vertex_map = create_subface_graph(
         graph=c_graph,
         positions=c_positions,
@@ -503,8 +523,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Identify all edge crossings in the faces, planarize the graph, and update the face's vertex sets
     print(f"\nSUBFACE CREATION")
-    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(graph=c_graph,
-                                                                       positions=c_positions)
+    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(graph=c_graph, positions=c_positions)
     plane_face_virtual_edge_map = planarize_graph(graph=c_graph,
                                                   positions=c_positions,
                                                   edge_crossings=face_edge_crossings)
@@ -519,7 +538,8 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print(f"\nSUBFACE SELECTION")
     plane_graph_sub_faces = find_all_subfaces(target_faces=selected_faces,
                                               face_vertex_map=subface_vertex_map,
-                                              graph=c_graph)
+                                              graph=c_graph,
+                                              positions=c_positions)
 
     # Calculate each subface's centroid
     subface_centroids = get_split_vertex_locations(positions=c_positions,
@@ -531,9 +551,9 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
                                                               centroids=subface_centroids,
                                                               target_neighbors=target_adjacency)
 
-    # Get Sub_face's edge set
-    subfaces_edge_sets = get_face_sub_face_edge_sets(face_sub_cells=plane_graph_sub_faces,
-                                                     graph=c_graph)
+    # # Get Sub_face's edge set
+    # subfaces_edge_sets = get_face_sub_face_edge_sets(face_sub_cells=plane_graph_sub_faces,
+    #                                                  graph=c_graph)
 
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)

@@ -120,9 +120,6 @@ def draw_all_line_segments(graph,
             print(f"virtual_edges: {virtual_edges}")
             segment_edge_map[frozenset(new_boundary_vertices)] = [set(edge) for edge in virtual_edges]
 
-    print(f"\nSEGMENT MAP:")
-    [print(f"{key} - {item}") for key, item in segment_edge_map.items()],
-
     # Return new graph and positions objects
     return segment_graph, segment_positions, segment_edge_map
 
@@ -192,6 +189,7 @@ def cull_all_line_segment_graph(target_faces, face_edge_map, face_vertex_map, se
 
                 # Check Whether Edge Crosses the faces
                 for face_edge in face_edge_map[face]:
+                    print(f"face edge: {face_edge}")
 
                     # Determine if line actually passes through one of the vertices which define the face
                     if {vertex_a, vertex_b} & {face_edge[0], face_edge[1]}:
@@ -271,7 +269,7 @@ def create_subface_graph(graph, positions, target_faces, face_vertex_map, face_i
     # face_vertex_map = {face: set() for face in target_faces}
 
     # Update face vertex map to feature sets, not frozensets
-    face_vertex_map.update({face: set(vertices) for face, vertices in face_vertex_map.items()})
+    # face_vertex_map.update({face: set(vertices) for face, vertices in face_vertex_map.items()})
 
     for target_face in target_faces:
         # [face_vertex_map[target_face].add(face_vertex) for face_vertex in list(target_face)]
