@@ -84,6 +84,7 @@ def draw_all_line_segments(graph,
                     print(f"extended edges: {extended_edges}")
                     if len(extended_edges) > 0:
                         connections = get_vertex_sequence(edges=extended_edges,
+                                                          starting_vertex=joint,
                                                           is_ordered=False)
                         print(f"vertex sequence: {connections}")
 
