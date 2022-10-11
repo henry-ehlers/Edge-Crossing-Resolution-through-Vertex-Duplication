@@ -255,6 +255,8 @@ def get_inner_faces(target_vertices: [int],
 
     # Get Incidence of Sight Cells Identified
     actual_cells = cells - convex_faces
+    # {frozenset({1, 12, 6}), frozenset({1, 10, 11, 13}), frozenset({1, 13, 9}), frozenset({1, 11, 12}), frozenset({1, 5, 9})}
+    # {frozenset({1, 11, 12}), frozenset({1, 12, 6}), frozenset({1, 10, 11, 13}), frozenset({1, 5, 9, 13})}
     print(f"actual cells: {actual_cells}")
 
     # cell_edges = get_sight_cell_edges(actual_cells, graph)
@@ -275,7 +277,7 @@ def get_inner_faces(target_vertices: [int],
     print(f"sight_cells: {sight_cells}")
     print(f"ordered edges:")
     ordered_edges = {**{face: sorted_inner_face_edges[face] for face in convex_faces},
-                     **{cell: ordered_cell_edges[cell] for cell in actual_cells}}
+                     **{cell: ordered_cell_edges[cell] for cell in ordered_cell_edges.keys()}}
     [print(f"{cell} - {item}") for cell, item in ordered_edges.items()]
     input("------------------------------------")
     print(f"\nedge map:")
