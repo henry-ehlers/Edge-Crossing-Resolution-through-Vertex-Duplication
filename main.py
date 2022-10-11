@@ -211,7 +211,8 @@ def update_graph_with_sight_cells(graph, positions, cell_graph, cell_positions, 
 
 def get_inner_faces(target_vertices: [int],
                     graph,
-                    positions):
+                    positions,
+                    outer_bounds):
 
     # Identify the graph's inner faces
     inner_faces, sorted_inner_face_vertices, sorted_inner_face_edges = find_inner_faces(graph=graph,
@@ -225,7 +226,8 @@ def get_inner_faces(target_vertices: [int],
         inner_faces=inner_faces,
         ordered_face_edges=sorted_inner_face_edges,
         graph=graph,
-        positions=positions)
+        positions=positions,
+        bounds=outer_bounds)
 
     print(f"\n connected nodes:")
     [print(f"cell: {cell} - {vertices}") for cell, vertices in connected_vertex_map.items()]
@@ -366,10 +368,13 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Get Inner Faces
     print(f"\nIdentify the Inner Faces")
-    # REMEMBER: the inner_graph_object does not produce a new graph/position pair. the input graph is modified in place
+    outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=1.5)
+    print(f"outer bounds: {outer_bounds}")
+    input("as;lkdfjals;kdf")
     inner_face_incidence, inner_graph_object = get_inner_faces(target_vertices=target_adjacency,
                                                                graph=p_graph,
-                                                               positions=p_positions)
+                                                               positions=p_positions,
+                                                               outer_bounds=outer_bounds)
 
     print(inner_face_incidence)
 
@@ -384,7 +389,6 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Decompose the outer face into sight cells and update the planar graph
     print("\nDecompose The Outer Face")
-    outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=1.5)
     outer_cell_incidence, cell_graph_object = decompose_outer_face(
         sorted_inner_face_edges=inner_graph_object["ordered_cycle_edges"],
         graph=p_graph,

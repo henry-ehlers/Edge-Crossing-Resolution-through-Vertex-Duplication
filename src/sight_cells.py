@@ -392,8 +392,12 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, edge_map: {
 
     # Calculate intersections of extended line with boundaries in both directions
     bound_intersections = extend_line(positions[joint_vertex], positions[connecting_vertex], bounds)
+    distances = [squared_distance(position, positions[connecting_vertex]) for position in bound_intersections]
     closest_intersection_to_joint = bound_intersections[0]
-
+    print(f"\nbound intersections: {bound_intersections}")
+    print(f"distances: {distances}")
+    print(f"closest: {closest_intersection_to_joint}")
+    input("WHAT?")
     # If vertices are adjacent, they can see one-another; otherwise we must check explicitly
     already_connected = are_vertices_adjacent(joint_vertex, connecting_vertex, graph) \
         or are_vertices_adjacent_virtually(joint_vertex, connecting_vertex, edge_map)
@@ -414,9 +418,11 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, edge_map: {
 
     # Find the Closest Intersection of the extended line with edges not incident to joint or connecting vertex
     extended_line = (positions[joint_vertex], closest_intersection_to_joint)
+    print(f"extended line: {extended_line}")
     # TODO: check also whether edge is part of virtual map => block all those as well
     candidate_edges = [edge for edge in edges if not set(edge).intersection((joint_vertex, connecting_vertex))]
     print(f"candidate edges: {candidate_edges}")
+    print(f"positions: {positions}")
     closest_edge, crossing_point = find_closest_edge_intersection(edge_points=extended_line,
                                                                   other_edges=candidate_edges,
                                                                   graph=graph,
