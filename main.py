@@ -445,9 +445,14 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     # Select the targets within which to embed split vertices
     print(f"\nSelect Embedding Cells/Faces")
     incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence], ignore_index=True, axis=0)
+    print(incidence_table)
+    print(f"")
     selected_cells = select_embedding_faces(incidence_table, target_adjacency)
     selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
+    print(f"\nselected faces: {selected_cells}")
+    print(f"\nselected faces: {selected_faces}")
     input("Start All Line Segmentation")
+    sys.exit()
 
     # All-to-All Line Segments ---------------------------------------------------------------------------------
     s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
