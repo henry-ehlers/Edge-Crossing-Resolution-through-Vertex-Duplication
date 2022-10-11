@@ -243,12 +243,15 @@ def get_sight_cell_incidence(sight_cell_vertices, target_vertices, real_face_edg
     return sight_cell_incidence
 
 
-def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph):
-
+def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph, positions):
+    print(f"\nEdge List:")
+    [print(f"{key} - {item}") for key, item in cells_edge_list.items()]
+    print(f"\nIncidence:")
+    [print(f"{key} - {item}") for key, item in cell_incidences.items()]
     for index_a in range(0, len(cells) - 1):
         for index_b in range(index_a + 1, len(cells)):
             cell_a, cell_b = cells[index_a], cells[index_b]
-            print(f"trying to merge {cell_a} and {cell_b}")
+
             # Attempt to merge the two cells, return a boolean for success and a (possibly empty) vertex ID
             merge_successful = try_merge_two_sight_cells(cell_a=cell_a,
                                                          cell_b=cell_b,
@@ -259,12 +262,17 @@ def merge_face_sight_cells(cells, cells_edge_list, cell_incidences, graph):
 
             # If the merge was successful, recurse
             if merge_successful:
-                print(f"merged")
+                print(f"merged {cell_a} and {cell_b}")
+
+                # draw_graph(graph=graph, positions=positions)
+                # save_drawn_graph(f"./{cell_a}_{cell_b}.png")
+
                 # Recurse and repeat merging
                 merge_face_sight_cells(cells=cells,
                                        cells_edge_list=cells_edge_list,
                                        cell_incidences=cell_incidences,
-                                       graph=graph)
+                                       graph=graph,
+                                       positions=positions)
 
                 # Exit recursion (as the set of cells has changed) and return the removed vertices
                 return
@@ -282,7 +290,6 @@ def try_merge_two_sight_cells(cell_a, cell_b, cells, cells_edge_list, cell_incid
     non_overlapping_incidences = incidence_a ^ incidence_b
 
     if (non_overlapping_incidences) or (len(merge_edges)) == 0 or (merge_edges in real_edges):
-        print(f"no overlap or merge edge illegal")
         return False
 
     # Determine the new cell's vertex set and edge list
@@ -544,7 +551,8 @@ def merge_cells_wrapper(face_sight_cells: {frozenset},
     merge_face_sight_cells(cells=face_sight_cells,
                            cells_edge_list=cells_edge_list,
                            cell_incidences=cell_incidences,
-                           graph=graph)
+                           graph=graph,
+                           positions=positions)
     face_sight_cells = set(face_sight_cells)
 
     # Update the face's cells, their incidents, and edges based on deleted vertices
@@ -553,6 +561,14 @@ def merge_cells_wrapper(face_sight_cells: {frozenset},
                                                 edge_map=cells_edge_map,
                                                 graph=graph)
 
+    print(f"\nPOST MERGE --------------------------------------------------------------------------")
+    print(f"\nEdge List:")
+    [print(f"{key} - {item}") for key, item in cells_edge_list.items()]
+    print(f"\nEdge List:")
+    [print(f"{key} - {item}") for key, item in cells_edge_list.items()]
+    print(f"\nCells:")
+    [print(f"{cell}") for cell in face_sight_cells]
+    input("pass?")
     #
     ordered_cell_edges = {cell: [] for cell in face_sight_cells}
     for cell in face_sight_cells:
@@ -594,8 +610,8 @@ def update_merged_sight_cells(sight_cells: {frozenset},
                                                       dictionary=cell_incidences)
         remove_elements_from_dictionary_frozenset_key(element=node,
                                                       dictionary=cell_vertex_map)
-        remove_vertex_from_sight_cell(vertex=node,
-                                      sight_cells=sight_cells)
+        # remove_vertex_from_sight_cell(vertex=node,
+        #                               sight_cells=sight_cells)
 
     return cell_vertex_map
 

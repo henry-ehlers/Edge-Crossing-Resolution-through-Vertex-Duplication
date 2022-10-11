@@ -333,7 +333,8 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
         graph=graph, positions=positions)
 
     print(f"target vertex: {target_vertex}")
-
+    print(f"target adjacency: {target_adjacency}")
+    input("FLKSDFJ")
     if target_vertex is None:
         return False, graph, positions, labels
 
@@ -452,7 +453,6 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print(f"\nselected faces: {selected_cells}")
     print(f"\nselected faces: {selected_faces}")
     input("Start All Line Segmentation")
-    sys.exit()
 
     # All-to-All Line Segments ---------------------------------------------------------------------------------
     s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
@@ -505,15 +505,6 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Create Subface Graph ---------------------------------------------------------------------------------------------
 
-    # TODO: debug this!
-    # Traceback (most recent call last):
-    #   File "main.py", line 662, in <module>
-    #     split, graph, positions, labels = split_vertex(graph, positions, labels, drawing_directory=drawing_directory)
-    #   File "main.py", line 503, in split_vertex
-    #     subface_edge_set, subface_vertex_map = create_subface_graph(
-    #   File "/home/hehlers/Documents/PhD Visualization/projects/Edge Crossing Resolution through Vertex Duplications/src/line_segments.py", line 295, in create_subface_graph
-    #     face_vertex_map[target_face].add(vertex_index)
-    # AttributeError: 'frozenset' object has no attribute 'add'
 
     subface_edge_set, subface_vertex_map = create_subface_graph(graph=c_graph,
                                                                 positions=c_positions,
