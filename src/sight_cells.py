@@ -729,6 +729,7 @@ def update_sight_line_graph(face_vertices: [int],
     print(f"face positions: {face_positions}")
     face_graph = nx.Graph(graph.subgraph(nodes=face_vertices))
     print(f"face graph vertices: {face_graph.nodes()}")
+    input(f"sight line face graph is frozen: {nx.is_frozen(face_graph)}")
     # Find remaining edge crossings (between placed line-segments) and replace them with virtual vertices
     face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
     print(f"\nedge crossings: {face_edge_crossings}")

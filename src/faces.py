@@ -332,7 +332,10 @@ def ilp_choose_face(visibility_matrix):
     return (faces)
 
 
-def find_all_subfaces(target_faces, face_vertex_map, graph, positions):
+def find_all_subfaces(target_faces: [set],
+                      face_vertex_map: {frozenset: set},
+                      graph,
+                      positions):
 
     # TODO: rework this nonsense to work with our updated data structures and
     # Prepare dictionary of sets within which to store all found faces per face
@@ -343,10 +346,14 @@ def find_all_subfaces(target_faces, face_vertex_map, graph, positions):
 
         # Extrac
         vertex_set = face_vertex_map.get(face)
+        print(f"vertex set of face {face}: {vertex_set}")
 
         # Keep only vertices pertaining to current subgraph and search for cycle basis within
-        subgraph = copy.deepcopy(graph).subgraph(list(vertex_set))
-        faces, sorted_face_vertices, sorted_face_edges = find_inner_faces(subgraph, positions)
+        # subgraph = copy.deepcopy(graph).subgraph(list(vertex_set))
+        subgraph = nx.Graph(graph.subgraph(nodes=list(vertex_set)))
+        print(nx.is_frozen(subgraph))
+        faces, sorted_face_vertices, sorted_face_edges = find_inner_faces(graph=subgraph,
+                                                                          positions=positions)
         subfaces[face] = faces
 
     # Return all subfaces for each target face

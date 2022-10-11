@@ -257,7 +257,11 @@ def cull_all_line_segment_graph(target_faces, face_edge_map, face_vertex_map, se
     return culled_graph, culled_positions, face_intersection_map
 
 
-def create_subface_graph(graph, positions, target_faces, face_vertex_map, face_intersection_map):
+def create_subface_graph(graph,
+                         positions,
+                         target_faces: [set],
+                         face_vertex_map: {frozenset: frozenset},
+                         face_intersection_map):
 
     # Iterate over all (hopefully 2) target faces
     node_list = list(graph.nodes())
@@ -269,7 +273,7 @@ def create_subface_graph(graph, positions, target_faces, face_vertex_map, face_i
     # face_vertex_map = {face: set() for face in target_faces}
 
     # Update face vertex map to feature sets, not frozensets
-    # face_vertex_map.update({face: set(vertices) for face, vertices in face_vertex_map.items()})
+    face_vertex_map.update({face: set(vertices) for face, vertices in face_vertex_map.items()})
 
     for target_face in target_faces:
         # [face_vertex_map[target_face].add(face_vertex) for face_vertex in list(target_face)]

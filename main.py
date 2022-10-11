@@ -510,12 +510,11 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     #     face_vertex_map[target_face].add(vertex_index)
     # AttributeError: 'frozenset' object has no attribute 'add'
 
-    subface_edge_set, subface_vertex_map = create_subface_graph(
-        graph=c_graph,
-        positions=c_positions,
-        target_faces=selected_faces,
-        face_vertex_map=complete_vertex_map,
-        face_intersection_map=intersection_map)
+    subface_edge_set, subface_vertex_map = create_subface_graph(graph=c_graph,
+                                                                positions=c_positions,
+                                                                target_faces=selected_faces,
+                                                                face_vertex_map=complete_vertex_map,
+                                                                face_intersection_map=intersection_map)
 
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)
@@ -523,7 +522,8 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Identify all edge crossings in the faces, planarize the graph, and update the face's vertex sets
     print(f"\nSUBFACE CREATION")
-    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(graph=c_graph, positions=c_positions)
+    face_edge_crossings, face_vertex_crossings = locate_edge_crossings(graph=c_graph,
+                                                                       positions=c_positions)
     plane_face_virtual_edge_map = planarize_graph(graph=c_graph,
                                                   positions=c_positions,
                                                   edge_crossings=face_edge_crossings)
@@ -550,10 +550,6 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
                                                               positions=r_positions,
                                                               centroids=subface_centroids,
                                                               target_neighbors=target_adjacency)
-
-    # # Get Sub_face's edge set
-    # subfaces_edge_sets = get_face_sub_face_edge_sets(face_sub_cells=plane_graph_sub_faces,
-    #                                                  graph=c_graph)
 
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)
