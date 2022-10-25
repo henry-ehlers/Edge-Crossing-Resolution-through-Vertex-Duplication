@@ -128,6 +128,7 @@ def get_outer_face_sight_cell_incidences(sight_cells: {frozenset},
                                          face_edges: {frozenset: [(int, int)]},
                                          face_edge_map: {frozenset: {frozenset}},
                                          positions):
+
     [print(f"{key} - {item}") for key, item in face_edge_map.items()]
     # input("+++++++++++++++++++++++++++++++++")
 
@@ -598,26 +599,26 @@ def update_merged_sight_cells(sight_cells: {frozenset},
     cell_vertex_map = {copy.deepcopy(cell): copy.deepcopy(cell) for cell in sight_cells}
 
     # Iterate over all vertices to determine whether it must be removed
-    for node in list(graph.nodes()):
-
-        # Get the current node's edges
-        node_edges = list(graph.edges(node))
-
-        # If the node has a degree of more than 2, it must remain
-        if len(node_edges) != 0:
-            continue
-
-        # If the node is not virtual, do not consider it
-        if node not in virtual_nodes:
-            continue
-
-        # Remove Edge from edge map and vertex from sight cell
-        remove_elements_from_dictionary_frozenset_key(element=node,
-                                                      dictionary=cell_incidences)
-        remove_elements_from_dictionary_frozenset_key(element=node,
-                                                      dictionary=cell_vertex_map)
-        # remove_vertex_from_sight_cell(vertex=node,
-        #                               sight_cells=sight_cells)
+    # for node in list(graph.nodes()):
+    #
+    #     # Get the current node's edges
+    #     node_edges = list(graph.edges(node))
+    #
+    #     # If the node has a degree of more than 2, it must remain
+    #     if len(node_edges) != 0:
+    #         continue
+    #
+    #     # If the node is not virtual, do not consider it
+    #     if node not in virtual_nodes:
+    #         continue
+    #
+    #     # Remove Edge from edge map and vertex from sight cell
+    #     # remove_elements_from_dictionary_frozenset_key(element=node,
+    #     #                                               dictionary=cell_incidences)
+    #     remove_elements_from_dictionary_frozenset_key(element=node,
+    #                                                   dictionary=cell_vertex_map)
+    #     # remove_vertex_from_sight_cell(vertex=node,
+    #     #                               sight_cells=sight_cells)
 
     return cell_vertex_map
 
@@ -1199,9 +1200,6 @@ def find_outer_face_sight_cells(selected_faces: {frozenset},
                     outer_positions,
                     outer_graph,
                     bounds)
-            elif not is_cycle[other_face] and len(other_face) > 1:
-                # TODO: if other face is not a cycle -> special visiblility checking of ONLY edge intersections
-                continue
             elif not is_cycle[other_face] and len(other_face) == 1:
                 edge_to_virtual_vertices, added_vertices, connected_vertices = project_outer_face_against_singleton(
                     face,

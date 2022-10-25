@@ -53,7 +53,7 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
         bounds=bounds)
     print(f"\nGET OUTER FACE SIGHT CELL")
     [print(f"{cell} - {edges}") for cell, edges in ordered_cell_edges.items()]
-    # input("...........")
+    input("cells")
 
     # Calculate the incidence of all sight cells to the outer face's target incident vertices
     outer_face = set().union(*outer_faces)
@@ -67,7 +67,7 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                            positions=o_positions)
     print(f"\ncell incidence:")
     [print(f"{cell} - {incidence}") for cell, incidence in cell_incidences.items()]
-    # input("...")
+    input("...")
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     # outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
@@ -470,6 +470,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
     print(f"\nselected faces: {selected_cells}")
     print(f"\nselected faces: {selected_faces}")
+    input(";alsdkjf;lsadkfa;sdlkfj")
     # input("Start All Line Segmentation")
 
     # All-to-All Line Segments ---------------------------------------------------------------------------------
@@ -492,14 +493,16 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     [print(f"{key} - {item}") for key, item in inner_graph_object["vertex_map"].items()]
     print(f"B ------------------------------------------------------------------------")
     [print(f"{key} - {item}") for key, item in cell_graph_object["vertex_map"].items()]
-    complete_vertex_map = {**inner_graph_object["vertex_map"], **cell_graph_object["vertex_map"]}
+    complete_vertex_map = {**inner_graph_object["vertex_map"],
+                           **cell_graph_object["vertex_map"]}
     print(f"C ------------------------------------------------------------------------")
     [print(f"{key} - {item}") for key, item in complete_vertex_map.items()]
     # input("check complete")
 
     # TODO: this merger MAY be incomplete? -> if an inner face's outer edge was bisected by an outer face's sight
     #  extension, this may not be accounted for
-    complete_face_edges = {**inner_graph_object["ordered_cycle_edges"], **cell_graph_object["ordered_cycle_edges"]}
+    complete_face_edges = {**inner_graph_object["ordered_cycle_edges"],
+                           **cell_graph_object["ordered_cycle_edges"]}
     print(f"A ------------------------------------------------------------------------")
     [print(f"{key} - {item}") for key, item in inner_graph_object["ordered_cycle_edges"].items()]
     print(f"B ------------------------------------------------------------------------")
@@ -523,7 +526,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Create Subface Graph ---------------------------------------------------------------------------------------------
 
-
+    #
     subface_edge_set, subface_vertex_map = create_subface_graph(graph=c_graph,
                                                                 positions=c_positions,
                                                                 target_faces=selected_faces,
@@ -634,13 +637,13 @@ if __name__ == '__main__':
     # Specify vertices and edges
     # todo: the example below causes floating point crashes as all their x and y points are identical
     # coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
-    # coordinates = [(0.001, 2.003), (1.001, 0.005), (2.003, 1.002), (3.004, 0.002),
-    #                (4.003, 2.006), (2.001, 4.004)]
+    # coordinates = [np.array((0.001, 2.003)), np.array((1.001, 0.005)), np.array((2.003, 1.002)),
+    #                np.array((3.004, 0.002)), np.array((4.003, 2.006)), np.array((2.001, 4.004))]
     #
     # vertices = range(0, len(coordinates))
     # edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
     #
-    # more_coordinates = [(-2.0004, 1.5004), (-1.16, 1.55), (-1.004, 0.507)]
+    # more_coordinates = [np.array((-2.0004, 1.5004)), np.array((-1.16, 1.55)), np.array((-1.004, 0.507))]
     # more_vertices = range(len(coordinates), len(coordinates) + len(more_coordinates))
     #
     # more_edges = ((more_vertices[index], more_vertices[(index + 1) % len(more_vertices)])
@@ -665,14 +668,14 @@ if __name__ == '__main__':
     #     graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
     # for edge in custom_edges:
     #     graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
-    # positions = {vertices[index]: np.array(coordinates[index]) for index in range(0, len(coordinates))}
+    # positions = {vertices[index]: coordinates[index] for index in range(0, len(coordinates))}
     # positions.update(
-    #     {more_vertices[index]: np.array(more_coordinates[index]) for index in range(0, len(more_vertices))})
+    #     {more_vertices[index]: more_coordinates[index] for index in range(0, len(more_vertices))})
     # positions.update({v_index: np.array((0.0, 1.0))})
     #
     # graph.add_node(10, real=1)
     # graph.add_edge(u_of_edge=9, v_of_edge=10, real=1)
-    # positions[10] = (2.49, 2.55)
+    # positions[10] = np.array((2.49, 2.55))
 
     graph = create_barabasi_albert_graph(n=n_vertices, m=m_edges, seed=seed)
     positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)

@@ -6,7 +6,7 @@ import networkx as nx
 def get_embedding_square(graph, positions, scaler=1):
     maximum = float("-inf")
     for vertex in graph.nodes:
-        largest_node_coordinate = max(abs(positions[vertex]))
+        largest_node_coordinate = max([abs(x) for x in positions[vertex]])
         if largest_node_coordinate <= maximum:
             continue
         maximum = largest_node_coordinate

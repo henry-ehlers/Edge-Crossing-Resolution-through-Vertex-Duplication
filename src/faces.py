@@ -546,7 +546,9 @@ def identify_faces(faces, face_edge_counts, graph, positions):
         print(f"length of edges pre prune: {len(sub_graph.edges)}")
 
         # Remove Edges if their mapped twice to a face or mapped once and are part of the current cycle
-        outer_perimeter = set([frozenset(edge)] for edge in ordered_edges[cycle])
+        print(f"edges: {ordered_edges[cycle]}")
+        outer_perimeter = set([frozenset(edge) for edge in ordered_edges[cycle]])
+        print(f"outer perimeter: {outer_perimeter}")
         sub_graph.remove_edges_from(tuple(edge) for edge, count in face_edge_counts.items() if
                                     ((count == 2) or (count == 1 and edge in outer_perimeter)))
         print(f"length of edges post prune: {len(sub_graph.edges)}")
@@ -697,6 +699,8 @@ def find_outer_face(ordered_face_edges, graph, positions):
     # Find singleton vertices and Check whether singleton falls outside for
     vertices = [vertex for vertex in graph.nodes if len(graph.edges(vertex)) == 0]
     for face in faces:
+        print(f"face: {face}")
+
         sorted_vertices = get_sorted_face_vertices([tuple(edge) for edge in face_edge_sets[face]], is_sorted=False)
         cycle_coordinates = [positions[vertex] for vertex in sorted_vertices]
         cycle_path = mpltPath.Path(cycle_coordinates[0:-1])
