@@ -241,7 +241,7 @@ def find_closest_edge_intersection(edge_points, other_edges, graph, positions, m
 
     # print(f"Points a and b: {point_b} - {point_b}")
     for edge in other_edges:
-        print(f"edge: {edge}")
+        # print(f"edge: {edge}")
 
         # Check whether the intersection is with a real edge
         if must_be_real:
@@ -256,16 +256,16 @@ def find_closest_edge_intersection(edge_points, other_edges, graph, positions, m
         # Find
         # print(f"current edge: {edge[0], edge[1]}")
         point_c, point_d = positions[edge[0]], positions[edge[1]]
-        print(f"Points c and d: {point_c} - {point_d}")
+        # print(f"Points c and d: {point_c} - {point_d}")
         intersection = line_intersection(point_a, point_b, point_c, point_d)
-        print(f"intersection: {intersection}")
+        # print(f"intersection: {intersection}")
         if intersection is None:
             continue
         intersections[edge] = intersection
         distances[edge] = squared_distance(point_a, intersection)
 
-    print(f"intersections: {intersections}")
-    print(f"distances: {distances}")
+    # print(f"intersections: {intersections}")
+    # print(f"distances: {distances}")
 
     # If no intersection was found, return none
     if len(intersections) == 0 and len(distances) == 0:
@@ -273,8 +273,8 @@ def find_closest_edge_intersection(edge_points, other_edges, graph, positions, m
 
     # Find closest intersection
     closest_intersection = min(distances, key=distances.get)
-    print(f"closest: {closest_intersection}")
-    print(f"point: {intersections[closest_intersection]}")
+    # print(f"closest: {closest_intersection}")
+    # print(f"point: {intersections[closest_intersection]}")
     # Return the Edge Name, and it's intersection as a tuple
     return closest_intersection, intersections[closest_intersection]
 
@@ -294,25 +294,25 @@ def line_intersection(p1, p2, p3, p4):
     x4, y4 = float(p4[0]), float(p4[1])
 
     denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-    print(f"a term: {(y4 - y3) * (x2 - x1)}")
-    print(f"b term: {(x4 - x3) * (y2 - y1)}")
-    print(f"denom: {denominator}")
+    # print(f"a term: {(y4 - y3) * (x2 - x1)}")
+    # print(f"b term: {(x4 - x3) * (y2 - y1)}")
+    # print(f"denom: {denominator}")
 
     if denominator == 0:  # parallel
         return None
     ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
-    print(f"ua: {ua}")
+    # print(f"ua: {ua}")
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
     if ua <= 0 or ua >= 1:
         return None
     ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
-    print(f"ub: {ub}")
+    # print(f"ub: {ub}")
     # TODO: investigate these statements. just adding >= instead of > strikes me as dangerous
     if ub <= 0 or ub >= 1:
         return None
     x = x1 + ua * (x2 - x1)
     y = y1 + ua * (y2 - y1)
-    print(f"x: {x} and y: {y}")
+    # print(f"x: {x} and y: {y}")
     return x, y
 
 

@@ -346,20 +346,27 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     draw_graph(graph=r_graph, positions=r_positions)
     save_drawn_graph(f"{drawing_directory}/graph_1.png")
 
-    rr_graph, rr_positions = copy.deepcopy(r_graph), copy.deepcopy(r_positions)
-    connect_singleton_vertex_edges(rr_graph, rr_positions)
-
-    # Draw the remaining graph
-    draw_graph(graph=rr_graph, positions=rr_positions)
-    save_drawn_graph(f"{drawing_directory}/graph_1.5.png")
-
     # Planarize Graph after removal of target vertex
     print("\nPlanarize Remaining Graph after target removal")
-    p_graph, p_positions = copy.deepcopy(rr_graph), copy.deepcopy(rr_positions)
-    virtual_edge_map = planarize_graph(graph=p_graph,
-                                       positions=p_positions,
+    rr_graph, rr_positions = copy.deepcopy(r_graph), copy.deepcopy(r_positions)
+    virtual_edge_map = planarize_graph(graph=rr_graph,
+                                       positions=rr_positions,
                                        edge_crossings=r_crossings,
                                        largest_index=max(graph.nodes))
+
+    #
+    p_graph, p_positions = copy.deepcopy(rr_graph), copy.deepcopy(rr_positions)
+    connect_singleton_vertex_edges(p_graph, p_positions)
+    # input("CONNECTING SINGLETONS")
+
+    # Draw the remaining graph
+    draw_graph(graph=p_graph, positions=p_positions)
+    save_drawn_graph(f"{drawing_directory}/graph_1.5.png")
+
+    # virtual_edge_map = planarize_graph(graph=p_graph,
+    #                                    positions=p_positions,
+    #                                    edge_crossings=r_crossings,
+    #                                    largest_index=max(graph.nodes))
     print(f"virtual edge set:")
     [print(f"{key} - {item}") for key, item in virtual_edge_map.items()]
 
@@ -443,6 +450,11 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
     print(f"\nUpdate Inner Face")
+    print(inner_face_incidence)
+    print()
+    print(inner_graph_object["ordered_cycle_edges"])
+    print()
+    print(complete_edge_map)
     sorted_inner_face_edges = inner_graph_object["ordered_cycle_edges"]
     update_faces_with_edge_map(face_incidence_table=inner_face_incidence,
                                sorted_face_edges=sorted_inner_face_edges,
