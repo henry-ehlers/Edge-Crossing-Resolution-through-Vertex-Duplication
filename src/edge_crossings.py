@@ -125,7 +125,7 @@ def add_virtual_edges(graph, positions, edge_to_virtual_vertex) -> {frozenset: {
     [print(f"{key} - {item}") for key, item in virtual_edge_set.items()]
     print(f"edge_to_vitrual vertex:")
     [print(f"{key} - {item}") for key, item in edge_to_virtual_vertex.items()]
-    input("????")
+    # input("????")
 
     # Iterate over all edges in the graph
     for edge in edge_to_virtual_vertex.keys():

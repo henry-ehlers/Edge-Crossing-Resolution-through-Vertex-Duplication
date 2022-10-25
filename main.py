@@ -53,13 +53,13 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
         bounds=bounds)
     print(f"\nGET OUTER FACE SIGHT CELL")
     [print(f"{cell} - {edges}") for cell, edges in ordered_cell_edges.items()]
-    input("...........")
+    # input("...........")
 
     # Calculate the incidence of all sight cells to the outer face's target incident vertices
     outer_face = set().union(*outer_faces)
     outer_target_vertices = outer_face.intersection(target_vertices)
     print(f"outer target vertices: {outer_target_vertices}")
-    input('....')
+    # input('....')
     cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=sight_cells,
                                                            target_vertices=outer_target_vertices,
                                                            face_edges=sorted_outer_edges,
@@ -67,7 +67,7 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                            positions=o_positions)
     print(f"\ncell incidence:")
     [print(f"{cell} - {incidence}") for cell, incidence in cell_incidences.items()]
-    input("...")
+    # input("...")
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     # outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
@@ -87,7 +87,7 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                outer=True)
     print(f"\ncell incidence table:")
     print(cell_incidence_table)
-    input("__________________")
+    # input("__________________")
 
     print(f"\nedge map:")
     [print(f"{key} - {item}") for key, item in edge_map.items()]
@@ -174,7 +174,7 @@ def decompose_outer_face(sorted_inner_face_edges, target_vertices, graph, positi
         graph=graph,
         positions=positions)
     print(f'outer faces: {outer_faces}')
-    input("......")
+    # input("......")
 
     # Decompose the Graph's Outer face
     cell_incidence_table, new_graph_object = get_outer_face_sight_cells(outer_faces=outer_faces,
@@ -219,7 +219,7 @@ def get_inner_faces(target_vertices: [int],
                                                                                         positions=positions)
     print(f"\nINNER FACES:")
     [print(face) for face in inner_faces]
-    input(f"inner faces")
+    # input(f"inner faces")
 
     # Decompose Inner Faces into Sight Cells by sight line extension
     cells, ordered_cell_vertices, ordered_cell_edges, face_edge_map, connected_vertex_map = find_inner_face_sight_cells(
@@ -234,19 +234,19 @@ def get_inner_faces(target_vertices: [int],
 
     print(f"\nINNER CELLS:")
     [print(cell) for cell in cells]
-    input(f"inner CELLS")
+    # input(f"inner CELLS")
 
     print(f"ordered cell vertices:")
     [print(f"cell: {cell} - {vertices}") for cell, vertices in ordered_cell_vertices.items()]
-    input("...")
+    # input("...")
 
     print(f"ordered cell edges:")
     [print(f"cell: {cell} - {edges}") for cell, edges in ordered_cell_edges.items()]
-    input("...")
+    #input("...")
 
     print(f"face edge map:")
     [print(f"cell: {cell} - {edges}") for cell, edges in face_edge_map.items()]
-    input("...")
+    # input("...")
 
     # Create Pandas Data Table of Face Incidences
     convex_faces = inner_faces.intersection(cells)
@@ -279,30 +279,30 @@ def get_inner_faces(target_vertices: [int],
     ordered_edges = {**{face: sorted_inner_face_edges[face] for face in convex_faces},
                      **{cell: ordered_cell_edges[cell] for cell in ordered_cell_edges.keys()}}
     [print(f"{cell} - {item}") for cell, item in ordered_edges.items()]
-    input("------------------------------------")
+    # input("------------------------------------")
     print(f"\nedge map:")
     [print(f"{cell} - {item}") for cell, item in face_edge_map.items()]
-    input(".....")
+    # input(".....")
     print(f"\nvertex map:")
     [print(f"{cell} - {item}") for cell, item in vertex_map.items()]
-    input(".....")
+    # input(".....")
     print(f"ordered face edges:")
     [print(f"cell: {face} - {edges}") for face, edges in sorted_inner_face_edges.items()]
-    input("...")
+    # input("...")
     print(f"ordered cell edges:")
     [print(f"cell: {cell} - {edges}") for cell, edges in ordered_cell_edges.items()]
-    input("...")
+    # input("...")
     print(f"ordered cell edges:")
     [print(f"cell: {key} - {edges}") for key, edges in ordered_edges.items()]
-    input("...")
+    # input("...")
 
     # Get Combined Incidence Table
     cell_incidence_table = get_incidence_table(incidences=inner_cells_incidence, entry_type="cell", outer=False)
     print(cell_incidence_table)
-    input("...")
+    # input("...")
     face_incidence_table = get_incidence_table(incidences=inner_faces_incidences, entry_type="face", outer=False)
     print(face_incidence_table)
-    input("...")
+    # input("...")
     inner_incidence_table = pd.concat(objs=[face_incidence_table, cell_incidence_table], ignore_index=True)
     print(f"\ninner_incidence_table:")
     print(inner_incidence_table)
@@ -338,7 +338,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     print(f"target vertex: {target_vertex}")
     print(f"target adjacency: {target_adjacency}")
-    input("FLKSDFJ")
+    # input("FLKSDFJ")
     if target_vertex is None:
         return False, graph, positions, labels
 
@@ -372,7 +372,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print(f"\nIdentify the Inner Faces")
     outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=1.5)
     print(f"outer bounds: {outer_bounds}")
-    input("as;lkdfjals;kdf")
+    # input("as;lkdfjals;kdf")
     inner_face_incidence, inner_graph_object = get_inner_faces(target_vertices=target_adjacency,
                                                                graph=p_graph,
                                                                positions=p_positions,
@@ -415,7 +415,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     # TODO: fix subface identification to work with new face detection function and produced data structure
 
     # -------------------------------------------------------------------------------------------------------
-    input("\nCONNECTED NODES ----------------------------------------------------------------------------")
+    # input("\nCONNECTED NODES ----------------------------------------------------------------------------")
     print(f"\nA")
     [print(f"{key} - {items}") for key, items in inner_graph_object['connected_nodes'].items()]
     print(f"\nB")
@@ -426,7 +426,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     [print(f"{key} - {items}") for key, items in connected_nodes.items()]
 
     # -------------------------------------------------------------------------------------------------------
-    input("\nEDGE MAP ----------------------------------------------------------------------------------")
+    # input("\nEDGE MAP ----------------------------------------------------------------------------------")
     print(f"\nA")
     [print(f"{key} - {items}") for key, items in inner_graph_object['edge_map'].items()]
     print(f"\nB")
@@ -436,7 +436,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     print(f"\nC")
     [print(f"{key} - {items}") for key, items in complete_edge_map.items()]
 
-    input("CHECK")
+    # input("CHECK")
 
     # -------------------------------------------------------------------------------------------------------
     print("\nINCIDENCE TABLE ---------------------------------------------------------------------------")
@@ -447,7 +447,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     update_faces_with_edge_map(face_incidence_table=inner_face_incidence,
                                sorted_face_edges=sorted_inner_face_edges,
                                edge_map=complete_edge_map)
-    input(f"\n POST UPDATE")
+    # input(f"\n POST UPDATE")
 
     # Select the targets within which to embed split vertices
     print(f"\nSelect Embedding Cells/Faces")
@@ -458,7 +458,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
     print(f"\nselected faces: {selected_cells}")
     print(f"\nselected faces: {selected_faces}")
-    input("Start All Line Segmentation")
+    # input("Start All Line Segmentation")
 
     # All-to-All Line Segments ---------------------------------------------------------------------------------
     s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
@@ -483,7 +483,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     complete_vertex_map = {**inner_graph_object["vertex_map"], **cell_graph_object["vertex_map"]}
     print(f"C ------------------------------------------------------------------------")
     [print(f"{key} - {item}") for key, item in complete_vertex_map.items()]
-    input("check complete")
+    # input("check complete")
 
     # TODO: this merger MAY be incomplete? -> if an inner face's outer edge was bisected by an outer face's sight
     #  extension, this may not be accounted for
@@ -494,7 +494,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     [print(f"{key} - {item}") for key, item in cell_graph_object["ordered_cycle_edges"].items()]
     print(f"C ------------------------------------------------------------------------")
     [print(f"{key} - {item}") for key, item in complete_face_edges.items()]
-    input("CHECK")
+    # input("CHECK")
 
     # Cull all segments which do not intersect the two selected faces
     c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
@@ -600,6 +600,9 @@ if __name__ == '__main__':
     # Command Line Arguments
     cmd_args = sys.argv
     n_vertices, m_edges, seed = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
+
+    # Set Recursion limit
+    # sys.setrecursionlimit(1500)
 
     # Define Input Parameters
     embedding = "kamada_kawai"

@@ -129,7 +129,7 @@ def get_outer_face_sight_cell_incidences(sight_cells: {frozenset},
                                          face_edge_map: {frozenset: {frozenset}},
                                          positions):
     [print(f"{key} - {item}") for key, item in face_edge_map.items()]
-    input("+++++++++++++++++++++++++++++++++")
+    # input("+++++++++++++++++++++++++++++++++")
 
     # Initialize an empty map of sight cell to incidence
     sight_cell_incidences = {sight_cell: set() for sight_cell in sight_cells}
@@ -397,7 +397,7 @@ def extend_sight_line(joint_vertex, connecting_vertex, inner_angles, edge_map: {
     print(f"\nbound intersections: {bound_intersections}")
     print(f"distances: {distances}")
     print(f"closest: {closest_intersection_to_joint}")
-    input("WHAT?")
+    # input("WHAT?")
     # If vertices are adjacent, they can see one-another; otherwise we must check explicitly
     already_connected = are_vertices_adjacent(joint_vertex, connecting_vertex, graph) \
         or are_vertices_adjacent_virtually(joint_vertex, connecting_vertex, edge_map)
@@ -550,7 +550,7 @@ def merge_cells_wrapper(face_sight_cells: {frozenset},
         cells_edge_list[cell] = set([frozenset(edge) for edge in ordered_cell_edges[cell]])
     print(f"cell_edge_list:")
     print(cells_edge_list)
-    input("CHECK")
+    # input("CHECK")
 
     # Try Merging Cells in non-convex face
     face_sight_cells = list(face_sight_cells)  # Reminder: cast is done to enable more efficient indexed looping
@@ -574,7 +574,7 @@ def merge_cells_wrapper(face_sight_cells: {frozenset},
     [print(f"{key} - {item}") for key, item in cells_edge_list.items()]
     print(f"\nCells:")
     [print(f"{cell}") for cell in face_sight_cells]
-    input("pass?")
+    # input("pass?")
     #
     ordered_cell_edges = {cell: [] for cell in face_sight_cells}
     for cell in face_sight_cells:
@@ -582,7 +582,7 @@ def merge_cells_wrapper(face_sight_cells: {frozenset},
 
     print(f"ordered_cell_edges:")
     print(ordered_cell_edges)
-    input("CHECK")
+    # input("CHECK")
 
     # Return updated sight cells, incidences, and edge map
     return face_sight_cells, ordered_cell_edges, cell_vertex_map
@@ -744,18 +744,18 @@ def update_sight_line_graph(face_vertices: [int],
     [print(f"{k} - {v}") for k, v in virtual_edge_map.items()]
     remove_edges(graph, edge_to_virtual_vertices.keys())
     print(graph.edges)
-    input("...")
+    # input("...")
 
     # Locate Edge Crossings and Faces in Subgraph
     face_positions = {key: positions.get(key) for key in face_vertices}
     print(f"face positions: {face_positions}")
     face_graph = nx.Graph(graph.subgraph(nodes=face_vertices))
     print(f"face graph vertices: {face_graph.nodes()}")
-    input(f"sight line face graph is frozen: {nx.is_frozen(face_graph)}")
+    # input(f"sight line face graph is frozen: {nx.is_frozen(face_graph)}")
     # Find remaining edge crossings (between placed line-segments) and replace them with virtual vertices
     face_edge_crossings, vertex_crossings = locate_edge_crossings(face_graph, face_positions)
     print(f"\nedge crossings: {face_edge_crossings}")
-    input("...")
+    # input("...")
     if face_edge_crossings:
         virtual_edges = planarize_graph(face_graph, face_positions, face_edge_crossings)
         print(f"virtual edges: {virtual_edges}")
@@ -780,7 +780,7 @@ def update_sight_line_graph(face_vertices: [int],
     if sight_cells is not None:
         print(f"\nplanarizing graph cycles:")
         [print(cell) for cell in sight_cells]
-        input("...")
+        # input("...")
 
     # Return Sight Cells
     return sight_cells, virtual_edge_map
@@ -1273,7 +1273,7 @@ def deep_update_of_virtual_edge_map(complete_map: {frozenset: {frozenset}}, new_
     [print(f"{key} - {item}") for key, item in complete_map.items()]
     print("-------------------------------------------------------------")
     [print(f"{key} - {item}") for key, item in new_map.items()]
-    input("CHECK STATUS")
+    # input("CHECK STATUS")
     for intersected_edge, virtual_edges in new_map.items():
         mapped = [real_edge for real_edge in complete_map.keys() if intersected_edge in complete_map[real_edge]]
 

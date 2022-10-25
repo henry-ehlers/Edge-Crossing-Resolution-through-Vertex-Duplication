@@ -427,7 +427,7 @@ def prune_cycle_graph(cycle_edges, graph):
     #  these are incorrect cycles (i.e. not faces), hence the messy mapping
     mapped_edges = [tuple(edge) for edge, count in edge_counts.items() if count == 2]
     [print(f"{edge} - {count}") for edge, count in edge_counts.items()]
-    input("COUNTS ARE FUCKED")
+    # input("COUNTS ARE FUCKED")
     graph.remove_edges_from(mapped_edges)
 
 
@@ -439,8 +439,8 @@ def get_nodes_in_cycle(ordered_cycle, graph, positions):
     print(f"ordered cycle closed in check: {ordered_cycle_closed}")
     print(f"positions: {positions}")
     ordered_coordinates = [positions[cycle_node] for cycle_node in ordered_cycle_closed]
-    print(f"ordered coordinates: {ordered_coordinates}")
-    input("CHECK NODES IN CYCLE")
+    # print(f"ordered coordinates: {ordered_coordinates}")
+    # input("CHECK NODES IN CYCLE")
     print(f"lenght of positions in function b: {len(positions)}")
     #
     cycle_path = mpltPath.Path(vertices=ordered_coordinates,
@@ -497,29 +497,37 @@ def get_sorted_face_vertices_from_cycle(ordered_cycle_nodes, original_vertices):
 
 def identify_faces(faces, graph, positions):
     print(f"length of positions: {len(positions)}")
+
     # Identify the minimum cycle basis of the graph
+    print(f"graph edges: {graph.edges}")
     cycles = [frozenset(cycle) for cycle in nx.minimum_cycle_basis(G=graph)]
     ordered_edges = {cycle: get_ordered_edges(get_cycle_edges(cycle=cycle, graph=graph)) for cycle in cycles}
     ordered_nodes = {cycle: get_vertex_sequence(edges=ordered_edges[cycle], is_ordered=True) for cycle in cycles}
-
+    print(f"ordered_edges: {ordered_edges}")
     #
     for cycle in cycles:
+        print(f"\ncycle: {cycle}")
+        if cycle == frozenset({0, 1, 4, 5, 12, 13, 22, 25}):
+            input("WHAT IS GOING ON")
         if cycle in faces:
             continue
 
         #
         nodes_inside_cycle = get_nodes_in_cycle(ordered_nodes[cycle], graph, positions)
+        print(f"nodes inside cycle: {nodes_inside_cycle}")
         if len(nodes_inside_cycle) == 0:
+            print(f"added face {cycle} to list")
             faces.add(cycle)
         else:
             print(f"nodes in cycle: {nodes_inside_cycle}")
             nodes_inside_cycle += list(cycle)
             print(f"nodes in cycle: {nodes_inside_cycle}")
-            sub_graph = graph.subgraph(nodes=list(set(nodes_inside_cycle))).copy()
+            sub_graph = nx.Graph(graph.subgraph(nodes=list(set(nodes_inside_cycle))))
             print(f"cycle: {cycle} is fucked")
             print(f"nodes in cycle:{nodes_inside_cycle}")
             print(f"nodes inside subgraph: {sub_graph.nodes}")
-            input(f"length before: {len(graph.nodes)} and after {len(sub_graph.nodes)}")
+            print(f"edges in subgraph: {sub_graph.edges}")
+            # input(f"length before: {len(graph.nodes)} and after {len(sub_graph.nodes)}")
             prune_cycle_graph(cycle_edges=ordered_edges, graph=sub_graph)
             # sub_positions = {node: ordered_nodes.get(node) for node in nodes_inside_cycle}
             identify_faces(faces, sub_graph, positions)
@@ -539,7 +547,7 @@ def find_inner_faces(graph, positions):
 
     print(f"MIDPOINT POSITIONS")
     print(positions)
-    input("midpoint")
+    # input("midpoint")
     identified_faces = set()
     identify_faces(faces=identified_faces, graph=midpoint_graph, positions=midpoint_positions)
 
@@ -553,7 +561,7 @@ def find_inner_faces(graph, positions):
     [print(f"{face} - {edges}") for face, edges in ordered_edges.items()]
     print(f"NODES:")
     [print(f"{face} - {nodes}") for face, nodes in ordered_nodes.items()]
-    input("LOOK AT IDENTIFIED FACES IN MIDPOINT GRAPH")
+    # input("LOOK AT IDENTIFIED FACES IN MIDPOINT GRAPH")
 
     # Clean up Sorted Vertex and Edge lists from midpoint vertices
     sorted_faces = get_sorted_face_vertices_from_cycle(ordered_cycle_nodes=ordered_nodes,
@@ -569,7 +577,7 @@ def find_inner_faces(graph, positions):
     [print(f"{face} - {edges}") for face, edges in sorted_face_vertices.items()]
     print(f"NODES:")
     [print(f"{face} - {nodes}") for face, nodes in sorted_face_edges.items()]
-    input("IDENTIFIED EDGES IN NORMAL GRAPH")
+    # input("IDENTIFIED EDGES IN NORMAL GRAPH")
 
     # Return set of faces (frozen sets of vertices), the sorted vertices, and sorted edges
     return faces, sorted_face_vertices, sorted_face_edges
