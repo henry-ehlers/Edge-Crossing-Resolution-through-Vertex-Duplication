@@ -1,3 +1,5 @@
+import pandas as pd
+
 from src.edges import *
 from src.edge_crossings import *
 from src.graph_drawing import *
@@ -171,6 +173,29 @@ def try_merge_two_sub_faces(sub_face_a, sub_face_b, sub_faces, sub_face_edge_set
 
     # The merge has successfully occurred
     return True
+
+
+def select_weighted_sub_faces(sub_face_tables, target_faces, target_vertices):
+
+    # Extract sub-faces as dictionary of list; one per face
+    sub_faces = {face: sub_face_tables[face].loc[:, "sub_face"].tolist() for face in target_faces}
+
+    # ILP select best pair of sub-faces
+    selected_sub_faces, sub_face_incidences = ilp_choose_subface(
+        induced_cross_A=sub_face_tables[target_faces[0]].loc[:, target_vertices].to_numpy(),
+        induced_cross_B=sub_face_tables[target_faces[1]].loc[:, target_vertices].to_numpy()
+    )
+
+    # Convert indices of ILP selection to named faces and vertices
+    sub_face_names = tuple([sub_faces[target_faces[i]][selected_sub_faces[i]] for i in range(0, 2)])
+    sub_face_neighbors = [[target_vertices[i] for i in range(0, len(target_vertices))
+                           if sub_face_incidences[j][i] == 1] for j in range(0, 2)]
+
+    # Store Selection as dictionary
+    sub_face_selection = {sub_face_names[i]: frozenset(sub_face_neighbors[i]) for i in range(0, 2)}
+
+    # Return dictionary of selection and their incidence
+    return sub_face_selection
 
 
 def select_sub_faces(sub_face_tables, target_faces, target_vertices):
@@ -481,6 +506,24 @@ def ilp_choose_face(visibility_matrix):
         index += 1
 
     return (faces)
+
+
+def get_subface_distance_to_face_centroids(target_faces: [set],
+                                           face_centroids: {frozenset: np.array},
+                                           subfaces: {frozenset: set},
+                                           subface_centroids: {frozenset: {frozenset: np.array}}):
+    tables = []
+    for target_face in target_faces:
+        subface_list = list(subfaces[target_face])
+        distances = [None] * len(subface_list)
+        face_centroid = face_centroids[target_face]
+        for index, subface in enumerate(subface_list):
+            subface_centroid = subface_centroids[target_face][subface]
+            distances[index] = squared_distance(face_centroid, subface_centroid)
+        tables.append(pd.DataFrame({"face": [target_face] * len(subface_list),
+                                    "subface": subface_list,
+                                    "distance": distances}))
+    return tables
 
 
 def find_all_subfaces(target_faces: [set],

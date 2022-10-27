@@ -72,6 +72,15 @@ def calculate_edge_length_weights(sight_cells, targets, positions, target_length
     return edge_length_table
 
 
+def get_face_centroids(faces: [set], positions):
+    centroids = {face: None for face in faces}
+    for face in faces:
+        face_vertex_positions = [positions[v] for v in list(face)]
+        print(f"positions: {face_vertex_positions}")
+        centroids[face] = calculate_face_centroid(face_vertex_positions)
+    return centroids
+
+
 def get_incidence_matrix(incidence_table, targets=None):
     # Initialize the incidence matrix as an empty numpy array
     entries = incidence_table["identifier"].tolist()
@@ -519,16 +528,18 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                 axis=0)
 
     # TODO: calculcate lengths
-    edge_length_table = calculate_edge_length_weights(sight_cells=incidence_table["identifier"].tolist(),
-                                                      targets=target_adjacency,
-                                                      positions=d_positions,
-                                                      target_length=target_edge_length)
-
-    print(incidence_table)
-    print(f"")
-    selected_cells = weighted_select_embedding_faces(incidence_table=incidence_table,
-                                                     edge_length_table=edge_length_table,
-                                                     target_vertices=target_adjacency)
+    # edge_length_table = calculate_edge_length_weights(sight_cells=incidence_table["identifier"].tolist(),
+    #                                                   targets=target_adjacency,
+    #                                                   positions=d_positions,
+    #                                                   target_length=target_edge_length)
+    #
+    # print(incidence_table)
+    # print(f"")
+    # selected_cells = weighted_select_embedding_faces(incidence_table=incidence_table,
+    #                                                  edge_length_table=edge_length_table,
+    #                                                  target_vertices=target_adjacency)
+    selected_cells = select_embedding_faces(incidence_table=incidence_table,
+                                            target_vertices=target_adjacency)
     selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
     print(f"\nselected faces: {selected_cells}")
     print(f"\nselected faces: {selected_faces}")
@@ -624,11 +635,23 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
     subface_centroids = get_split_vertex_locations(positions=c_positions,
                                                    target_face_subfaces=plane_graph_sub_faces)
 
+    # TODO: get distances to centroids
+    face_centroids = get_face_centroids(selected_faces, c_positions)
+    subface_distances = get_subface_distance_to_face_centroids(target_faces=selected_faces,
+                                                               face_centroids=face_centroids,
+                                                               subfaces=plane_graph_sub_faces,
+                                                               subface_centroids=subface_centroids)
+    [print(subface_distances[i]) for i in range(0, len(subface_distances))]
+    input("CLKSL:KDJF:LKJ")
+
     # Calculate the number of edge crossing induced by connected each subface to all target neighbors
     induced_edge_crossings = calculate_induced_edge_crossings(graph=r_graph,
                                                               positions=r_positions,
                                                               centroids=subface_centroids,
                                                               target_neighbors=target_adjacency)
+
+    # Calculate Distances of subfaces centroids to face centroids
+
 
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)
@@ -636,10 +659,6 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
 
     # Place Copies
     print(f"\nPLACING SPLIT VERTICES")
-
-    # Calculate each subface's centroid
-    subface_centroids = get_split_vertex_locations(positions=c_positions,
-                                                   target_face_subfaces=plane_graph_sub_faces)
 
     # Get the number of induced edge crossings in the form of a dictionary of pandas dataframes
     induced_edge_crossing_table = get_edge_crossing_table(induced_edge_crossings=induced_edge_crossings,
