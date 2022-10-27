@@ -22,7 +22,7 @@ def connect_singleton_vertex_edges(graph, positions):
         graph.add_edge(u_of_edge=vertex,
                        v_of_edge=closest_target_vertex,
                        virtual=1)
-        input(f"connected {vertex} to {closest_target_vertex}")
+        # input(f"connected {vertex} to {closest_target_vertex}")
         return connect_singleton_vertex_edges(graph, positions)
 
 
@@ -196,6 +196,84 @@ def select_sub_faces(sub_face_tables, target_faces, target_vertices):
     return sub_face_selection
 
 
+def ilp_choose_weighted_subface(induced_cross_A, induced_cross_B, edge_length_dif_a, edge_length_dif_b):
+    (W_a, T) = induced_cross_A.shape
+    (W_b, T) = induced_cross_B.shape
+
+    # Create model
+    m = gp.Model("subfacechoice")
+
+    # Create variables
+    # c_i = 1   :   worker i is chosen
+    cell_a = m.addVars(W_a, vtype=GRB.BINARY, name="ca")
+    cell_b = m.addVars(W_b, vtype=GRB.BINARY, name="cb")
+
+    # e_ij = 1   :   task j is assigned to worker i
+    edge_a = m.addVars(W_a, T, vtype=GRB.BINARY, name="ea")
+    edge_b = m.addVars(W_b, T, vtype=GRB.BINARY, name="eb")
+
+    print(induced_cross_B.shape)
+    print(edge_length_dif_b.shape)
+
+    # Set objective
+    obj = gp.LinExpr(0)
+    for j in range(T):
+        for i in range(W_a):
+            obj.addTerms(induced_cross_A[i][j], edge_a[i, j])
+            obj.addTerms(0.01 * edge_length_dif_a[i][j], edge_a[i, j])
+        for i in range(W_b):
+            obj.addTerms(induced_cross_B[i][j], edge_b[i, j])
+            obj.addTerms(0.01 * edge_length_dif_b[i][j], edge_a[i, j])
+    m.setObjective(obj, GRB.MINIMIZE)
+
+    # Create constraints
+    # have to select one subface per face
+    m.addConstr(gp.quicksum(cell_a) <= 1)
+    m.addConstr(gp.quicksum(cell_b) <= 1)
+
+    # a task can only be done by one worker
+    for j in range(T):
+        assignment_amount = gp.LinExpr(0)
+
+        for i in range(W_a):
+            assignment_amount.addTerms(1, edge_a[i, j])
+        for i in range(W_b):
+            assignment_amount.addTerms(1, edge_b[i, j])
+
+        m.addConstr(assignment_amount >= 1)
+
+    # a task cannot be assigned to a unchosen worker
+    for j in range(T):
+        for i in range(W_a):
+            m.addConstr(cell_a[i] >= edge_a[i, j])
+        for i in range(W_b):
+            m.addConstr(cell_b[i] >= edge_b[i, j])
+
+    # Optimize model
+    m.optimize()
+
+    index_A = 0
+    index_B = 0
+    subface_A = -1
+    subface_B = -1
+
+    for v in m.getVars():
+        if (v.x) == 1:
+            print('%s %g' % (v.varName, v.x))
+        if v.varName[0] == "c":
+            if v.varName[1] == "a":
+                if (v.x) == 1:
+                    subface_A = index_A
+                index_A += 1
+
+            if v.varName[1] == "b":
+                if (v.x) == 1:
+                    subface_B = index_B
+                index_B += 1
+
+    return (subface_A, subface_B)
+
+
 def ilp_choose_subface(induced_cross_A, induced_cross_B):
 
     #
@@ -277,6 +355,75 @@ def ilp_choose_subface(induced_cross_A, induced_cross_B):
             assignment_b[column] = int(v.x)
 
     return (subface_A, subface_B), (assignment_a, assignment_b)
+
+
+def ilp_choose_weighted_face(visibility_matrix, edge_length_dif):
+    (W, T) = visibility_matrix.shape
+
+    # Create model
+    m = gp.Model("facechoice")
+    m.setParam(GRB.Param.PoolSolutions, 10)
+    m.setParam(GRB.Param.PoolGap, 0)
+    m.setParam(GRB.Param.PoolSearchMode, 2)
+
+    # Create variables
+    # c_i = 1   :   worker i is chosen
+    cell = m.addVars(W, vtype=GRB.BINARY, name="c")
+
+    # e_ij = 1   :   task j is assigned to worker i
+    edge = m.addVars(W, T, vtype=GRB.BINARY, name="e")
+
+    # Set objective
+    obj = gp.quicksum(edge)
+
+    obj = gp.LinExpr(0)
+    for j in range(T):
+        for i in range(W):
+            obj.addTerms(1, edge[i, j])
+            obj.addTerms(0.01 * edge_length_dif[i][j], edge[i, j])
+
+    m.setObjective(obj, GRB.MAXIMIZE)
+
+    # Create constraints
+    # can only select two workers
+    m.addConstr(gp.quicksum(cell) <= 2)
+
+    # a task can only be done by one worker
+    for j in range(T):
+        assignment_amount = gp.LinExpr(0)
+
+        for i in range(W):
+            assignment_amount.addTerms(1, edge[i, j])
+
+        m.addConstr(assignment_amount <= 1)
+
+    # a task cannot be assigned to a unchosen worker
+    for i in range(W):
+        for j in range(T):
+            m.addConstr(cell[i] >= edge[i, j])
+
+    # if a worker cant do the task, it is not assigned to him
+    for i in range(W):
+        for j in range(T):
+            m.addConstr(edge[i, j] <= visibility_matrix[i][j])
+
+    # Optimize model
+    m.optimize()
+
+    m.setParam(GRB.Param.OutputFlag, 0)
+
+    faces = []
+    index = 0
+
+    for v in m.getVars():
+
+        if v.varName[0] == "c":
+
+            if (v.x) == 1:
+                faces += [index]
+        index += 1
+
+    return (faces)
 
 
 def ilp_choose_face(visibility_matrix):

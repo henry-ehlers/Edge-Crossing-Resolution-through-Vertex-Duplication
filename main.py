@@ -53,7 +53,7 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
         bounds=bounds)
     print(f"\nGET OUTER FACE SIGHT CELL")
     [print(f"{cell} - {edges}") for cell, edges in ordered_cell_edges.items()]
-    input("cells")
+    # input("cells")
 
     # Calculate the incidence of all sight cells to the outer face's target incident vertices
     outer_face = set().union(*outer_faces)
@@ -67,7 +67,7 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                            positions=o_positions)
     print(f"\ncell incidence:")
     [print(f"{cell} - {incidence}") for cell, incidence in cell_incidences.items()]
-    input("...")
+    # input("...")
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
     # outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
@@ -470,7 +470,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
     print(f"\nselected faces: {selected_cells}")
     print(f"\nselected faces: {selected_faces}")
-    input(";alsdkjf;lsadkfa;sdlkfj")
+    # input(";alsdkjf;lsadkfa;sdlkfj")
     # input("Start All Line Segmentation")
 
     # All-to-All Line Segments ---------------------------------------------------------------------------------
@@ -479,7 +479,7 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
                                                               virtual_edge_set=complete_edge_map,
                                                               bounds=outer_bounds,
                                                               already_extended=connected_nodes)
-    print(f"\nS edge Map:")
+    # print(f"\nS edge Map:")
     [print(f"{k} - {v}") for k, v in s_edge_map.items()]
 
     # Draw the segment graph
