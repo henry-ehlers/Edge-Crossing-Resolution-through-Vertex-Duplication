@@ -205,7 +205,7 @@ def select_weighted_sub_faces(sub_face_tables,
         for face in target_faces
     ]
     print(distance_matrices)
-    input()
+    # input()
 
     # ILP select best pair of sub-faces
     selected_sub_faces, sub_face_incidences = ilp_choose_weighted_subface(

@@ -28,13 +28,13 @@ def select_embedding_faces(incidence_table, target_vertices):
 def weighted_select_embedding_faces(incidence_table, edge_length_table, target_vertices):
     print(incidence_table)
     print(edge_length_table)
-    input("HERE")
+    # input("HERE")
     incidence_matrix = get_incidence_matrix(incidence_table=incidence_table,
                                             targets=target_vertices)
     print(incidence_matrix)
     edge_length_matrix = get_edge_length_matrix(edge_length_table, incidence_table, target_vertices)
     print(edge_length_matrix)
-    input("CHJELJK")
+    # input("CHJELJK")
     assert (incidence_matrix.shape[0] == edge_length_matrix.shape[0]) and \
            (incidence_matrix.shape[1] == edge_length_matrix.shape[1]), \
         "Error in face selection. Incidence Matrix and Edge Length Matrix must of of same dimensions."
@@ -45,7 +45,7 @@ def weighted_select_embedding_faces(incidence_table, edge_length_table, target_v
                                                 edge_length_dif=edge_length_matrix)
     print(f"selected entry indices: {selected_entries}")
     print(incidence_matrix.iloc[selected_entries])
-    input("selected faces")
+    # input("selected faces")
     return selected_entries
 
 
@@ -528,18 +528,18 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                 axis=0)
 
     # TODO: calculcate lengths
-    # edge_length_table = calculate_edge_length_weights(sight_cells=incidence_table["identifier"].tolist(),
-    #                                                   targets=target_adjacency,
-    #                                                   positions=d_positions,
-    #                                                   target_length=target_edge_length)
-    #
-    # print(incidence_table)
-    # print(f"")
-    # selected_cells = weighted_select_embedding_faces(incidence_table=incidence_table,
-    #                                                  edge_length_table=edge_length_table,
-    #                                                  target_vertices=target_adjacency)
-    selected_cells = select_embedding_faces(incidence_table=incidence_table,
-                                            target_vertices=target_adjacency)
+    edge_length_table = calculate_edge_length_weights(sight_cells=incidence_table["identifier"].tolist(),
+                                                      targets=target_adjacency,
+                                                      positions=d_positions,
+                                                      target_length=target_edge_length)
+
+    print(incidence_table)
+    print(f"")
+    selected_cells = weighted_select_embedding_faces(incidence_table=incidence_table,
+                                                     edge_length_table=edge_length_table,
+                                                     target_vertices=target_adjacency)
+    # selected_cells = select_embedding_faces(incidence_table=incidence_table,
+    #                                         target_vertices=target_adjacency)
     selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
     print(f"\nselected faces: {selected_cells}")
     print(f"\nselected faces: {selected_faces}")
@@ -642,7 +642,7 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                                                subfaces=plane_graph_sub_faces,
                                                                subface_centroids=subface_centroids)
     [print(val) for key, val in subface_distances.items()]
-    input("CLKSL:KDJF:LKJ")
+    # input("CLKSL:KDJF:LKJ")
 
     # Calculate the number of edge crossing induced by connected each subface to all target neighbors
     induced_edge_crossings = calculate_induced_edge_crossings(graph=r_graph,
@@ -666,7 +666,7 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                                    subface_distances=subface_distances,
                                                    target_faces=selected_faces,
                                                    target_vertices=target_adjacency)
-    input()
+    # input()
     print(f"selected sub_faces: {selected_sub_faces}")
 
     n_graph, n_positions = place_split_vertices(faces=selected_faces,
