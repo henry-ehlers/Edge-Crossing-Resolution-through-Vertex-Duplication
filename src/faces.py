@@ -175,16 +175,47 @@ def try_merge_two_sub_faces(sub_face_a, sub_face_b, sub_faces, sub_face_edge_set
     return True
 
 
-def select_weighted_sub_faces(sub_face_tables, target_faces, target_vertices):
+def get_subface_centroid_matrix(subface_centroid_distance: pd.DataFrame, subfaces: [set], target_vertices: [int]):
+    assert all([subface in subface_centroid_distance["subface"].tolist()] for subface in subfaces), \
+        "Error in Subface Centroid Matrix Creation: not all subfaces present in provided data table."
+
+    distance_matrix = np.empty(shape=(len(subfaces), len(target_vertices)), dtype=float)
+    for subface_index, subface in enumerate(subfaces):
+        index = subface_centroid_distance.index[subface_centroid_distance["subface"] == subface].tolist()[0]
+        distance = subface_centroid_distance.at[index, "distance"]
+        for target_index, target in enumerate(target_vertices):
+            distance_matrix[subface_index, target_index] = distance
+
+    return distance_matrix
+
+
+def select_weighted_sub_faces(sub_face_tables,
+                              subface_distances: {frozenset: pd.DataFrame},
+                              target_faces: [set],
+                              target_vertices: [int]):
 
     # Extract sub-faces as dictionary of list; one per face
     sub_faces = {face: sub_face_tables[face].loc[:, "sub_face"].tolist() for face in target_faces}
+    print(sub_face_tables)
+
+    distance_matrices = [
+        get_subface_centroid_matrix(subface_centroid_distance=subface_distances[face],
+                                    subfaces=sub_face_tables[face]["sub_face"].tolist(),
+                                    target_vertices=target_vertices)
+        for face in target_faces
+    ]
+    print(distance_matrices)
+    input()
 
     # ILP select best pair of sub-faces
-    selected_sub_faces, sub_face_incidences = ilp_choose_subface(
+    selected_sub_faces, sub_face_incidences = ilp_choose_weighted_subface(
         induced_cross_A=sub_face_tables[target_faces[0]].loc[:, target_vertices].to_numpy(),
-        induced_cross_B=sub_face_tables[target_faces[1]].loc[:, target_vertices].to_numpy()
+        induced_cross_B=sub_face_tables[target_faces[1]].loc[:, target_vertices].to_numpy(),
+        edge_length_dif_a=distance_matrices[0],
+        edge_length_dif_b=distance_matrices[1]
     )
+    print(f"selected sub faces: {selected_sub_faces}")
+    print(f"subface incidences: {sub_face_incidences}")
 
     # Convert indices of ILP selection to named faces and vertices
     sub_face_names = tuple([sub_faces[target_faces[i]][selected_sub_faces[i]] for i in range(0, 2)])
@@ -296,7 +327,20 @@ def ilp_choose_weighted_subface(induced_cross_A, induced_cross_B, edge_length_di
                     subface_B = index_B
                 index_B += 1
 
-    return (subface_A, subface_B)
+    # Get Assignments
+    assignment_a = [None] * induced_cross_A.shape[1]
+    assignment_b = [None] * induced_cross_B.shape[1]
+    regx_numbers = re.compile(r"[+-]?\d+(?:\.\d+)?")
+    for v in m.getVars():
+        if v.varName[0] != "e":
+            continue
+        row, column = [int(i) for i in regx_numbers.findall(v.varName)]
+        if v.varName[1] == "a" and row == subface_A:
+            assignment_a[column] = int(v.x)
+        elif v.varName[1] == "b" and row == subface_B:
+            assignment_b[column] = int(v.x)
+
+    return (subface_A, subface_B), (assignment_a, assignment_b)
 
 
 def ilp_choose_subface(induced_cross_A, induced_cross_B):
@@ -512,7 +556,7 @@ def get_subface_distance_to_face_centroids(target_faces: [set],
                                            face_centroids: {frozenset: np.array},
                                            subfaces: {frozenset: set},
                                            subface_centroids: {frozenset: {frozenset: np.array}}):
-    tables = []
+    tables = {face: None for face in target_faces}
     for target_face in target_faces:
         subface_list = list(subfaces[target_face])
         distances = [None] * len(subface_list)
@@ -520,9 +564,9 @@ def get_subface_distance_to_face_centroids(target_faces: [set],
         for index, subface in enumerate(subface_list):
             subface_centroid = subface_centroids[target_face][subface]
             distances[index] = squared_distance(face_centroid, subface_centroid)
-        tables.append(pd.DataFrame({"face": [target_face] * len(subface_list),
-                                    "subface": subface_list,
-                                    "distance": distances}))
+        tables[target_face] = pd.DataFrame({"face": [target_face] * len(subface_list),
+                                            "subface": subface_list,
+                                            "distance": distances})
     return tables
 
 

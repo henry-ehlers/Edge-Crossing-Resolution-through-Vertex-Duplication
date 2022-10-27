@@ -641,7 +641,7 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                                                face_centroids=face_centroids,
                                                                subfaces=plane_graph_sub_faces,
                                                                subface_centroids=subface_centroids)
-    [print(subface_distances[i]) for i in range(0, len(subface_distances))]
+    [print(val) for key, val in subface_distances.items()]
     input("CLKSL:KDJF:LKJ")
 
     # Calculate the number of edge crossing induced by connected each subface to all target neighbors
@@ -649,9 +649,6 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                                               positions=r_positions,
                                                               centroids=subface_centroids,
                                                               target_neighbors=target_adjacency)
-
-    # Calculate Distances of subfaces centroids to face centroids
-
 
     # Draw the segment graph
     draw_graph(graph=c_graph, positions=c_positions)
@@ -665,9 +662,11 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                                           target_neighbors=target_adjacency)
 
     #
-    selected_sub_faces = select_sub_faces(sub_face_tables=induced_edge_crossing_table,
-                                          target_faces=selected_faces,
-                                          target_vertices=target_adjacency)
+    selected_sub_faces = select_weighted_sub_faces(sub_face_tables=induced_edge_crossing_table,
+                                                   subface_distances=subface_distances,
+                                                   target_faces=selected_faces,
+                                                   target_vertices=target_adjacency)
+    input()
     print(f"selected sub_faces: {selected_sub_faces}")
 
     n_graph, n_positions = place_split_vertices(faces=selected_faces,
