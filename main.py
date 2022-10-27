@@ -25,8 +25,54 @@ def select_embedding_faces(incidence_table, target_vertices):
     return selected_entries
 
 
-def get_incidence_matrix(incidence_table, targets=None):
+def weighted_select_embedding_faces(incidence_table, edge_length_table, target_vertices):
+    print(incidence_table)
+    print(edge_length_table)
+    input("HERE")
+    incidence_matrix = get_incidence_matrix(incidence_table=incidence_table,
+                                            targets=target_vertices)
+    print(incidence_matrix)
+    edge_length_matrix = get_edge_length_matrix(edge_length_table, incidence_table, target_vertices)
+    print(edge_length_matrix)
+    input("CHJELJK")
+    assert (incidence_matrix.shape[0] == edge_length_matrix.shape[0]) and \
+           (incidence_matrix.shape[1] == edge_length_matrix.shape[1]), \
+        "Error in face selection. Incidence Matrix and Edge Length Matrix must of of same dimensions."
 
+    print(incidence_matrix)
+    # TODO: resolve ties
+    selected_entries = ilp_choose_weighted_face(visibility_matrix=incidence_matrix.to_numpy(dtype=int),
+                                                edge_length_dif=edge_length_matrix)
+    print(f"selected entry indices: {selected_entries}")
+    print(incidence_matrix.iloc[selected_entries])
+    input("selected faces")
+    return selected_entries
+
+
+def calculate_edge_length_weights(sight_cells, targets, positions, target_length):
+    edge_lengths = [[None] * len(sight_cells) for target in targets]
+    print(len(edge_lengths))
+    print(len(edge_lengths[0]))
+
+    for cell_index, sight_cell in enumerate(sight_cells):
+        print(f"cell {sight_cell}")
+        face_vertex_positions = [positions[v] for v in list(sight_cell)]
+        print(f"positions: {face_vertex_positions}")
+        centroid = calculate_face_centroid(face_vertex_positions)
+        print(f"centroid: {centroid}")
+        for target_index, target in enumerate(targets):
+            target_position = positions[target]
+            print(f"target: {target} @ {target_position}")
+            edge_lengths[target_index][cell_index] = abs(squared_distance(centroid, target_position) - target_length)
+    [print(edge_lengths[i]) for i in range(0, len(edge_lengths))]
+
+    edge_length_table = pd.DataFrame({t: edge_lengths[t_index] for t_index, t in enumerate(targets)})
+    edge_length_table["identifier"] = sight_cells
+
+    return edge_length_table
+
+
+def get_incidence_matrix(incidence_table, targets=None):
     # Initialize the incidence matrix as an empty numpy array
     entries = incidence_table["identifier"].tolist()
     targets = targets if targets is not None else list(set(incidence_table["incidence"].tolist()))
@@ -41,8 +87,24 @@ def get_incidence_matrix(incidence_table, targets=None):
     return pd.DataFrame(incidence_matrix, columns=targets, index=entries)
 
 
-def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target_vertices, graph, positions, bounds):
+def get_edge_length_matrix(edge_length_table, incidence_table, targets):
+    edge_length_matrix = np.empty(shape=(incidence_table.shape[0], len(targets)), dtype=float)
+    print(edge_length_table[targets[0]])
+    sight_cells = incidence_table["identifier"].tolist()
+    for cell_index, cell in enumerate(sight_cells):
+        print(f"Cell {cell} @ {cell_index}")
+        for target_index, target in enumerate(targets):
+            match_index = edge_length_table.index[edge_length_table["identifier"] == cell].tolist()[0]
+            print(f"Target {target} @ {target_index}")
+            print(edge_length_table["identifier"] == cell)
+            print(f'index: {match_index}')
+            edge_length = edge_length_table.at[match_index, target]
+            edge_length_matrix[cell_index, target_index] = edge_length
 
+    return edge_length_matrix
+
+
+def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target_vertices, graph, positions, bounds):
     # Identify all sight cells in the outer face
     sight_cells, ordered_cell_edges, edge_map, connected_vertices, o_graph, o_positions = find_outer_face_sight_cells(
         selected_faces=outer_faces,
@@ -95,20 +157,19 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
     [print(f"{key} - {item}") for key, item in ordered_cell_edges.items()]
 
     # Return Everything if no single sight cell can realize the incidence of the face
-    new_graph_object = {"cells":                sight_cells,
-                        "incidences":           cell_incidences,
-                        "connected_nodes":      connected_vertices,
-                        "ordered_cycle_edges":  ordered_cell_edges,
-                        "edge_map":             edge_map,
-                        "vertex_map":           vertex_map,
-                        "graph":                o_graph,
-                        "positions":            o_positions}
+    new_graph_object = {"cells": sight_cells,
+                        "incidences": cell_incidences,
+                        "connected_nodes": connected_vertices,
+                        "ordered_cycle_edges": ordered_cell_edges,
+                        "edge_map": edge_map,
+                        "vertex_map": vertex_map,
+                        "graph": o_graph,
+                        "positions": o_positions}
 
     return cell_incidence_table, new_graph_object
 
 
 def get_incidence_table(incidences, entry_type="face", outer=False):
-
     # Create lists for each of the 4 columns
     entry_list = [entry for entry in incidences.keys()]
     incidence_list = [incidences[entry] for entry in entry_list]
@@ -116,10 +177,10 @@ def get_incidence_table(incidences, entry_type="face", outer=False):
     outer_list = [outer] * len(entry_list)
 
     # Create n x 4 data table, where n = the number of faces
-    incidence_table = pd.DataFrame({"type":       type_list,
-                                    "outer":      outer_list,
+    incidence_table = pd.DataFrame({"type": type_list,
+                                    "outer": outer_list,
                                     "identifier": entry_list,
-                                    "incidence":  incidence_list})
+                                    "incidence": incidence_list})
 
     # Return the pandas data table
     return incidence_table
@@ -153,7 +214,6 @@ def identify_target_vertex(graph, positions):
 
 
 def get_outer_face(sorted_inner_face_edges, graph, positions):
-
     # Find Outer Face
     outer_faces, outer_face_edges, is_cycle = find_outer_face(sorted_inner_face_edges, graph, positions)
     print(f"\nOuter Face: {outer_faces}")
@@ -167,7 +227,6 @@ def get_outer_face(sorted_inner_face_edges, graph, positions):
 
 
 def decompose_outer_face(sorted_inner_face_edges, target_vertices, graph, positions, bounds):
-
     # Find the Graph's Outer face(s)
     outer_faces, sorted_outer_face_edges, is_cycle = get_outer_face(
         sorted_inner_face_edges=sorted_inner_face_edges,
@@ -213,7 +272,6 @@ def get_inner_faces(target_vertices: [int],
                     graph,
                     positions,
                     outer_bounds):
-
     # Identify the graph's inner faces
     inner_faces, sorted_inner_face_vertices, sorted_inner_face_edges = find_inner_faces(graph=graph,
                                                                                         positions=positions)
@@ -242,7 +300,7 @@ def get_inner_faces(target_vertices: [int],
 
     print(f"ordered cell edges:")
     [print(f"cell: {cell} - {edges}") for cell, edges in ordered_cell_edges.items()]
-    #input("...")
+    # input("...")
 
     print(f"face edge map:")
     [print(f"cell: {cell} - {edges}") for cell, edges in face_edge_map.items()]
@@ -325,8 +383,7 @@ def get_inner_faces(target_vertices: [int],
     return inner_incidence_table, new_graph_object
 
 
-def split_vertex(graph, positions, labels, drawing_directory="."):
-
+def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_directory="."):
     # Draw Initial Embedding
     draw_graph(graph=graph, positions=positions, labels=labels)
     save_drawn_graph(f"{drawing_directory}/graph_0.png")
@@ -369,7 +426,6 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     #                                    largest_index=max(graph.nodes))
     print(f"virtual edge set:")
     [print(f"{key} - {item}") for key, item in virtual_edge_map.items()]
-
 
     # Draw the planarized graph
     draw_graph(graph=p_graph, positions=p_positions)
@@ -450,11 +506,6 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Create line-segments between all vertices now already connected by edges or virtual edge sets
     print(f"\nUpdate Inner Face")
-    print(inner_face_incidence)
-    print()
-    print(inner_graph_object["ordered_cycle_edges"])
-    print()
-    print(complete_edge_map)
     sorted_inner_face_edges = inner_graph_object["ordered_cycle_edges"]
     update_faces_with_edge_map(face_incidence_table=inner_face_incidence,
                                sorted_face_edges=sorted_inner_face_edges,
@@ -463,10 +514,21 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
 
     # Select the targets within which to embed split vertices
     print(f"\nSelect Embedding Cells/Faces")
-    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence], ignore_index=True, axis=0)
+    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence],
+                                ignore_index=True,
+                                axis=0)
+
+    # TODO: calculcate lengths
+    edge_length_table = calculate_edge_length_weights(sight_cells=incidence_table["identifier"].tolist(),
+                                                      targets=target_adjacency,
+                                                      positions=d_positions,
+                                                      target_length=target_edge_length)
+
     print(incidence_table)
     print(f"")
-    selected_cells = select_embedding_faces(incidence_table, target_adjacency)
+    selected_cells = weighted_select_embedding_faces(incidence_table=incidence_table,
+                                                     edge_length_table=edge_length_table,
+                                                     target_vertices=target_adjacency)
     selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
     print(f"\nselected faces: {selected_cells}")
     print(f"\nselected faces: {selected_faces}")
@@ -610,6 +672,17 @@ def split_vertex(graph, positions, labels, drawing_directory="."):
     return True, n_graph, n_positions, labels
 
 
+def get_target_edge_length(graph, positions):
+    distances = [None] * len(graph.edges)
+    for edge_index, edge in enumerate(list(graph.edges)):
+        print(f"edge: {edge}")
+        vertex_a, vertex_b = edge
+        print(f"vertices: {vertex_a} and {vertex_b}")
+        distances[edge_index] = squared_distance(positions[vertex_a], positions[vertex_b])
+        print(f"distance: {distances[edge_index]}")
+    return sum(distances) / len(distances)
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     # Command Line Arguments
@@ -681,11 +754,17 @@ if __name__ == '__main__':
     positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
     labels = {node: node for node in graph.nodes}
 
+    #
+    target_edge_length = get_target_edge_length(graph, positions)
+    print(target_edge_length)
+
     iteration_number = 0
     while True:
         drawing_directory = f"./{output_directory}/{iteration_number}/"
         Path(drawing_directory).mkdir(parents=True, exist_ok=True)
-        split, graph, positions, labels = split_vertex(graph, positions, labels, drawing_directory=drawing_directory)
+        split, graph, positions, labels = split_vertex(graph, positions, labels,
+                                                       target_edge_length=target_edge_length,
+                                                       drawing_directory=drawing_directory)
         print(graph.nodes)
         print(positions)
         print(labels)

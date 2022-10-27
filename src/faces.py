@@ -592,6 +592,8 @@ def get_nodes_in_cycle(ordered_cycle, graph, positions):
     ordered_coordinates = [positions[cycle_node] for cycle_node in ordered_cycle_closed]
     # print(f"ordered coordinates: {ordered_coordinates}")
     # input("CHECK NODES IN CYCLE")
+    print(f"ordered coordinates: {ordered_coordinates}")
+    print(f"len(ordered coordinate): {len(ordered_coordinates)}")
     print(f"lenght of positions in function b: {len(positions)}")
     #
     cycle_path = mpltPath.Path(vertices=ordered_coordinates,
@@ -602,6 +604,12 @@ def get_nodes_in_cycle(ordered_cycle, graph, positions):
     print(f"lenght of positions in function c: {len(positions)}")
     #
     remaining_nodes = [node for node in graph.nodes if node not in ordered_cycle]
+
+    # If the cycle IS the remaining graph, return the empty list
+    if len(remaining_nodes) == 0:
+        return remaining_nodes
+
+    print(f"remaining nodes: {remaining_nodes}")
     in_side = cycle_path.contains_points([positions[node] for node in remaining_nodes])
 
     print(f"lenght of positions in function d: {len(positions)}")
