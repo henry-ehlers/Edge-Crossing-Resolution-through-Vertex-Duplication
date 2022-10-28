@@ -5,7 +5,8 @@ import networkx as nx
 import itertools as it
 import pandas as pd
 import numpy as np
-import timeit
+import datetime
+import pickle
 import sys
 
 from src.graph_simulation import *
@@ -717,76 +718,48 @@ if __name__ == '__main__':
     diagnostics_directory = "./output/diagnostics"
     diagnostics_file = f"barabasi_albert_{n_vertices}_{m_edges}_{seed}"
 
-    # TESTS ------------------------------------------------------------------------------------------------------------
-
     # Create Output Directory
     output_directory = f"./drawings/kamada_kawai/barabasi_albert_{n_vertices}_{m_edges}_{seed}"
 
     # Create or Load simulated graph
     print("\nCreation and Embedding of Graph")
-    #
-    # Specify vertices and edges
-    # todo: the example below causes floating point crashes as all their x and y points are identical
-    # coordinates = [(0, 0), (1, 2), (2, 0), (3, 2), (4, 0), (5, 3), (4, 1), (3, 3), (2, 1), (1, 3)]
-    # coordinates = [np.array((0.001, 2.003)), np.array((1.001, 0.005)), np.array((2.003, 1.002)),
-    #                np.array((3.004, 0.002)), np.array((4.003, 2.006)), np.array((2.001, 4.004))]
-    #
-    # vertices = range(0, len(coordinates))
-    # edges = ((index, (index + 1) % len(vertices)) for index in range(0, len(vertices)))
-    #
-    # more_coordinates = [np.array((-2.0004, 1.5004)), np.array((-1.16, 1.55)), np.array((-1.004, 0.507))]
-    # more_vertices = range(len(coordinates), len(coordinates) + len(more_coordinates))
-    #
-    # more_edges = ((more_vertices[index], more_vertices[(index + 1) % len(more_vertices)])
-    #               for index in range(0, len(more_vertices)))
-    # custom_edges = [(2, 5), (0, 4), (2, 0)]
-    # target_edges = [(9, 6), (9, 4), (9, 2), (9, 5)]
-    #
-    # # Create Graph
-    # graph = nx.Graph()
-    # for vertex in vertices:
-    #     graph.add_node(vertex, real=1)
-    # for vertex in more_vertices:
-    #     graph.add_node(vertex, real=1)
-    # v_index = max(graph.nodes) + 1
-    # graph.add_node(v_index, real=1)
-    # for edge in target_edges:
-    #     graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
-    #
-    # for edge in edges:
-    #     graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
-    # for edge in more_edges:
-    #     graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
-    # for edge in custom_edges:
-    #     graph.add_edge(u_of_edge=edge[0], v_of_edge=edge[1], real=1)
-    # positions = {vertices[index]: coordinates[index] for index in range(0, len(coordinates))}
-    # positions.update(
-    #     {more_vertices[index]: more_coordinates[index] for index in range(0, len(more_vertices))})
-    # positions.update({v_index: np.array((0.0, 1.0))})
-    #
-    # graph.add_node(10, real=1)
-    # graph.add_edge(u_of_edge=9, v_of_edge=10, real=1)
-    # positions[10] = np.array((2.49, 2.55))
 
+    # Simulate and Embed the input graph
     graph = create_barabasi_albert_graph(n=n_vertices, m=m_edges, seed=seed)
     positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
     labels = {node: node for node in graph.nodes}
 
-    #
+    # Calculate the target edge length (= the average edge length in the original embedding)
     target_edge_length = get_target_edge_length(graph, positions)
-    print(target_edge_length)
 
-    iteration_number = 0
-    while True:
+    # Calculate the number of edge crossing in the initial embedding
+    initial_edge_crossings, initial_vertex_crossings = locate_edge_crossings(graph=graph, positions=positions)
+    remaining_edge_crossings, remaining_vertex_crossings = initial_edge_crossings, initial_vertex_crossings
+
+    # Resolve at least 50% of all edge crossings of the original embedding
+    iteration_number = -1
+    while len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)):
+        iteration_number += 1
+
+        # Create Output Directory
         drawing_directory = f"./{output_directory}/{iteration_number}/"
         Path(drawing_directory).mkdir(parents=True, exist_ok=True)
-        split, graph, positions, labels = split_vertex(graph, positions, labels,
+
+        # Resolve edge crossings by splitting one vertex
+        start_time = datetime.datetime.now()
+        split, graph, positions, labels = split_vertex(graph=graph,
+                                                       positions=positions,
+                                                       labels=labels,
                                                        target_edge_length=target_edge_length,
                                                        drawing_directory=drawing_directory)
-        print(graph.nodes)
-        print(positions)
-        print(labels)
+        time_taken = datetime.datetime.now() - start_time
+
+        # Save graph objects and time taken
+        pickle.dump(graph, open(f"{drawing_directory}/graph.txt", 'wb'))
+        pickle.dump(positions, open(f"{drawing_directory}/positions.txt", 'wb'))
+        pickle.dump(labels, open(f"{drawing_directory}/labels.txt", 'wb'))
+        pickle.dump(time_taken, open(f"{drawing_directory}/time.txt", 'wb'))
+
+        # Calculate the number of remaining edge crossings
+        remaining_edge_crossings, remaining_vertex_crossings = locate_edge_crossings(graph=graph, positions=positions)
         input(f"Did it split -> {split}?")
-        iteration_number += 1
-        if not split:
-            break

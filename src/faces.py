@@ -253,6 +253,15 @@ def select_sub_faces(sub_face_tables, target_faces, target_vertices):
 
 
 def ilp_choose_weighted_subface(induced_cross_A, induced_cross_B, edge_length_dif_a, edge_length_dif_b):
+
+    print(f"induced edge crossing A shape: {induced_cross_A.shape}")
+    print(f"edge length differences A shape: {edge_length_dif_a.shape}")
+
+    print(f"induced edge crossing B shape: {induced_cross_B.shape}")
+    print(f"edge length differences B shape: {edge_length_dif_b.shape}")
+
+    input("just check the dimsneions")
+
     (W_a, T) = induced_cross_A.shape
     (W_b, T) = induced_cross_B.shape
 
@@ -279,7 +288,7 @@ def ilp_choose_weighted_subface(induced_cross_A, induced_cross_B, edge_length_di
             obj.addTerms(0.01 * edge_length_dif_a[i][j], edge_a[i, j])
         for i in range(W_b):
             obj.addTerms(induced_cross_B[i][j], edge_b[i, j])
-            obj.addTerms(0.01 * edge_length_dif_b[i][j], edge_a[i, j])
+            obj.addTerms(0.01 * edge_length_dif_b[i][j], edge_b[i, j])
     m.setObjective(obj, GRB.MINIMIZE)
 
     # Create constraints
