@@ -457,97 +457,112 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
     draw_graph(graph=p_graph, positions=p_positions)
     save_drawn_graph(f"{drawing_directory}/graph_2.png")
 
-    test = merge_edge_map(virtual_edge_map, inner_graph_object["edge_map"])
-    [print(f"{cell} - {edges}") for cell, edges in test.items()]
-
     # sys.exit()
 
     # Decompose the outer face into sight cells and update the planar graph
-    print("\nDecompose The Outer Face")
-    outer_cell_incidence, cell_graph_object = decompose_outer_face(
-        sorted_inner_face_edges=inner_graph_object["ordered_cycle_edges"],
-        graph=p_graph,
-        positions=p_positions,
-        target_vertices=target_adjacency,
-        bounds=outer_bounds)
+    # print("\nDecompose The Outer Face")
+    # outer_cell_incidence, cell_graph_object = decompose_outer_face(
+    #     sorted_inner_face_edges=inner_graph_object["ordered_cycle_edges"],
+    #     graph=p_graph,
+    #     positions=p_positions,
+    #     target_vertices=target_adjacency,
+    #     bounds=outer_bounds)
 
-    draw_graph(graph=cell_graph_object["graph"], positions=cell_graph_object["positions"])
-    save_drawn_graph(f"{drawing_directory}/graph_2.5.png")
-
-    d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
-    update_graph_with_sight_cells(graph=d_graph,
-                                  positions=d_positions,
-                                  cell_graph=cell_graph_object["graph"],
-                                  cell_positions=cell_graph_object["positions"],
-                                  new_edge_map=cell_graph_object["edge_map"])
-
-    draw_graph(graph=d_graph, positions=d_positions)
-    save_drawn_graph(f"{drawing_directory}/graph_3.png")
+    # draw_graph(graph=cell_graph_object["graph"], positions=cell_graph_object["positions"])
+    # save_drawn_graph(f"{drawing_directory}/graph_2.5.png")
+    #
+    # d_graph, d_positions = copy.deepcopy(p_graph), copy.deepcopy(p_positions)
+    # update_graph_with_sight_cells(graph=d_graph,
+    #                               positions=d_positions,
+    #                               cell_graph=cell_graph_object["graph"],
+    #                               cell_positions=cell_graph_object["positions"],
+    #                               new_edge_map=cell_graph_object["edge_map"])
+    #
+    # draw_graph(graph=d_graph, positions=d_positions)
+    # save_drawn_graph(f"{drawing_directory}/graph_3.png")
 
     # TODO: fix the projection to now work with the data structures of edges
     # TODO: fix subface identification to work with new face detection function and produced data structure
 
     # -------------------------------------------------------------------------------------------------------
     # input("\nCONNECTED NODES ----------------------------------------------------------------------------")
-    print(f"\nA")
-    [print(f"{key} - {items}") for key, items in inner_graph_object['connected_nodes'].items()]
-    print(f"\nB")
-    [print(f"{key} - {items}") for key, items in cell_graph_object['connected_nodes'].items()]
-    connected_nodes = merge_connected_nodes([inner_graph_object['connected_nodes'],
-                                             cell_graph_object['connected_nodes']])
-    print(f"\nC")
-    [print(f"{key} - {items}") for key, items in connected_nodes.items()]
+    # print(f"\nA")
+    # [print(f"{key} - {items}") for key, items in inner_graph_object['connected_nodes'].items()]
+    # print(f"\nB")
+    # [print(f"{key} - {items}") for key, items in cell_graph_object['connected_nodes'].items()]
+    # connected_nodes = merge_connected_nodes([inner_graph_object['connected_nodes'],
+    #                                          cell_graph_object['connected_nodes']])
+    # print(f"\nC")
+    # [print(f"{key} - {items}") for key, items in connected_nodes.items()]
 
     # -------------------------------------------------------------------------------------------------------
     # input("\nEDGE MAP ----------------------------------------------------------------------------------")
-    print(f"\nA")
-    [print(f"{key} - {items}") for key, items in inner_graph_object['edge_map'].items()]
-    print(f"\nB")
-    [print(f"{key} - {items}") for key, items in cell_graph_object['edge_map'].items()]
-    complete_edge_map = merge_edge_map(old_edge_map=inner_graph_object['edge_map'],
-                                       new_edge_map=cell_graph_object['edge_map'])
-    print(f"\nC")
-    [print(f"{key} - {items}") for key, items in complete_edge_map.items()]
+    # print(f"\nA")
+    # [print(f"{key} - {items}") for key, items in inner_graph_object['edge_map'].items()]
+    # print(f"\nB")
+    # [print(f"{key} - {items}") for key, items in cell_graph_object['edge_map'].items()]
+    # complete_edge_map = merge_edge_map(old_edge_map=inner_graph_object['edge_map'],
+    #                                    new_edge_map=cell_graph_object['edge_map'])
+    # print(f"\nC")
+    # [print(f"{key} - {items}") for key, items in complete_edge_map.items()]
 
     # input("CHECK")
 
     # -------------------------------------------------------------------------------------------------------
-    print("\nINCIDENCE TABLE ---------------------------------------------------------------------------")
+    # print("\nINCIDENCE TABLE ---------------------------------------------------------------------------")
+    #
+    # # Create line-segments between all vertices now already connected by edges or virtual edge sets
+    # print(f"\nUpdate Inner Face")
+    # sorted_inner_face_edges = inner_graph_object["ordered_cycle_edges"]
+    # update_faces_with_edge_map(face_incidence_table=inner_face_incidence,
+    #                            sorted_face_edges=sorted_inner_face_edges,
+    #                            edge_map=complete_edge_map)
+    # # input(f"\n POST UPDATE")
+    #
+    # # Select the targets within which to embed split vertices
+    # print(f"\nSelect Embedding Cells/Faces")
+    # incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence],
+    #                             ignore_index=True,
+    #                             axis=0)
+    #
+    # # TODO: calculcate lengths
+    # edge_length_table = calculate_edge_length_weights(sight_cells=incidence_table["identifier"].tolist(),
+    #                                                   targets=target_adjacency,
+    #                                                   positions=d_positions,
+    #                                                   target_length=target_edge_length)
+    #
+    # print(incidence_table)
+    # print(f"")
+    # selected_cells = weighted_select_embedding_faces(incidence_table=incidence_table,
+    #                                                  edge_length_table=edge_length_table,
+    #                                                  target_vertices=target_adjacency)
+    # # selected_cells = select_embedding_faces(incidence_table=incidence_table,
+    # #                                         target_vertices=target_adjacency)
+    # selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
+    # print(f"\nselected faces: {selected_cells}")
+    # print(f"\nselected faces: {selected_faces}")
+    # # input(";alsdkjf;lsadkfa;sdlkfj")
+    # # input("Start All Line Segmentation")
 
-    # Create line-segments between all vertices now already connected by edges or virtual edge sets
-    print(f"\nUpdate Inner Face")
-    sorted_inner_face_edges = inner_graph_object["ordered_cycle_edges"]
-    update_faces_with_edge_map(face_incidence_table=inner_face_incidence,
-                               sorted_face_edges=sorted_inner_face_edges,
-                               edge_map=complete_edge_map)
-    # input(f"\n POST UPDATE")
+    # All-to-All Line Segments ---------------------------------------------------------------------------------
 
-    # Select the targets within which to embed split vertices
-    print(f"\nSelect Embedding Cells/Faces")
-    incidence_table = pd.concat(objs=[inner_face_incidence, outer_cell_incidence],
-                                ignore_index=True,
-                                axis=0)
+    d_graph, d_positions = p_graph, p_positions
 
-    # TODO: calculcate lengths
+    connected_nodes = inner_graph_object['connected_nodes']
+    complete_edge_map = inner_graph_object['edge_map']
+    incidence_table = inner_face_incidence
+
     edge_length_table = calculate_edge_length_weights(sight_cells=incidence_table["identifier"].tolist(),
                                                       targets=target_adjacency,
                                                       positions=d_positions,
                                                       target_length=target_edge_length)
 
-    print(incidence_table)
-    print(f"")
     selected_cells = weighted_select_embedding_faces(incidence_table=incidence_table,
                                                      edge_length_table=edge_length_table,
                                                      target_vertices=target_adjacency)
-    # selected_cells = select_embedding_faces(incidence_table=incidence_table,
-    #                                         target_vertices=target_adjacency)
-    selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
-    print(f"\nselected faces: {selected_cells}")
-    print(f"\nselected faces: {selected_faces}")
-    # input(";alsdkjf;lsadkfa;sdlkfj")
-    # input("Start All Line Segmentation")
 
-    # All-to-All Line Segments ---------------------------------------------------------------------------------
+    selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
+
     s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
                                                               positions=d_positions,
                                                               virtual_edge_set=complete_edge_map,
@@ -560,29 +575,31 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
     draw_graph(graph=s_graph, positions=s_positions)
     save_drawn_graph(f"{drawing_directory}/graph_4.png")
 
-    print(f"\nCull Non-Selected Line Segments")
-    print(f"cells: {incidence_table['identifier'].tolist()}")
+    # print(f"\nCull Non-Selected Line Segments")
+    # print(f"cells: {incidence_table['identifier'].tolist()}")
+    complete_vertex_map = inner_graph_object["vertex_map"]
+    complete_face_edges = inner_graph_object["ordered_cycle_edges"]
 
-    print(f"A ------------------------------------------------------------------------")
-    [print(f"{key} - {item}") for key, item in inner_graph_object["vertex_map"].items()]
-    print(f"B ------------------------------------------------------------------------")
-    [print(f"{key} - {item}") for key, item in cell_graph_object["vertex_map"].items()]
-    complete_vertex_map = {**inner_graph_object["vertex_map"],
-                           **cell_graph_object["vertex_map"]}
-    print(f"C ------------------------------------------------------------------------")
-    [print(f"{key} - {item}") for key, item in complete_vertex_map.items()]
+    # print(f"A ------------------------------------------------------------------------")
+    # [print(f"{key} - {item}") for key, item in inner_graph_object["vertex_map"].items()]
+    # print(f"B ------------------------------------------------------------------------")
+    # [print(f"{key} - {item}") for key, item in cell_graph_object["vertex_map"].items()]
+    # complete_vertex_map = {**inner_graph_object["vertex_map"],
+    #                        **cell_graph_object["vertex_map"]}
+    # print(f"C ------------------------------------------------------------------------")
+    # [print(f"{key} - {item}") for key, item in complete_vertex_map.items()]
     # input("check complete")
 
     # TODO: this merger MAY be incomplete? -> if an inner face's outer edge was bisected by an outer face's sight
     #  extension, this may not be accounted for
-    complete_face_edges = {**inner_graph_object["ordered_cycle_edges"],
-                           **cell_graph_object["ordered_cycle_edges"]}
-    print(f"A ------------------------------------------------------------------------")
-    [print(f"{key} - {item}") for key, item in inner_graph_object["ordered_cycle_edges"].items()]
-    print(f"B ------------------------------------------------------------------------")
-    [print(f"{key} - {item}") for key, item in cell_graph_object["ordered_cycle_edges"].items()]
-    print(f"C ------------------------------------------------------------------------")
-    [print(f"{key} - {item}") for key, item in complete_face_edges.items()]
+    # complete_face_edges = {**inner_graph_object["ordered_cycle_edges"],
+    #                        **cell_graph_object["ordered_cycle_edges"]}
+    # print(f"A ------------------------------------------------------------------------")
+    # [print(f"{key} - {item}") for key, item in inner_graph_object["ordered_cycle_edges"].items()]
+    # print(f"B ------------------------------------------------------------------------")
+    # [print(f"{key} - {item}") for key, item in cell_graph_object["ordered_cycle_edges"].items()]
+    # print(f"C ------------------------------------------------------------------------")
+    # [print(f"{key} - {item}") for key, item in complete_face_edges.items()]
     # input("CHECK")
 
     # Cull all segments which do not intersect the two selected faces
