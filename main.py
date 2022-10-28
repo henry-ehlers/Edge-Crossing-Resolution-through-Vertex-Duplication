@@ -779,4 +779,4 @@ if __name__ == '__main__':
 
         # Calculate the number of remaining edge crossings
         remaining_edge_crossings, remaining_vertex_crossings = locate_edge_crossings(graph=graph, positions=positions)
-        input(f"Did it split -> {split}?")
+        # input(f"Did it split -> {split}?")
