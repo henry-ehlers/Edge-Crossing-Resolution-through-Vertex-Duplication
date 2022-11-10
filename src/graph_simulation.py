@@ -3,10 +3,11 @@ import numpy as np
 from pathlib import Path
 
 
-def create_barabasi_albert_graph(n, m, seed, root_dir="data/simulated"):
+def create_barabasi_albert_graph(n, m, seed, root_dir="data/simulated", type="barabasi_albert"):
 
     # Define the input/output file path of the specified graph
-    file_path = f = "./{}/barabasi_albert_{}_{}_{}.csv".format(root_dir, n, m, seed)
+    # file_path = f = "./{}/barabasi_albert_{}_{}_{}.csv".format(root_dir, n, m, seed)
+    file_path = f = "./{}/{}_{}_{}_{}.csv".format(root_dir, type, n, m, seed)
 
     # If the path already exists, load it from the existing file
     if Path(file_path).is_file():
@@ -19,7 +20,10 @@ def create_barabasi_albert_graph(n, m, seed, root_dir="data/simulated"):
     else:
 
         # Create graph and save to file
-        graph = nx.barabasi_albert_graph(n=n, m=m, seed=seed)
+        if type == "barabasi_albert":
+                graph = nx.barabasi_albert_graph(n=n, m=m, seed=seed)
+        elif type == "watts_strogatz":
+            graph = nx.watts_strogatz_graph(n=n, k=m, p=0.5, seed=seed)
         np.savetxt(fname=file_path, X=nx.to_numpy_matrix(graph).astype(int), fmt='%i', delimiter=",")
 
     # Set Edge Attributes

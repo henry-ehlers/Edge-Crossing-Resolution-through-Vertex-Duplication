@@ -260,7 +260,7 @@ def ilp_choose_weighted_subface(induced_cross_A, induced_cross_B, edge_length_di
     print(f"induced edge crossing B shape: {induced_cross_B.shape}")
     print(f"edge length differences B shape: {edge_length_dif_b.shape}")
 
-    input("just check the dimsneions")
+    # input("just check the dimensions")
 
     (W_a, T) = induced_cross_A.shape
     (W_b, T) = induced_cross_B.shape
@@ -720,6 +720,9 @@ def calculate_midpoint(point_a, point_b):
 def place_virtual_midpoints(graph, positions, start_index=None):
     start_index = start_index if start_index is not None else max(graph.nodes()) + 1
     for index, (node_a, node_b) in enumerate(copy.deepcopy(graph.edges)):
+        print(f"splitting edge {(node_a, node_b)}")
+        print(f"position A: {positions[node_a]}")
+        print(f"position B: {positions[node_b]}")
         new_vertex = start_index + index
         positions[new_vertex] = calculate_midpoint(positions[node_a], positions[node_b])
         graph.add_edge(u_of_edge=node_a, v_of_edge=new_vertex)
@@ -811,6 +814,7 @@ def find_inner_faces(graph, positions):
 
     # Keep track of the original vertex set
     original_vertices = list(graph.nodes)
+
 
     # Create New Graph which splits all edges by placing a virtual vertex at their centers
     midpoint_graph, midpoint_positions = copy.deepcopy(graph), copy.deepcopy(positions)

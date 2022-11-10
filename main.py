@@ -115,6 +115,7 @@ def get_edge_length_matrix(edge_length_table, incidence_table, targets):
 
 
 def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target_vertices, graph, positions, bounds):
+
     # Identify all sight cells in the outer face
     sight_cells, ordered_cell_edges, edge_map, connected_vertices, o_graph, o_positions = find_outer_face_sight_cells(
         selected_faces=outer_faces,
@@ -123,26 +124,17 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
         positions=positions,
         is_cycle=is_cycle,
         bounds=bounds)
-    print(f"\nGET OUTER FACE SIGHT CELL")
-    [print(f"{cell} - {edges}") for cell, edges in ordered_cell_edges.items()]
-    # input("cells")
 
     # Calculate the incidence of all sight cells to the outer face's target incident vertices
     outer_face = set().union(*outer_faces)
     outer_target_vertices = outer_face.intersection(target_vertices)
-    print(f"outer target vertices: {outer_target_vertices}")
-    # input('....')
     cell_incidences = get_outer_face_sight_cell_incidences(sight_cells=sight_cells,
                                                            target_vertices=outer_target_vertices,
                                                            face_edges=sorted_outer_edges,
                                                            face_edge_map=edge_map,
                                                            positions=o_positions)
-    print(f"\ncell incidence:")
-    [print(f"{cell} - {incidence}") for cell, incidence in cell_incidences.items()]
-    # input("...")
 
     # Merge Outer Sight Cells with identical incidences and Update all data structures
-    # outer_sight_cell_edges = get_sight_cell_edges(sight_cells, o_graph)
     sight_cells, ordered_cell_edges, vertex_map = merge_cells_wrapper(face_sight_cells=sight_cells,
                                                                       cell_incidences=cell_incidences,
                                                                       cells_edge_map=edge_map,
@@ -150,21 +142,10 @@ def get_outer_face_sight_cells(outer_faces, sorted_outer_edges, is_cycle, target
                                                                       positions=o_positions,
                                                                       graph=o_graph)
 
-    draw_graph(o_graph, o_positions)
-    save_drawn_graph("./merged_outer_graph.png")
-
     # Get Sorted Incidence Table of sight cells and their incidences
     cell_incidence_table = get_incidence_table(incidences=cell_incidences,
                                                entry_type="cell",
                                                outer=True)
-    print(f"\ncell incidence table:")
-    print(cell_incidence_table)
-    # input("__________________")
-
-    print(f"\nedge map:")
-    [print(f"{key} - {item}") for key, item in edge_map.items()]
-    print(f"\n\nedges:")
-    [print(f"{key} - {item}") for key, item in ordered_cell_edges.items()]
 
     # Return Everything if no single sight cell can realize the incidence of the face
     new_graph_object = {"cells": sight_cells,
@@ -206,10 +187,15 @@ def identify_target_vertex(graph, positions):
 
     # Locate all edge crossings and rank all vertices accordingly
     edge_crossings, vertex_crossings = locate_edge_crossings(graph=graph, positions=positions)
+    [print(f"{key} - {item}") for key, item in edge_crossings.items()]
+    print()
+    print(vertex_crossings)
     if len(edge_crossings) == 0:
         return None, None, None, None, None
 
     target_vertex = get_target_vertex(vertex_crossings=vertex_crossings, graph=graph)
+    print(f"target vertex: {target_vertex}")
+    # input("---------")
     target_vertex_adjacency = list(graph.neighbors(target_vertex))
 
     # Remove the target vertex and identify all remaining edge crossings
@@ -278,18 +264,17 @@ def update_graph_with_sight_cells(graph, positions, cell_graph, cell_positions, 
     graph.update(cell_graph)
 
 
-def get_inner_faces(target_vertices: [int],
-                    graph,
-                    positions,
-                    outer_bounds):
+def get_inner_faces(target_vertices: [int], graph, positions, outer_bounds):
+
     # Identify the graph's inner faces
+    # input("find_inner_faces")
     inner_faces, sorted_inner_face_vertices, sorted_inner_face_edges = find_inner_faces(graph=graph,
                                                                                         positions=positions)
-    print(f"\nINNER FACES:")
+    # print(f"\nINNER FACES:")
     [print(face) for face in inner_faces]
-    # input(f"inner faces")
 
     # Decompose Inner Faces into Sight Cells by sight line extension
+    # input("find_inner_face_sight_cells")
     cells, ordered_cell_vertices, ordered_cell_edges, face_edge_map, connected_vertex_map = find_inner_face_sight_cells(
         inner_faces=inner_faces,
         ordered_face_edges=sorted_inner_face_edges,
@@ -314,19 +299,17 @@ def get_inner_faces(target_vertices: [int],
 
     print(f"face edge map:")
     [print(f"cell: {cell} - {edges}") for cell, edges in face_edge_map.items()]
-    # input("...")
 
     # Create Pandas Data Table of Face Incidences
+    # input("find_face_vertex_incidence")
     convex_faces = inner_faces.intersection(cells)
     inner_faces_incidences = find_face_vertex_incidence(faces=convex_faces,
                                                         target_vertices=target_vertices)
 
     # Get Incidence of Sight Cells Identified
     actual_cells = cells - convex_faces
-    # {frozenset({1, 12, 6}), frozenset({1, 10, 11, 13}), frozenset({1, 13, 9}), frozenset({1, 11, 12}), frozenset({1, 5, 9})}
-    # {frozenset({1, 11, 12}), frozenset({1, 12, 6}), frozenset({1, 10, 11, 13}), frozenset({1, 5, 9, 13})}
     print(f"actual cells: {actual_cells}")
-
+    # input("get_inner_face_sight_cell_incidences")
     # cell_edges = get_sight_cell_edges(actual_cells, graph)
     inner_cells_incidence = get_inner_face_sight_cell_incidences(sight_cells=actual_cells,
                                                                  target_vertices=target_vertices,
@@ -336,6 +319,7 @@ def get_inner_faces(target_vertices: [int],
 
     print(f"\ninner_cells_incidence")
     print(inner_cells_incidence)
+    # input("merge_cells_wrapper")
     sight_cells, ordered_cell_edges, vertex_map = merge_cells_wrapper(face_sight_cells=actual_cells,
                                                                       cell_incidences=inner_cells_incidence,
                                                                       cells_edge_map=face_edge_map,
@@ -347,19 +331,14 @@ def get_inner_faces(target_vertices: [int],
     ordered_edges = {**{face: sorted_inner_face_edges[face] for face in convex_faces},
                      **{cell: ordered_cell_edges[cell] for cell in ordered_cell_edges.keys()}}
     [print(f"{cell} - {item}") for cell, item in ordered_edges.items()]
-    # input("------------------------------------")
     print(f"\nedge map:")
     [print(f"{cell} - {item}") for cell, item in face_edge_map.items()]
-    # input(".....")
     print(f"\nvertex map:")
     [print(f"{cell} - {item}") for cell, item in vertex_map.items()]
-    # input(".....")
     print(f"ordered face edges:")
     [print(f"cell: {face} - {edges}") for face, edges in sorted_inner_face_edges.items()]
-    # input("...")
     print(f"ordered cell edges:")
     [print(f"cell: {cell} - {edges}") for cell, edges in ordered_cell_edges.items()]
-    # input("...")
     print(f"ordered cell edges:")
     [print(f"cell: {key} - {edges}") for key, edges in ordered_edges.items()]
     # input("...")
@@ -450,8 +429,11 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                                                graph=p_graph,
                                                                positions=p_positions,
                                                                outer_bounds=outer_bounds)
-
+    print("POSITIONS:")
+    [print(f"{key} - {value}") for key, value in p_positions.items()]
+    print("INCIDENCES")
     print(inner_face_incidence)
+    # input("")
 
     # Draw the inner sight cell decomposed graph
     draw_graph(graph=p_graph, positions=p_positions)
@@ -733,16 +715,17 @@ if __name__ == '__main__':
 
     # Diagnostics Files
     diagnostics_directory = "./output/diagnostics"
-    diagnostics_file = f"barabasi_albert_{n_vertices}_{m_edges}_{seed}"
+    simulation_type = "watts_strogatz"
+    diagnostics_file = f"{simulation_type}_{n_vertices}_{m_edges}_{seed}"
 
     # Create Output Directory
-    output_directory = f"./drawings/kamada_kawai/barabasi_albert_{n_vertices}_{m_edges}_{seed}"
+    output_directory = f"./drawings/kamada_kawai/{simulation_type}_{n_vertices}_{m_edges}_{seed}"
 
     # Create or Load simulated graph
     print("\nCreation and Embedding of Graph")
 
     # Simulate and Embed the input graph
-    graph = create_barabasi_albert_graph(n=n_vertices, m=m_edges, seed=seed)
+    graph = create_barabasi_albert_graph(n=n_vertices, m=m_edges, seed=seed, type=simulation_type)
     positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
     labels = {node: node for node in graph.nodes}
 
@@ -752,10 +735,14 @@ if __name__ == '__main__':
     # Calculate the number of edge crossing in the initial embedding
     initial_edge_crossings, initial_vertex_crossings = locate_edge_crossings(graph=graph, positions=positions)
     remaining_edge_crossings, remaining_vertex_crossings = initial_edge_crossings, initial_vertex_crossings
+    split = True
+
+    draw_graph(graph, positions, labels)
+    save_drawn_graph("original_embedding.png")
 
     # Resolve at least 50% of all edge crossings of the original embedding
     iteration_number = -1
-    while len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)):
+    while len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)) and split:
         iteration_number += 1
 
         # Create Output Directory

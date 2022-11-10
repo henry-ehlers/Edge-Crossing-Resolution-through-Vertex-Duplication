@@ -903,6 +903,7 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
     # Iterate over all faces
     selected_face_list = list(inner_faces)
     for face_index, face in enumerate(selected_face_list):
+        print(f"face: {face}")
 
         # Project sight-lines within the currently selected face against itself
         edge_to_virtual_vertices, added_vertices, connected_vertices = project_face_against_self(
@@ -1182,8 +1183,8 @@ def find_outer_face_sight_cells(selected_faces: {frozenset},
                                               outer=True)
 
             # DEBUG: Draw Initial Embedding
-            draw_graph(graph=outer_graph, positions=outer_positions)
-            save_drawn_graph(f"./graph_{face}.png")
+            # draw_graph(graph=outer_graph, positions=outer_positions)
+            # save_drawn_graph(f"./graph_{face}.png")
 
         # Iterate over all other faces that form the outer face
         for other_face in selected_faces:
@@ -1223,8 +1224,8 @@ def find_outer_face_sight_cells(selected_faces: {frozenset},
                                               outer=True)
 
             # Draw Initial Embedding
-            draw_graph(graph=outer_graph, positions=outer_positions)
-            save_drawn_graph(f"./graph_{face}+{other_face}.png")
+            # draw_graph(graph=outer_graph, positions=outer_positions)
+            # save_drawn_graph(f"./graph_{face}+{other_face}.png")
 
     print(f"\nfinal map: {connected_vertex_map}")
     draw_graph(graph=outer_graph,
