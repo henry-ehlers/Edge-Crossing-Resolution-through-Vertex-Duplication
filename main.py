@@ -737,9 +737,6 @@ if __name__ == '__main__':
     remaining_edge_crossings, remaining_vertex_crossings = initial_edge_crossings, initial_vertex_crossings
     split = True
 
-    draw_graph(graph, positions, labels)
-    save_drawn_graph("original_embedding.png")
-
     # Resolve at least 50% of all edge crossings of the original embedding
     iteration_number = -1
     while len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)) and split:
