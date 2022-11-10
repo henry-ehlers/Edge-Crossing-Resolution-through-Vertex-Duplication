@@ -928,8 +928,8 @@ def find_inner_face_sight_cells(inner_faces, ordered_face_edges, graph, position
                                           outer=False)
 
         # DEBUG: Draw Initial Embedding
-        draw_graph(graph=graph, positions=positions)
-        save_drawn_graph(f"./graph_{face}.png")
+        # draw_graph(graph=graph, positions=positions)
+        # save_drawn_graph(f"./graph_{face}.png")
 
     # Identify all faces (i.e. sight cells in outer face)
     print(f"\nFIND SIGHT CELLS OF INNER FACES")
@@ -1228,9 +1228,9 @@ def find_outer_face_sight_cells(selected_faces: {frozenset},
             # save_drawn_graph(f"./graph_{face}+{other_face}.png")
 
     print(f"\nfinal map: {connected_vertex_map}")
-    draw_graph(graph=outer_graph,
-               positions=outer_positions)
-    save_drawn_graph(f"./final_outer.png")
+    # draw_graph(graph=outer_graph,
+    #            positions=outer_positions)
+    # save_drawn_graph(f"./final_outer.png")
 
     # Identify all faces (i.e. sight cells in outer face)
     sight_cells, ordered_cell_nodes, ordered_cell_edges = find_inner_faces(graph=outer_graph,

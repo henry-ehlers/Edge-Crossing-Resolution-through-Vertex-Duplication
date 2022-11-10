@@ -87,8 +87,8 @@ def sub_face_merge_wrapper(face_sub_faces, face_sub_face_crossings, face_sub_fac
         face_sub_faces[face] = set(sub_faces)
 
         # Draw Merged Embedding
-        draw_graph(graph=graph, positions=positions)
-        save_drawn_graph(f"./merged_sub_faces_{face}.png")
+        # draw_graph(graph=graph, positions=positions)
+        # save_drawn_graph(f"./merged_sub_faces_{face}.png")
 
     # Return updated sight cells, incidences, and edge map
     return face_sub_faces
@@ -820,8 +820,8 @@ def find_inner_faces(graph, positions):
     midpoint_graph, midpoint_positions = copy.deepcopy(graph), copy.deepcopy(positions)
     place_virtual_midpoints(graph=midpoint_graph, positions=midpoint_positions)
 
-    draw_graph(graph=midpoint_graph, positions=midpoint_positions)
-    save_drawn_graph(f"./midpoint_graph.png")
+    # draw_graph(graph=midpoint_graph, positions=midpoint_positions)
+    # save_drawn_graph(f"./midpoint_graph.png")
 
     print(f"MIDPOINT POSITIONS")
     print(positions)
