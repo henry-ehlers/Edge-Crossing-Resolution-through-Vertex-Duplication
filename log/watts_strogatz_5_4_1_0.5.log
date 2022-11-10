@@ -1,0 +1,1404 @@
+
+Creation and Embedding of Graph
+edge: (0, 1)
+vertices: 0 and 1
+distance: 1.3819660438962291
+edge: (0, 2)
+vertices: 0 and 2
+distance: 3.6180340594070755
+edge: (0, 3)
+vertices: 0 and 3
+distance: 3.6180340381032274
+edge: (0, 4)
+vertices: 0 and 4
+distance: 1.3819659802959263
+edge: (1, 2)
+vertices: 1 and 2
+distance: 1.38196605686737
+edge: (1, 3)
+vertices: 1 and 3
+distance: 3.618034120851386
+edge: (1, 4)
+vertices: 1 and 4
+distance: 3.6180340586801982
+edge: (2, 3)
+vertices: 2 and 3
+distance: 1.3819660770503313
+edge: (2, 4)
+vertices: 2 and 4
+distance: 3.618034107031191
+edge: (3, 4)
+vertices: 3 and 4
+distance: 1.381966066329321
+
+Identify Target Vertex and Remove it from the Embedding
+(0, 2) - {(1, 3): (-0.11803400628562999, 0.36327126086163114), (1, 4): (0.30901699465368127, 0.22451399772209885)}
+(0, 3) - {(1, 4): (0.3090170181729338, -0.22451397873625953), (2, 4): (-0.11803395968547936, -0.3632712758595657)}
+(1, 3) - {(2, 4): (-0.3819660103592874, -1.4829806271876578e-08)}
+
+{0: 4, 1: 4, 2: 4, 3: 4, 4: 4}
+target vertex: 0
+target vertex: 0
+target adjacency: [1, 2, 3, 4]
+
+Planarize Remaining Graph after target removal
+fvirtual edge set:
+frozenset({1, 2}) - set()
+frozenset({1, 3}) - set()
+frozenset({1, 4}) - set()
+frozenset({2, 3}) - set()
+frozenset({2, 4}) - set()
+frozenset({3, 4}) - set()
+edge_to_vitrual vertex:
+(1, 2) - set()
+(1, 3) - {5}
+(1, 4) - set()
+(2, 3) - set()
+(2, 4) - {5}
+(3, 4) - set()
+virtual edge set:
+frozenset({1, 2}) - set()
+frozenset({1, 3}) - {frozenset({1, 5}), frozenset({3, 5})}
+frozenset({1, 4}) - set()
+frozenset({2, 3}) - set()
+frozenset({2, 4}) - {frozenset({4, 5}), frozenset({2, 5})}
+frozenset({3, 4}) - set()
+
+Identify the Inner Faces
+outer bounds: ((-1.426584817867224, -1.426584817867224), (-1.426584817867224, 1.426584817867224), (1.426584817867224, 1.426584817867224), (1.426584817867224, -1.426584817867224))
+splitting edge (1, 2)
+position A: [0.30901696 0.95105655]
+position B: [-0.80901703  0.58778523]
+splitting edge (1, 4)
+position A: [0.30901696 0.95105655]
+position B: [ 0.30901706 -0.95105651]
+splitting edge (1, 5)
+position A: [0.30901696 0.95105655]
+position B: [-3.81966010e-01 -1.48298063e-08]
+splitting edge (2, 3)
+position A: [-0.80901703  0.58778523]
+position B: [-0.80901698 -0.58778531]
+splitting edge (2, 5)
+position A: [-0.80901703  0.58778523]
+position B: [-3.81966010e-01 -1.48298063e-08]
+splitting edge (3, 4)
+position A: [-0.80901698 -0.58778531]
+position B: [ 0.30901706 -0.95105651]
+splitting edge (3, 5)
+position A: [-0.80901698 -0.58778531]
+position B: [-3.81966010e-01 -1.48298063e-08]
+splitting edge (4, 5)
+position A: [ 0.30901706 -0.95105651]
+position B: [-3.81966010e-01 -1.48298063e-08]
+MIDPOINT POSITIONS
+{1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08])}
+length of positions: 13
+graph edges: [(1, 6), (1, 7), (1, 8), (2, 6), (2, 9), (2, 10), (3, 9), (3, 11), (3, 12), (4, 7), (4, 11), (4, 13), (5, 8), (5, 10), (5, 12), (5, 13)]
+frozenset({3, 4, 5, 11, 12, 13})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({3, 4, 5, 11, 12, 13})'s edges: [frozenset({11, 3}), frozenset({3, 12}), frozenset({11, 4}), frozenset({4, 13}), frozenset({12, 5}), frozenset({13, 5})]
+edges: [(11, 3), (3, 12), (11, 4), (4, 13), (12, 5), (13, 5)]
+frozenset({1, 2, 5, 6, 8, 10})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({1, 2, 5, 6, 8, 10})'s edges: [frozenset({1, 6}), frozenset({8, 1}), frozenset({2, 6}), frozenset({2, 10}), frozenset({8, 5}), frozenset({10, 5})]
+edges: [(1, 6), (8, 1), (2, 6), (2, 10), (8, 5), (10, 5)]
+frozenset({2, 3, 5, 9, 10, 12})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({2, 3, 5, 9, 10, 12})'s edges: [frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({3, 12}), frozenset({10, 5}), frozenset({12, 5})]
+edges: [(9, 2), (2, 10), (9, 3), (3, 12), (10, 5), (12, 5)]
+frozenset({1, 4, 5, 7, 8, 13})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({1, 4, 5, 7, 8, 13})'s edges: [frozenset({1, 7}), frozenset({8, 1}), frozenset({4, 7}), frozenset({4, 13}), frozenset({8, 5}), frozenset({13, 5})]
+edges: [(1, 7), (8, 1), (4, 7), (4, 13), (8, 5), (13, 5)]
+sorted vertex sequence: [11, 3, 12, 5, 13, 4]
+sorted vertex sequence: [1, 6, 2, 10, 5, 8]
+sorted vertex sequence: [9, 2, 10, 5, 12, 3]
+sorted vertex sequence: [1, 7, 4, 13, 5, 8]
+ordered_edges: {frozenset({3, 4, 5, 11, 12, 13}): [(11, 3), (3, 12), (12, 5), (5, 13), (13, 4), (4, 11)], frozenset({1, 2, 5, 6, 8, 10}): [(1, 6), (6, 2), (2, 10), (10, 5), (5, 8), (8, 1)], frozenset({2, 3, 5, 9, 10, 12}): [(9, 2), (2, 10), (10, 5), (5, 12), (12, 3), (3, 9)], frozenset({1, 4, 5, 7, 8, 13}): [(1, 7), (7, 4), (4, 13), (13, 5), (5, 8), (8, 1)]}
+
+cycle: frozenset({3, 4, 5, 11, 12, 13})
+lenght of positions in function 0: 13
+lenght of positions in function a: 13
+ordered cycle closed in check: [11, 3, 12, 5, 13, 4, 11]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: (-0.2500000391499012, 0.7694208860778542), 7: (0.309017006413307, 1.9758529701263683e-08), 8: (-0.03647452688027841, 0.47552826520750485), 9: (-0.8090170064133069, -3.937483383786855e-08), 10: (-0.5954915226289101, 0.293892606040543), 11: (-0.2499999608500987, -0.7694209056941583), 12: (-0.5954914941436841, -0.2938926602451831), 13: (-0.036474477065702005, -0.4755282602787814)}
+ordered coordinates: [(-0.2499999608500987, -0.7694209056941583), array([-0.80901698, -0.58778531]), (-0.5954914941436841, -0.2938926602451831), array([-3.81966010e-01, -1.48298063e-08]), (-0.036474477065702005, -0.4755282602787814), array([ 0.30901706, -0.95105651]), (-0.2499999608500987, -0.7694209056941583)]
+len(ordered coordinate): 7
+lenght of positions in function b: 13
+lenght of positions in function c: 13
+remaining nodes: [1, 2, 6, 7, 8, 9, 10]
+lenght of positions in function d: 13
+nodes inside cycle: []
+added face frozenset({3, 4, 5, 11, 12, 13}) to list
+
+cycle: frozenset({1, 2, 5, 6, 8, 10})
+lenght of positions in function 0: 13
+lenght of positions in function a: 13
+ordered cycle closed in check: [1, 6, 2, 10, 5, 8, 1]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: (-0.2500000391499012, 0.7694208860778542), 7: (0.309017006413307, 1.9758529701263683e-08), 8: (-0.03647452688027841, 0.47552826520750485), 9: (-0.8090170064133069, -3.937483383786855e-08), 10: (-0.5954915226289101, 0.293892606040543), 11: (-0.2499999608500987, -0.7694209056941583), 12: (-0.5954914941436841, -0.2938926602451831), 13: (-0.036474477065702005, -0.4755282602787814)}
+ordered coordinates: [array([0.30901696, 0.95105655]), (-0.2500000391499012, 0.7694208860778542), array([-0.80901703,  0.58778523]), (-0.5954915226289101, 0.293892606040543), array([-3.81966010e-01, -1.48298063e-08]), (-0.03647452688027841, 0.47552826520750485), array([0.30901696, 0.95105655])]
+len(ordered coordinate): 7
+lenght of positions in function b: 13
+lenght of positions in function c: 13
+remaining nodes: [3, 4, 7, 9, 11, 12, 13]
+lenght of positions in function d: 13
+nodes inside cycle: []
+added face frozenset({1, 2, 5, 6, 8, 10}) to list
+
+cycle: frozenset({2, 3, 5, 9, 10, 12})
+lenght of positions in function 0: 13
+lenght of positions in function a: 13
+ordered cycle closed in check: [9, 2, 10, 5, 12, 3, 9]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: (-0.2500000391499012, 0.7694208860778542), 7: (0.309017006413307, 1.9758529701263683e-08), 8: (-0.03647452688027841, 0.47552826520750485), 9: (-0.8090170064133069, -3.937483383786855e-08), 10: (-0.5954915226289101, 0.293892606040543), 11: (-0.2499999608500987, -0.7694209056941583), 12: (-0.5954914941436841, -0.2938926602451831), 13: (-0.036474477065702005, -0.4755282602787814)}
+ordered coordinates: [(-0.8090170064133069, -3.937483383786855e-08), array([-0.80901703,  0.58778523]), (-0.5954915226289101, 0.293892606040543), array([-3.81966010e-01, -1.48298063e-08]), (-0.5954914941436841, -0.2938926602451831), array([-0.80901698, -0.58778531]), (-0.8090170064133069, -3.937483383786855e-08)]
+len(ordered coordinate): 7
+lenght of positions in function b: 13
+lenght of positions in function c: 13
+remaining nodes: [1, 4, 6, 7, 8, 11, 13]
+lenght of positions in function d: 13
+nodes inside cycle: []
+added face frozenset({2, 3, 5, 9, 10, 12}) to list
+
+cycle: frozenset({1, 4, 5, 7, 8, 13})
+lenght of positions in function 0: 13
+lenght of positions in function a: 13
+ordered cycle closed in check: [1, 7, 4, 13, 5, 8, 1]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: (-0.2500000391499012, 0.7694208860778542), 7: (0.309017006413307, 1.9758529701263683e-08), 8: (-0.03647452688027841, 0.47552826520750485), 9: (-0.8090170064133069, -3.937483383786855e-08), 10: (-0.5954915226289101, 0.293892606040543), 11: (-0.2499999608500987, -0.7694209056941583), 12: (-0.5954914941436841, -0.2938926602451831), 13: (-0.036474477065702005, -0.4755282602787814)}
+ordered coordinates: [array([0.30901696, 0.95105655]), (0.309017006413307, 1.9758529701263683e-08), array([ 0.30901706, -0.95105651]), (-0.036474477065702005, -0.4755282602787814), array([-3.81966010e-01, -1.48298063e-08]), (-0.03647452688027841, 0.47552826520750485), array([0.30901696, 0.95105655])]
+len(ordered coordinate): 7
+lenght of positions in function b: 13
+lenght of positions in function c: 13
+remaining nodes: [2, 3, 6, 9, 10, 11, 12]
+lenght of positions in function d: 13
+nodes inside cycle: []
+added face frozenset({1, 4, 5, 7, 8, 13}) to list
+CYCLES:
+frozenset({3, 4, 5, 11, 12, 13})
+frozenset({2, 3, 5, 9, 10, 12})
+frozenset({1, 4, 5, 7, 8, 13})
+frozenset({1, 2, 5, 6, 8, 10})
+frozenset({3, 4, 5, 11, 12, 13})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({3, 4, 5, 11, 12, 13})'s edges: [frozenset({11, 3}), frozenset({3, 12}), frozenset({11, 4}), frozenset({4, 13}), frozenset({12, 5}), frozenset({13, 5})]
+edges: [(11, 3), (3, 12), (11, 4), (4, 13), (12, 5), (13, 5)]
+frozenset({2, 3, 5, 9, 10, 12})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({2, 3, 5, 9, 10, 12})'s edges: [frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({3, 12}), frozenset({10, 5}), frozenset({12, 5})]
+edges: [(9, 2), (2, 10), (9, 3), (3, 12), (10, 5), (12, 5)]
+frozenset({1, 4, 5, 7, 8, 13})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({1, 4, 5, 7, 8, 13})'s edges: [frozenset({1, 7}), frozenset({8, 1}), frozenset({4, 7}), frozenset({4, 13}), frozenset({8, 5}), frozenset({13, 5})]
+edges: [(1, 7), (8, 1), (4, 7), (4, 13), (8, 5), (13, 5)]
+frozenset({1, 2, 5, 6, 8, 10})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({1, 2, 5, 6, 8, 10})'s edges: [frozenset({1, 6}), frozenset({8, 1}), frozenset({2, 6}), frozenset({2, 10}), frozenset({8, 5}), frozenset({10, 5})]
+edges: [(1, 6), (8, 1), (2, 6), (2, 10), (8, 5), (10, 5)]
+sorted vertex sequence: [11, 3, 12, 5, 13, 4]
+sorted vertex sequence: [9, 2, 10, 5, 12, 3]
+sorted vertex sequence: [1, 7, 4, 13, 5, 8]
+sorted vertex sequence: [1, 6, 2, 10, 5, 8]
+EDGES:
+frozenset({3, 4, 5, 11, 12, 13}) - [(11, 3), (3, 12), (12, 5), (5, 13), (13, 4), (4, 11)]
+frozenset({2, 3, 5, 9, 10, 12}) - [(9, 2), (2, 10), (10, 5), (5, 12), (12, 3), (3, 9)]
+frozenset({1, 4, 5, 7, 8, 13}) - [(1, 7), (7, 4), (4, 13), (13, 5), (5, 8), (8, 1)]
+frozenset({1, 2, 5, 6, 8, 10}) - [(1, 6), (6, 2), (2, 10), (10, 5), (5, 8), (8, 1)]
+NODES:
+frozenset({3, 4, 5, 11, 12, 13}) - [11, 3, 12, 5, 13, 4]
+frozenset({2, 3, 5, 9, 10, 12}) - [9, 2, 10, 5, 12, 3]
+frozenset({1, 4, 5, 7, 8, 13}) - [1, 7, 4, 13, 5, 8]
+frozenset({1, 2, 5, 6, 8, 10}) - [1, 6, 2, 10, 5, 8]
+ordered cycle vertices: [11, 3, 12, 5, 13, 4]
+ordered filtered nodes: [3, 5, 4]
+ordered cycle vertices: [9, 2, 10, 5, 12, 3]
+ordered filtered nodes: [2, 5, 3]
+ordered cycle vertices: [1, 7, 4, 13, 5, 8]
+ordered filtered nodes: [1, 4, 5]
+ordered cycle vertices: [1, 6, 2, 10, 5, 8]
+ordered filtered nodes: [1, 2, 5]
+SORTED FACES:
+[3, 5, 4]
+[2, 5, 3]
+[1, 4, 5]
+[1, 2, 5]
+FACES:
+[3, 5, 4]
+[2, 5, 3]
+[1, 4, 5]
+[1, 2, 5]
+EDGES:
+frozenset({3, 4, 5}) - [3, 5, 4]
+frozenset({2, 3, 5}) - [2, 5, 3]
+frozenset({1, 4, 5}) - [1, 4, 5]
+frozenset({1, 2, 5}) - [1, 2, 5]
+NODES:
+frozenset({3, 4, 5}) - [(3, 5), (5, 4), (4, 3)]
+frozenset({2, 3, 5}) - [(2, 5), (5, 3), (3, 2)]
+frozenset({1, 4, 5}) - [(1, 4), (4, 5), (5, 1)]
+frozenset({1, 2, 5}) - [(1, 2), (2, 5), (5, 1)]
+frozenset({1, 2, 5})
+frozenset({2, 3, 5})
+frozenset({1, 4, 5})
+frozenset({3, 4, 5})
+face: frozenset({1, 2, 5})
+face vertices: [1, 2, 5]
+unit vector 1: [0.58778521 0.80901702]
+unit vector 2: [-0.5877853   0.80901696]
+dot product: 0.30901698852391263
+angle: 1.2566370675880594
+point a: [0.30901696 0.95105655]
+point b: [-3.81966010e-01 -1.48298063e-08]
+point c: [-0.80901703  0.58778523]
+angle of b 72.00000035249178
+unit vector 1: [-0.9510565  -0.30901704]
+unit vector 2: [-0.58778521 -0.80901702]
+dot product: 0.8090169912788898
+angle: 0.6283185359852864
+point a: [-0.80901703  0.58778523]
+point b: [0.30901696 0.95105655]
+point c: [-3.81966010e-01 -1.48298063e-08]
+angle of b 36.00000030179565
+unit vector 1: [ 0.5877853  -0.80901696]
+unit vector 2: [0.9510565  0.30901704]
+dot product: 0.30901700523550846
+angle: 1.2566370500164477
+point a: [-3.81966010e-01 -1.48298063e-08]
+point b: [-0.80901703  0.58778523]
+point c: [0.30901696 0.95105655]
+angle of b 71.99999934571258
+face: frozenset({2, 3, 5})
+face vertices: [3, 5, 2]
+unit vector 1: [ 4.846196e-08 -1.000000e+00]
+unit vector 2: [ 0.5877853  -0.80901696]
+dot product: 0.8090169907364277
+angle: 0.6283185369081781
+point a: [-0.80901698 -0.58778531]
+point b: [-0.80901703  0.58778523]
+point c: [-3.81966010e-01 -1.48298063e-08]
+angle of b 36.000000354673446
+unit vector 1: [0.58778521 0.80901702]
+unit vector 2: [-4.846196e-08  1.000000e+00]
+dot product: 0.8090169943973288
+angle: 0.6283185306798812
+point a: [-3.81966010e-01 -1.48298063e-08]
+point b: [-0.80901698 -0.58778531]
+point c: [-0.80901703  0.58778523]
+angle of b 35.99999999781832
+unit vector 1: [-0.5877853   0.80901696]
+unit vector 2: [-0.58778521 -0.80901702]
+dot product: -0.30901698852391263
+angle: 1.884955586001734
+point a: [-0.80901703  0.58778523]
+point b: [-3.81966010e-01 -1.48298063e-08]
+point c: [-0.80901698 -0.58778531]
+angle of b 107.99999964750823
+face: frozenset({1, 4, 5})
+face vertices: [5, 4, 1]
+unit vector 1: [-0.58778521 -0.80901702]
+unit vector 2: [ 5.23781448e-08 -1.00000000e+00]
+dot product: 0.809016992095453
+angle: 0.6283185345960662
+point a: [-3.81966010e-01 -1.48298063e-08]
+point b: [0.30901696 0.95105655]
+point c: [ 0.30901706 -0.95105651]
+angle of b 36.0000002221992
+unit vector 1: [ 0.5877853  -0.80901696]
+unit vector 2: [0.58778521 0.80901702]
+dot product: -0.3090169885239125
+angle: 1.8849555860017337
+point a: [ 0.30901706 -0.95105651]
+point b: [-3.81966010e-01 -1.48298063e-08]
+point c: [0.30901696 0.95105655]
+angle of b 107.99999964750822
+unit vector 1: [-5.23781448e-08  1.00000000e+00]
+unit vector 2: [-0.5877853   0.80901696]
+dot product: 0.8090169930383032
+angle: 0.6283185329919936
+point a: [0.30901696 0.95105655]
+point b: [ 0.30901706 -0.95105651]
+point c: [-3.81966010e-01 -1.48298063e-08]
+angle of b 36.000000130292605
+face: frozenset({3, 4, 5})
+face vertices: [4, 5, 3]
+unit vector 1: [ 0.95105654 -0.30901693]
+unit vector 2: [0.58778521 0.80901702]
+dot product: 0.3090170087934834
+angle: 1.2566370462753713
+point a: [ 0.30901706 -0.95105651]
+point b: [-0.80901698 -0.58778531]
+point c: [-3.81966010e-01 -1.48298063e-08]
+angle of b 71.9999991313647
+unit vector 1: [-0.5877853   0.80901696]
+unit vector 2: [-0.95105654  0.30901693]
+dot product: 0.8090169890799405
+angle: 0.6283185397263625
+point a: [-3.81966010e-01 -1.48298063e-08]
+point b: [ 0.30901706 -0.95105651]
+point c: [-0.80901698 -0.58778531]
+angle of b 36.00000051614352
+unit vector 1: [-0.58778521 -0.80901702]
+unit vector 2: [ 0.5877853  -0.80901696]
+dot product: 0.3090169885239125
+angle: 1.2566370675880594
+point a: [-0.80901698 -0.58778531]
+point b: [-3.81966010e-01 -1.48298063e-08]
+point c: [ 0.30901706 -0.95105651]
+angle of b 72.00000035249178
+
+FIND SIGHT CELLS OF INNER FACES
+splitting edge (1, 2)
+position A: [0.30901696 0.95105655]
+position B: [-0.80901703  0.58778523]
+splitting edge (1, 4)
+position A: [0.30901696 0.95105655]
+position B: [ 0.30901706 -0.95105651]
+splitting edge (1, 5)
+position A: [0.30901696 0.95105655]
+position B: [-3.81966010e-01 -1.48298063e-08]
+splitting edge (2, 3)
+position A: [-0.80901703  0.58778523]
+position B: [-0.80901698 -0.58778531]
+splitting edge (2, 5)
+position A: [-0.80901703  0.58778523]
+position B: [-3.81966010e-01 -1.48298063e-08]
+splitting edge (3, 4)
+position A: [-0.80901698 -0.58778531]
+position B: [ 0.30901706 -0.95105651]
+splitting edge (3, 5)
+position A: [-0.80901698 -0.58778531]
+position B: [-3.81966010e-01 -1.48298063e-08]
+splitting edge (4, 5)
+position A: [ 0.30901706 -0.95105651]
+position B: [-3.81966010e-01 -1.48298063e-08]
+MIDPOINT POSITIONS
+{1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08])}
+length of positions: 13
+graph edges: [(1, 6), (1, 7), (1, 8), (2, 6), (2, 9), (2, 10), (3, 9), (3, 11), (3, 12), (4, 7), (4, 11), (4, 13), (5, 8), (5, 10), (5, 12), (5, 13)]
+frozenset({3, 4, 5, 11, 12, 13})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({3, 4, 5, 11, 12, 13})'s edges: [frozenset({11, 3}), frozenset({3, 12}), frozenset({11, 4}), frozenset({4, 13}), frozenset({12, 5}), frozenset({13, 5})]
+edges: [(11, 3), (3, 12), (11, 4), (4, 13), (12, 5), (13, 5)]
+frozenset({1, 2, 5, 6, 8, 10})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({1, 2, 5, 6, 8, 10})'s edges: [frozenset({1, 6}), frozenset({8, 1}), frozenset({2, 6}), frozenset({2, 10}), frozenset({8, 5}), frozenset({10, 5})]
+edges: [(1, 6), (8, 1), (2, 6), (2, 10), (8, 5), (10, 5)]
+frozenset({2, 3, 5, 9, 10, 12})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({2, 3, 5, 9, 10, 12})'s edges: [frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({3, 12}), frozenset({10, 5}), frozenset({12, 5})]
+edges: [(9, 2), (2, 10), (9, 3), (3, 12), (10, 5), (12, 5)]
+frozenset({1, 4, 5, 7, 8, 13})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({1, 4, 5, 7, 8, 13})'s edges: [frozenset({1, 7}), frozenset({8, 1}), frozenset({4, 7}), frozenset({4, 13}), frozenset({8, 5}), frozenset({13, 5})]
+edges: [(1, 7), (8, 1), (4, 7), (4, 13), (8, 5), (13, 5)]
+sorted vertex sequence: [11, 3, 12, 5, 13, 4]
+sorted vertex sequence: [1, 6, 2, 10, 5, 8]
+sorted vertex sequence: [9, 2, 10, 5, 12, 3]
+sorted vertex sequence: [1, 7, 4, 13, 5, 8]
+ordered_edges: {frozenset({3, 4, 5, 11, 12, 13}): [(11, 3), (3, 12), (12, 5), (5, 13), (13, 4), (4, 11)], frozenset({1, 2, 5, 6, 8, 10}): [(1, 6), (6, 2), (2, 10), (10, 5), (5, 8), (8, 1)], frozenset({2, 3, 5, 9, 10, 12}): [(9, 2), (2, 10), (10, 5), (5, 12), (12, 3), (3, 9)], frozenset({1, 4, 5, 7, 8, 13}): [(1, 7), (7, 4), (4, 13), (13, 5), (5, 8), (8, 1)]}
+
+cycle: frozenset({3, 4, 5, 11, 12, 13})
+lenght of positions in function 0: 13
+lenght of positions in function a: 13
+ordered cycle closed in check: [11, 3, 12, 5, 13, 4, 11]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: (-0.2500000391499012, 0.7694208860778542), 7: (0.309017006413307, 1.9758529701263683e-08), 8: (-0.03647452688027841, 0.47552826520750485), 9: (-0.8090170064133069, -3.937483383786855e-08), 10: (-0.5954915226289101, 0.293892606040543), 11: (-0.2499999608500987, -0.7694209056941583), 12: (-0.5954914941436841, -0.2938926602451831), 13: (-0.036474477065702005, -0.4755282602787814)}
+ordered coordinates: [(-0.2499999608500987, -0.7694209056941583), array([-0.80901698, -0.58778531]), (-0.5954914941436841, -0.2938926602451831), array([-3.81966010e-01, -1.48298063e-08]), (-0.036474477065702005, -0.4755282602787814), array([ 0.30901706, -0.95105651]), (-0.2499999608500987, -0.7694209056941583)]
+len(ordered coordinate): 7
+lenght of positions in function b: 13
+lenght of positions in function c: 13
+remaining nodes: [1, 2, 6, 7, 8, 9, 10]
+lenght of positions in function d: 13
+nodes inside cycle: []
+added face frozenset({3, 4, 5, 11, 12, 13}) to list
+
+cycle: frozenset({1, 2, 5, 6, 8, 10})
+lenght of positions in function 0: 13
+lenght of positions in function a: 13
+ordered cycle closed in check: [1, 6, 2, 10, 5, 8, 1]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: (-0.2500000391499012, 0.7694208860778542), 7: (0.309017006413307, 1.9758529701263683e-08), 8: (-0.03647452688027841, 0.47552826520750485), 9: (-0.8090170064133069, -3.937483383786855e-08), 10: (-0.5954915226289101, 0.293892606040543), 11: (-0.2499999608500987, -0.7694209056941583), 12: (-0.5954914941436841, -0.2938926602451831), 13: (-0.036474477065702005, -0.4755282602787814)}
+ordered coordinates: [array([0.30901696, 0.95105655]), (-0.2500000391499012, 0.7694208860778542), array([-0.80901703,  0.58778523]), (-0.5954915226289101, 0.293892606040543), array([-3.81966010e-01, -1.48298063e-08]), (-0.03647452688027841, 0.47552826520750485), array([0.30901696, 0.95105655])]
+len(ordered coordinate): 7
+lenght of positions in function b: 13
+lenght of positions in function c: 13
+remaining nodes: [3, 4, 7, 9, 11, 12, 13]
+lenght of positions in function d: 13
+nodes inside cycle: []
+added face frozenset({1, 2, 5, 6, 8, 10}) to list
+
+cycle: frozenset({2, 3, 5, 9, 10, 12})
+lenght of positions in function 0: 13
+lenght of positions in function a: 13
+ordered cycle closed in check: [9, 2, 10, 5, 12, 3, 9]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: (-0.2500000391499012, 0.7694208860778542), 7: (0.309017006413307, 1.9758529701263683e-08), 8: (-0.03647452688027841, 0.47552826520750485), 9: (-0.8090170064133069, -3.937483383786855e-08), 10: (-0.5954915226289101, 0.293892606040543), 11: (-0.2499999608500987, -0.7694209056941583), 12: (-0.5954914941436841, -0.2938926602451831), 13: (-0.036474477065702005, -0.4755282602787814)}
+ordered coordinates: [(-0.8090170064133069, -3.937483383786855e-08), array([-0.80901703,  0.58778523]), (-0.5954915226289101, 0.293892606040543), array([-3.81966010e-01, -1.48298063e-08]), (-0.5954914941436841, -0.2938926602451831), array([-0.80901698, -0.58778531]), (-0.8090170064133069, -3.937483383786855e-08)]
+len(ordered coordinate): 7
+lenght of positions in function b: 13
+lenght of positions in function c: 13
+remaining nodes: [1, 4, 6, 7, 8, 11, 13]
+lenght of positions in function d: 13
+nodes inside cycle: []
+added face frozenset({2, 3, 5, 9, 10, 12}) to list
+
+cycle: frozenset({1, 4, 5, 7, 8, 13})
+lenght of positions in function 0: 13
+lenght of positions in function a: 13
+ordered cycle closed in check: [1, 7, 4, 13, 5, 8, 1]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: (-0.2500000391499012, 0.7694208860778542), 7: (0.309017006413307, 1.9758529701263683e-08), 8: (-0.03647452688027841, 0.47552826520750485), 9: (-0.8090170064133069, -3.937483383786855e-08), 10: (-0.5954915226289101, 0.293892606040543), 11: (-0.2499999608500987, -0.7694209056941583), 12: (-0.5954914941436841, -0.2938926602451831), 13: (-0.036474477065702005, -0.4755282602787814)}
+ordered coordinates: [array([0.30901696, 0.95105655]), (0.309017006413307, 1.9758529701263683e-08), array([ 0.30901706, -0.95105651]), (-0.036474477065702005, -0.4755282602787814), array([-3.81966010e-01, -1.48298063e-08]), (-0.03647452688027841, 0.47552826520750485), array([0.30901696, 0.95105655])]
+len(ordered coordinate): 7
+lenght of positions in function b: 13
+lenght of positions in function c: 13
+remaining nodes: [2, 3, 6, 9, 10, 11, 12]
+lenght of positions in function d: 13
+nodes inside cycle: []
+added face frozenset({1, 4, 5, 7, 8, 13}) to list
+CYCLES:
+frozenset({3, 4, 5, 11, 12, 13})
+frozenset({2, 3, 5, 9, 10, 12})
+frozenset({1, 4, 5, 7, 8, 13})
+frozenset({1, 2, 5, 6, 8, 10})
+frozenset({3, 4, 5, 11, 12, 13})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({3, 4, 5, 11, 12, 13})'s edges: [frozenset({11, 3}), frozenset({3, 12}), frozenset({11, 4}), frozenset({4, 13}), frozenset({12, 5}), frozenset({13, 5})]
+edges: [(11, 3), (3, 12), (11, 4), (4, 13), (12, 5), (13, 5)]
+frozenset({2, 3, 5, 9, 10, 12})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({2, 3, 5, 9, 10, 12})'s edges: [frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({3, 12}), frozenset({10, 5}), frozenset({12, 5})]
+edges: [(9, 2), (2, 10), (9, 3), (3, 12), (10, 5), (12, 5)]
+frozenset({1, 4, 5, 7, 8, 13})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({1, 4, 5, 7, 8, 13})'s edges: [frozenset({1, 7}), frozenset({8, 1}), frozenset({4, 7}), frozenset({4, 13}), frozenset({8, 5}), frozenset({13, 5})]
+edges: [(1, 7), (8, 1), (4, 7), (4, 13), (8, 5), (13, 5)]
+frozenset({1, 2, 5, 6, 8, 10})
+[frozenset({1, 6}), frozenset({1, 7}), frozenset({8, 1}), frozenset({2, 6}), frozenset({9, 2}), frozenset({2, 10}), frozenset({9, 3}), frozenset({11, 3}), frozenset({3, 12}), frozenset({4, 7}), frozenset({11, 4}), frozenset({4, 13}), frozenset({8, 5}), frozenset({10, 5}), frozenset({12, 5}), frozenset({13, 5})]
+cycle frozenset({1, 2, 5, 6, 8, 10})'s edges: [frozenset({1, 6}), frozenset({8, 1}), frozenset({2, 6}), frozenset({2, 10}), frozenset({8, 5}), frozenset({10, 5})]
+edges: [(1, 6), (8, 1), (2, 6), (2, 10), (8, 5), (10, 5)]
+sorted vertex sequence: [11, 3, 12, 5, 13, 4]
+sorted vertex sequence: [9, 2, 10, 5, 12, 3]
+sorted vertex sequence: [1, 7, 4, 13, 5, 8]
+sorted vertex sequence: [1, 6, 2, 10, 5, 8]
+EDGES:
+frozenset({3, 4, 5, 11, 12, 13}) - [(11, 3), (3, 12), (12, 5), (5, 13), (13, 4), (4, 11)]
+frozenset({2, 3, 5, 9, 10, 12}) - [(9, 2), (2, 10), (10, 5), (5, 12), (12, 3), (3, 9)]
+frozenset({1, 4, 5, 7, 8, 13}) - [(1, 7), (7, 4), (4, 13), (13, 5), (5, 8), (8, 1)]
+frozenset({1, 2, 5, 6, 8, 10}) - [(1, 6), (6, 2), (2, 10), (10, 5), (5, 8), (8, 1)]
+NODES:
+frozenset({3, 4, 5, 11, 12, 13}) - [11, 3, 12, 5, 13, 4]
+frozenset({2, 3, 5, 9, 10, 12}) - [9, 2, 10, 5, 12, 3]
+frozenset({1, 4, 5, 7, 8, 13}) - [1, 7, 4, 13, 5, 8]
+frozenset({1, 2, 5, 6, 8, 10}) - [1, 6, 2, 10, 5, 8]
+ordered cycle vertices: [11, 3, 12, 5, 13, 4]
+ordered filtered nodes: [3, 5, 4]
+ordered cycle vertices: [9, 2, 10, 5, 12, 3]
+ordered filtered nodes: [2, 5, 3]
+ordered cycle vertices: [1, 7, 4, 13, 5, 8]
+ordered filtered nodes: [1, 4, 5]
+ordered cycle vertices: [1, 6, 2, 10, 5, 8]
+ordered filtered nodes: [1, 2, 5]
+SORTED FACES:
+[3, 5, 4]
+[2, 5, 3]
+[1, 4, 5]
+[1, 2, 5]
+FACES:
+[3, 5, 4]
+[2, 5, 3]
+[1, 4, 5]
+[1, 2, 5]
+EDGES:
+frozenset({3, 4, 5}) - [3, 5, 4]
+frozenset({2, 3, 5}) - [2, 5, 3]
+frozenset({1, 4, 5}) - [1, 4, 5]
+frozenset({1, 2, 5}) - [1, 2, 5]
+NODES:
+frozenset({3, 4, 5}) - [(3, 5), (5, 4), (4, 3)]
+frozenset({2, 3, 5}) - [(2, 5), (5, 3), (3, 2)]
+frozenset({1, 4, 5}) - [(1, 4), (4, 5), (5, 1)]
+frozenset({1, 2, 5}) - [(1, 2), (2, 5), (5, 1)]
+
+ connected nodes:
+
+INNER CELLS:
+frozenset({1, 2, 5})
+frozenset({2, 3, 5})
+frozenset({1, 4, 5})
+frozenset({3, 4, 5})
+ordered cell vertices:
+cell: frozenset({3, 4, 5}) - [3, 5, 4]
+cell: frozenset({2, 3, 5}) - [2, 5, 3]
+cell: frozenset({1, 4, 5}) - [1, 4, 5]
+cell: frozenset({1, 2, 5}) - [1, 2, 5]
+ordered cell edges:
+cell: frozenset({3, 4, 5}) - [(3, 5), (5, 4), (4, 3)]
+cell: frozenset({2, 3, 5}) - [(2, 5), (5, 3), (3, 2)]
+cell: frozenset({1, 4, 5}) - [(1, 4), (4, 5), (5, 1)]
+cell: frozenset({1, 2, 5}) - [(1, 2), (2, 5), (5, 1)]
+face edge map:
+cell: frozenset({1, 2}) - {frozenset({1, 2})}
+cell: frozenset({2, 5}) - {frozenset({2, 5})}
+cell: frozenset({1, 5}) - {frozenset({1, 5})}
+cell: frozenset({3, 5}) - {frozenset({3, 5})}
+cell: frozenset({2, 3}) - {frozenset({2, 3})}
+cell: frozenset({1, 4}) - {frozenset({1, 4})}
+cell: frozenset({4, 5}) - {frozenset({4, 5})}
+cell: frozenset({3, 4}) - {frozenset({3, 4})}
+actual cells: set()
+
+inner_cells_incidence
+{}
+cell_edge_list:
+{frozenset({3, 4, 5}): {frozenset({4, 5}), frozenset({3, 4}), frozenset({3, 5})}, frozenset({2, 3, 5}): {frozenset({2, 3}), frozenset({2, 5}), frozenset({3, 5})}, frozenset({1, 4, 5}): {frozenset({4, 5}), frozenset({1, 4}), frozenset({1, 5})}, frozenset({1, 2, 5}): {frozenset({1, 5}), frozenset({2, 5}), frozenset({1, 2})}}
+
+Edge List:
+frozenset({3, 4, 5}) - {frozenset({4, 5}), frozenset({3, 4}), frozenset({3, 5})}
+frozenset({2, 3, 5}) - {frozenset({2, 3}), frozenset({2, 5}), frozenset({3, 5})}
+frozenset({1, 4, 5}) - {frozenset({4, 5}), frozenset({1, 4}), frozenset({1, 5})}
+frozenset({1, 2, 5}) - {frozenset({1, 5}), frozenset({2, 5}), frozenset({1, 2})}
+
+Incidence:
+
+POST MERGE --------------------------------------------------------------------------
+
+Edge List:
+frozenset({3, 4, 5}) - {frozenset({4, 5}), frozenset({3, 4}), frozenset({3, 5})}
+frozenset({2, 3, 5}) - {frozenset({2, 3}), frozenset({2, 5}), frozenset({3, 5})}
+frozenset({1, 4, 5}) - {frozenset({4, 5}), frozenset({1, 4}), frozenset({1, 5})}
+frozenset({1, 2, 5}) - {frozenset({1, 5}), frozenset({2, 5}), frozenset({1, 2})}
+
+Edge List:
+frozenset({3, 4, 5}) - {frozenset({4, 5}), frozenset({3, 4}), frozenset({3, 5})}
+frozenset({2, 3, 5}) - {frozenset({2, 3}), frozenset({2, 5}), frozenset({3, 5})}
+frozenset({1, 4, 5}) - {frozenset({4, 5}), frozenset({1, 4}), frozenset({1, 5})}
+frozenset({1, 2, 5}) - {frozenset({1, 5}), frozenset({2, 5}), frozenset({1, 2})}
+
+Cells:
+ordered_cell_edges:
+{}
+sight_cells: set()
+ordered edges:
+frozenset({1, 2, 5}) - [(1, 2), (2, 5), (5, 1)]
+frozenset({2, 3, 5}) - [(2, 5), (5, 3), (3, 2)]
+frozenset({1, 4, 5}) - [(1, 4), (4, 5), (5, 1)]
+frozenset({3, 4, 5}) - [(3, 5), (5, 4), (4, 3)]
+
+edge map:
+frozenset({1, 2}) - {frozenset({1, 2})}
+frozenset({2, 5}) - {frozenset({2, 5})}
+frozenset({1, 5}) - {frozenset({1, 5})}
+frozenset({3, 5}) - {frozenset({3, 5})}
+frozenset({2, 3}) - {frozenset({2, 3})}
+frozenset({1, 4}) - {frozenset({1, 4})}
+frozenset({4, 5}) - {frozenset({4, 5})}
+frozenset({3, 4}) - {frozenset({3, 4})}
+
+vertex map:
+ordered face edges:
+cell: frozenset({3, 4, 5}) - [(3, 5), (5, 4), (4, 3)]
+cell: frozenset({2, 3, 5}) - [(2, 5), (5, 3), (3, 2)]
+cell: frozenset({1, 4, 5}) - [(1, 4), (4, 5), (5, 1)]
+cell: frozenset({1, 2, 5}) - [(1, 2), (2, 5), (5, 1)]
+ordered cell edges:
+ordered cell edges:
+cell: frozenset({1, 2, 5}) - [(1, 2), (2, 5), (5, 1)]
+cell: frozenset({2, 3, 5}) - [(2, 5), (5, 3), (3, 2)]
+cell: frozenset({1, 4, 5}) - [(1, 4), (4, 5), (5, 1)]
+cell: frozenset({3, 4, 5}) - [(3, 5), (5, 4), (4, 3)]
+Empty DataFrame
+Columns: [type, outer, identifier, incidence]
+Index: []
+   type  outer identifier incidence
+0  face  False  (1, 2, 5)    (1, 2)
+1  face  False  (2, 3, 5)    (2, 3)
+2  face  False  (1, 4, 5)    (1, 4)
+3  face  False  (3, 4, 5)    (3, 4)
+
+inner_incidence_table:
+   type  outer identifier incidence
+0  face    0.0  (1, 2, 5)    (1, 2)
+1  face    0.0  (2, 3, 5)    (2, 3)
+2  face    0.0  (1, 4, 5)    (1, 4)
+3  face    0.0  (3, 4, 5)    (3, 4)
+
+face edge map:
+{frozenset({1, 2}): {frozenset({1, 2})}, frozenset({2, 5}): {frozenset({2, 5})}, frozenset({1, 5}): {frozenset({1, 5})}, frozenset({3, 5}): {frozenset({3, 5})}, frozenset({2, 3}): {frozenset({2, 3})}, frozenset({1, 4}): {frozenset({1, 4})}, frozenset({4, 5}): {frozenset({4, 5})}, frozenset({3, 4}): {frozenset({3, 4})}}
+
+connected_vertex_map:
+{}
+POSITIONS:
+1 - [0.30901696 0.95105655]
+2 - [-0.80901703  0.58778523]
+3 - [-0.80901698 -0.58778531]
+4 - [ 0.30901706 -0.95105651]
+5 - [-3.81966010e-01 -1.48298063e-08]
+INCIDENCES
+   type  outer identifier incidence
+0  face    0.0  (1, 2, 5)    (1, 2)
+1  face    0.0  (2, 3, 5)    (2, 3)
+2  face    0.0  (1, 4, 5)    (1, 4)
+3  face    0.0  (3, 4, 5)    (3, 4)
+4
+4
+cell frozenset({1, 2, 5})
+positions: [array([0.30901696, 0.95105655]), array([-0.80901703,  0.58778523]), array([-3.81966010e-01, -1.48298063e-08])]
+centroid: [-0.2939887   0.51294725]
+target: 1 @ [0.30901696 0.95105655]
+target: 2 @ [-0.80901703  0.58778523]
+target: 3 @ [-0.80901698 -0.58778531]
+target: 4 @ [ 0.30901706 -0.95105651]
+cell frozenset({2, 3, 5})
+positions: [array([-0.80901703,  0.58778523]), array([-0.80901698, -0.58778531]), array([-3.81966010e-01, -1.48298063e-08])]
+centroid: [-6.66666674e-01 -3.11931580e-08]
+target: 1 @ [0.30901696 0.95105655]
+target: 2 @ [-0.80901703  0.58778523]
+target: 3 @ [-0.80901698 -0.58778531]
+target: 4 @ [ 0.30901706 -0.95105651]
+cell frozenset({1, 4, 5})
+positions: [array([0.30901696, 0.95105655]), array([ 0.30901706, -0.95105651]), array([-3.81966010e-01, -1.48298063e-08])]
+centroid: [7.86893342e-02 8.22908438e-09]
+target: 1 @ [0.30901696 0.95105655]
+target: 2 @ [-0.80901703  0.58778523]
+target: 3 @ [-0.80901698 -0.58778531]
+target: 4 @ [ 0.30901706 -0.95105651]
+cell frozenset({3, 4, 5})
+positions: [array([-0.80901698, -0.58778531]), array([ 0.30901706, -0.95105651]), array([-3.81966010e-01, -1.48298063e-08])]
+centroid: [-0.29398864 -0.51294728]
+target: 1 @ [0.30901696 0.95105655]
+target: 2 @ [-0.80901703  0.58778523]
+target: 3 @ [-0.80901698 -0.58778531]
+target: 4 @ [ 0.30901706 -0.95105651]
+[1.944444491080036, 0.6435329014756097, 1.542440710590646, 0.006922880406429854]
+[2.229145148786332, 2.1342449260713807, 1.3664859998908212, 1.0231337757832206]
+[1.0231337654248014, 2.134244923054632, 1.3664859891133572, 2.229145145350539]
+[0.006922880568721368, 0.6435329008942725, 1.5424407085565608, 1.9444444886269068]
+   type  outer identifier incidence
+0  face    0.0  (1, 2, 5)    (1, 2)
+1  face    0.0  (2, 3, 5)    (2, 3)
+2  face    0.0  (1, 4, 5)    (1, 4)
+3  face    0.0  (3, 4, 5)    (3, 4)
+          1         2         3         4 identifier
+0  1.944444  2.229145  1.023134  0.006923  (1, 2, 5)
+1  0.643533  2.134245  2.134245  0.643533  (2, 3, 5)
+2  1.542441  1.366486  1.366486  1.542441  (1, 4, 5)
+3  0.006923  1.023134  2.229145  1.944444  (3, 4, 5)
+           1  2  3  4
+(1, 2, 5)  1  1  0  0
+(2, 3, 5)  0  1  1  0
+(1, 4, 5)  1  0  0  1
+(3, 4, 5)  0  0  1  1
+0    1.944444
+1    0.643533
+2    1.542441
+3    0.006923
+Name: 1, dtype: float64
+Cell frozenset({1, 2, 5}) @ 0
+Target 1 @ 0
+0     True
+1    False
+2    False
+3    False
+Name: identifier, dtype: bool
+index: 0
+Target 2 @ 1
+0     True
+1    False
+2    False
+3    False
+Name: identifier, dtype: bool
+index: 0
+Target 3 @ 2
+0     True
+1    False
+2    False
+3    False
+Name: identifier, dtype: bool
+index: 0
+Target 4 @ 3
+0     True
+1    False
+2    False
+3    False
+Name: identifier, dtype: bool
+index: 0
+Cell frozenset({2, 3, 5}) @ 1
+Target 1 @ 0
+0    False
+1     True
+2    False
+3    False
+Name: identifier, dtype: bool
+index: 1
+Target 2 @ 1
+0    False
+1     True
+2    False
+3    False
+Name: identifier, dtype: bool
+index: 1
+Target 3 @ 2
+0    False
+1     True
+2    False
+3    False
+Name: identifier, dtype: bool
+index: 1
+Target 4 @ 3
+0    False
+1     True
+2    False
+3    False
+Name: identifier, dtype: bool
+index: 1
+Cell frozenset({1, 4, 5}) @ 2
+Target 1 @ 0
+0    False
+1    False
+2     True
+3    False
+Name: identifier, dtype: bool
+index: 2
+Target 2 @ 1
+0    False
+1    False
+2     True
+3    False
+Name: identifier, dtype: bool
+index: 2
+Target 3 @ 2
+0    False
+1    False
+2     True
+3    False
+Name: identifier, dtype: bool
+index: 2
+Target 4 @ 3
+0    False
+1    False
+2     True
+3    False
+Name: identifier, dtype: bool
+index: 2
+Cell frozenset({3, 4, 5}) @ 3
+Target 1 @ 0
+0    False
+1    False
+2    False
+3     True
+Name: identifier, dtype: bool
+index: 3
+Target 2 @ 1
+0    False
+1    False
+2    False
+3     True
+Name: identifier, dtype: bool
+index: 3
+Target 3 @ 2
+0    False
+1    False
+2    False
+3     True
+Name: identifier, dtype: bool
+index: 3
+Target 4 @ 3
+0    False
+1    False
+2    False
+3     True
+Name: identifier, dtype: bool
+index: 3
+[[1.94444449 2.22914515 1.02313377 0.00692288]
+ [0.6435329  2.13424493 2.13424492 0.6435329 ]
+ [1.54244071 1.366486   1.36648599 1.54244071]
+ [0.00692288 1.02313378 2.22914515 1.94444449]]
+           1  2  3  4
+(1, 2, 5)  1  1  0  0
+(2, 3, 5)  0  1  1  0
+(1, 4, 5)  1  0  0  1
+(3, 4, 5)  0  0  1  1
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-09-28
+Set parameter PoolGap to value 0
+Set parameter PoolSearchMode to value 2
+Gurobi Optimizer version 9.5.2 build v9.5.2rc0 (linux64)
+Thread count: 12 physical cores, 24 logical processors, using up to 24 threads
+Optimize a model with 37 rows, 20 columns and 68 nonzeros
+Model fingerprint: 0xea1e40ac
+Variable types: 0 continuous, 20 integer (20 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 2e+00]
+Found heuristic solution: objective -0.0000000
+Presolve removed 24 rows and 8 columns
+Presolve time: 0.00s
+Presolved: 13 rows, 12 columns, 28 nonzeros
+Variable types: 0 continuous, 12 integer (12 binary)
+Found heuristic solution: objective 3.0630783
+
+Root relaxation: objective 4.083472e+00, 2 iterations, 0.00 seconds (0.00 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0       4.0834718    4.08347  0.00%     -    0s
+
+Optimal solution found at node 0 - now completing solution pool...
+
+    Nodes    |    Current Node    |      Pool Obj. Bounds     |     Work
+             |                    |   Worst                   |
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0          -    0               -    4.08347      -     -    0s
+     0     0          -    0               -    4.08347      -     -    0s
+     0     2          -    0               -    4.08347      -     -    0s
+
+Explored 17 nodes (20 simplex iterations) in 0.01 seconds (0.00 work units)
+Thread count was 24 (of 24 available processors)
+
+Solution count 1: 4.08347 
+No other solutions better than -1e+100
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 4.083471792738e+00, best bound 4.083471792738e+00, gap 0.0000%
+selected entry indices: [0, 3]
+           1  2  3  4
+(1, 2, 5)  1  1  0  0
+(3, 4, 5)  0  0  1  1
+real nodes: [1, 2, 3, 4]
+
+Vertices 1 and 2
+virtual connections: [frozenset({1, 2})]
+virtual edges with which to check edges: [(1, 2)]
+connected:     1
+connections A: [{1, 2}]
+extended vertex: None
+connections because no connections exist: [1]
+connections to be connected: [1, 6]
+extended vertex: None
+connections because no connections exist: [2]
+connections to be connected: [2, 7]
+virtual_edges: [{1, 2}, (1, 6), (2, 7)]
+
+Vertices 1 and 3
+virtual connections: []
+connected:     0
+connections A: []
+extended vertex: None
+connections because no connections exist: [1]
+connections to be connected: [1, 8]
+extended vertex: None
+connections because no connections exist: [3]
+connections to be connected: [3, 9]
+virtual_edges: [{1, 3}, (1, 8), (3, 9)]
+
+Vertices 1 and 4
+virtual connections: [frozenset({1, 4})]
+virtual edges with which to check edges: [(1, 4)]
+connected:     1
+connections A: [{1, 4}]
+extended vertex: None
+connections because no connections exist: [1]
+connections to be connected: [1, 10]
+extended vertex: None
+connections because no connections exist: [4]
+connections to be connected: [4, 11]
+virtual_edges: [{1, 4}, (1, 10), (4, 11)]
+
+Vertices 2 and 3
+virtual connections: [frozenset({2, 3})]
+virtual edges with which to check edges: [(2, 3)]
+connected:     1
+connections A: [{2, 3}]
+extended vertex: None
+connections because no connections exist: [2]
+connections to be connected: [2, 12]
+extended vertex: None
+connections because no connections exist: [3]
+connections to be connected: [3, 13]
+virtual_edges: [{2, 3}, (2, 12), (3, 13)]
+
+Vertices 2 and 4
+virtual connections: []
+connected:     0
+connections A: []
+extended vertex: None
+connections because no connections exist: [2]
+connections to be connected: [2, 14]
+extended vertex: None
+connections because no connections exist: [4]
+connections to be connected: [4, 15]
+virtual_edges: [{2, 4}, (2, 14), (4, 15)]
+
+Vertices 3 and 4
+virtual connections: [frozenset({3, 4})]
+virtual edges with which to check edges: [(3, 4)]
+connected:     1
+connections A: [{3, 4}]
+extended vertex: None
+connections because no connections exist: [3]
+connections to be connected: [3, 16]
+extended vertex: None
+connections because no connections exist: [4]
+connections to be connected: [4, 17]
+virtual_edges: [{3, 4}, (3, 16), (4, 17)]
+frozenset({6, 7}) - [{1, 2}, {1, 6}, {2, 7}]
+frozenset({8, 9}) - [{1, 3}, {8, 1}, {9, 3}]
+frozenset({10, 11}) - [{1, 4}, {1, 10}, {11, 4}]
+frozenset({12, 13}) - [{2, 3}, {2, 12}, {3, 13}]
+frozenset({14, 15}) - [{2, 4}, {2, 14}, {4, 15}]
+frozenset({16, 17}) - [{3, 4}, {16, 3}, {17, 4}]
+virtual edges: [{1, 5}, {2, 5}, {3, 5}, {4, 5}]
+
+face: frozenset({1, 2, 5})
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+face edge: (1, 2)
+face edge: (2, 5)
+face edge: (5, 1)
+
+face: frozenset({3, 4, 5})
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+face edge: (3, 5)
+face edge: (5, 4)
+face edge: (4, 3)
+fvirtual edge set:
+frozenset({2, 5}) - set()
+frozenset({1, 5}) - set()
+frozenset({3, 5}) - set()
+edge_to_vitrual vertex:
+(2, 5) - {6}
+(5, 1) - {7}
+(3, 5) - {8}
+
+SUBFACE CREATION
+fvirtual edge set:
+frozenset({1, 2}) - set()
+frozenset({1, 4}) - set()
+frozenset({1, 6}) - set()
+frozenset({1, 7}) - set()
+frozenset({2, 3}) - set()
+frozenset({2, 7}) - set()
+frozenset({2, 6}) - set()
+frozenset({3, 4}) - set()
+frozenset({8, 3}) - set()
+frozenset({4, 5}) - set()
+frozenset({8, 4}) - set()
+frozenset({5, 6}) - set()
+frozenset({5, 7}) - set()
+frozenset({8, 5}) - set()
+edge_to_vitrual vertex:
+(1, 2) - set()
+(1, 4) - set()
+(1, 6) - set()
+(1, 7) - set()
+(2, 3) - set()
+(2, 7) - set()
+(2, 6) - set()
+(3, 4) - set()
+(3, 8) - set()
+(4, 5) - set()
+(4, 8) - set()
+(5, 6) - set()
+(5, 7) - set()
+(5, 8) - set()
+
+SUBFACE SELECTION
+vertex set of face frozenset({1, 2, 5}): {1, 2, 5, 6, 7}
+False
+splitting edge (1, 2)
+position A: [0.30901696 0.95105655]
+position B: [-0.80901703  0.58778523]
+splitting edge (1, 6)
+position A: [0.30901696 0.95105655]
+position B: [-3.8196601e-01 -1.4829806e-08]
+splitting edge (1, 7)
+position A: [0.30901696 0.95105655]
+position B: [-3.81966010e-01 -1.48298062e-08]
+splitting edge (2, 7)
+position A: [-0.80901703  0.58778523]
+position B: [-3.81966010e-01 -1.48298062e-08]
+splitting edge (2, 6)
+position A: [-0.80901703  0.58778523]
+position B: [-3.8196601e-01 -1.4829806e-08]
+splitting edge (5, 6)
+position A: [-3.81966010e-01 -1.48298063e-08]
+position B: [-3.8196601e-01 -1.4829806e-08]
+splitting edge (5, 7)
+position A: [-3.81966010e-01 -1.48298063e-08]
+position B: [-3.81966010e-01 -1.48298062e-08]
+MIDPOINT POSITIONS
+{1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: array([-3.8196601e-01, -1.4829806e-08]), 7: array([-3.81966010e-01, -1.48298062e-08]), 8: array([-3.81966010e-01, -1.48298062e-08]), 9: array([-1.41844043, -1.42658482]), 10: array([0.30901693, 1.42658482]), 11: array([ 0.30901708, -1.42658482]), 12: array([-0.80901708,  1.42658482]), 13: array([-0.80901694, -1.42658482]), 14: array([-1.41844068,  1.42658482]), 15: array([ 0.65450864, -1.42658482]), 16: array([-1.42658482, -0.38712539]), 17: array([ 1.42658482, -1.3141762 ])}
+length of positions: 17
+graph edges: [(1, 8), (1, 9), (1, 10), (2, 8), (2, 11), (2, 12), (5, 13), (5, 14), (6, 9), (6, 12), (6, 13), (7, 10), (7, 11), (7, 14)]
+frozenset({1, 2, 6, 8, 9, 12})
+[frozenset({8, 1}), frozenset({1, 9}), frozenset({1, 10}), frozenset({8, 2}), frozenset({2, 11}), frozenset({2, 12}), frozenset({13, 5}), frozenset({5, 14}), frozenset({9, 6}), frozenset({12, 6}), frozenset({13, 6}), frozenset({10, 7}), frozenset({11, 7}), frozenset({14, 7})]
+cycle frozenset({1, 2, 6, 8, 9, 12})'s edges: [frozenset({8, 1}), frozenset({1, 9}), frozenset({8, 2}), frozenset({2, 12}), frozenset({9, 6}), frozenset({12, 6})]
+edges: [(8, 1), (1, 9), (8, 2), (2, 12), (9, 6), (12, 6)]
+frozenset({1, 2, 7, 8, 10, 11})
+[frozenset({8, 1}), frozenset({1, 9}), frozenset({1, 10}), frozenset({8, 2}), frozenset({2, 11}), frozenset({2, 12}), frozenset({13, 5}), frozenset({5, 14}), frozenset({9, 6}), frozenset({12, 6}), frozenset({13, 6}), frozenset({10, 7}), frozenset({11, 7}), frozenset({14, 7})]
+cycle frozenset({1, 2, 7, 8, 10, 11})'s edges: [frozenset({8, 1}), frozenset({1, 10}), frozenset({8, 2}), frozenset({2, 11}), frozenset({10, 7}), frozenset({11, 7})]
+edges: [(8, 1), (1, 10), (8, 2), (2, 11), (10, 7), (11, 7)]
+frozenset({1, 5, 6, 7, 9, 10, 13, 14})
+[frozenset({8, 1}), frozenset({1, 9}), frozenset({1, 10}), frozenset({8, 2}), frozenset({2, 11}), frozenset({2, 12}), frozenset({13, 5}), frozenset({5, 14}), frozenset({9, 6}), frozenset({12, 6}), frozenset({13, 6}), frozenset({10, 7}), frozenset({11, 7}), frozenset({14, 7})]
+cycle frozenset({1, 5, 6, 7, 9, 10, 13, 14})'s edges: [frozenset({1, 9}), frozenset({1, 10}), frozenset({13, 5}), frozenset({5, 14}), frozenset({9, 6}), frozenset({13, 6}), frozenset({10, 7}), frozenset({14, 7})]
+edges: [(1, 9), (1, 10), (13, 5), (5, 14), (9, 6), (13, 6), (10, 7), (14, 7)]
+sorted vertex sequence: [8, 1, 9, 6, 12, 2]
+sorted vertex sequence: [8, 1, 10, 7, 11, 2]
+sorted vertex sequence: [1, 9, 6, 13, 5, 14, 7, 10]
+ordered_edges: {frozenset({1, 2, 6, 8, 9, 12}): [(8, 1), (1, 9), (9, 6), (6, 12), (12, 2), (2, 8)], frozenset({1, 2, 7, 8, 10, 11}): [(8, 1), (1, 10), (10, 7), (7, 11), (11, 2), (2, 8)], frozenset({1, 5, 6, 7, 9, 10, 13, 14}): [(1, 9), (9, 6), (6, 13), (13, 5), (5, 14), (14, 7), (7, 10), (10, 1)]}
+
+cycle: frozenset({1, 2, 6, 8, 9, 12})
+lenght of positions in function 0: 17
+lenght of positions in function a: 17
+ordered cycle closed in check: [8, 1, 9, 6, 12, 2, 8]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: array([-3.8196601e-01, -1.4829806e-08]), 7: array([-3.81966010e-01, -1.48298062e-08]), 8: (-0.2500000391499012, 0.7694208860778542), 9: (-0.0364745268802783, 0.47552826520750496), 10: (-0.03647452688027841, 0.4755282652075049), 11: (-0.5954915226289101, 0.29389260604054307), 12: (-0.59549152262891, 0.2938926060405431), 13: (-0.3819660103592873, -1.4829806160854275e-08), 14: (-0.3819660103592874, -1.4829806216365427e-08), 15: array([ 0.65450864, -1.42658482]), 16: array([-1.42658482, -0.38712539]), 17: array([ 1.42658482, -1.3141762 ])}
+ordered coordinates: [(-0.2500000391499012, 0.7694208860778542), array([0.30901696, 0.95105655]), (-0.0364745268802783, 0.47552826520750496), array([-3.8196601e-01, -1.4829806e-08]), (-0.59549152262891, 0.2938926060405431), array([-0.80901703,  0.58778523]), (-0.2500000391499012, 0.7694208860778542)]
+len(ordered coordinate): 7
+lenght of positions in function b: 17
+lenght of positions in function c: 17
+remaining nodes: [5, 7, 10, 11, 13, 14]
+lenght of positions in function d: 17
+nodes inside cycle: [10]
+
+cycle: frozenset({1, 2, 7, 8, 10, 11})
+lenght of positions in function 0: 17
+lenght of positions in function a: 17
+ordered cycle closed in check: [8, 1, 10, 7, 11, 2, 8]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: array([-3.8196601e-01, -1.4829806e-08]), 7: array([-3.81966010e-01, -1.48298062e-08]), 8: (-0.2500000391499012, 0.7694208860778542), 9: (-0.0364745268802783, 0.47552826520750496), 10: (-0.03647452688027841, 0.4755282652075049), 11: (-0.5954915226289101, 0.29389260604054307), 12: (-0.59549152262891, 0.2938926060405431), 13: (-0.3819660103592873, -1.4829806160854275e-08), 14: (-0.3819660103592874, -1.4829806216365427e-08), 15: array([ 0.65450864, -1.42658482]), 16: array([-1.42658482, -0.38712539]), 17: array([ 1.42658482, -1.3141762 ])}
+ordered coordinates: [(-0.2500000391499012, 0.7694208860778542), array([0.30901696, 0.95105655]), (-0.03647452688027841, 0.4755282652075049), array([-3.81966010e-01, -1.48298062e-08]), (-0.5954915226289101, 0.29389260604054307), array([-0.80901703,  0.58778523]), (-0.2500000391499012, 0.7694208860778542)]
+len(ordered coordinate): 7
+lenght of positions in function b: 17
+lenght of positions in function c: 17
+remaining nodes: [5, 6, 9, 12, 13, 14]
+lenght of positions in function d: 17
+nodes inside cycle: [12]
+
+cycle: frozenset({1, 5, 6, 7, 9, 10, 13, 14})
+lenght of positions in function 0: 17
+lenght of positions in function a: 17
+ordered cycle closed in check: [1, 9, 6, 13, 5, 14, 7, 10, 1]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: array([-3.8196601e-01, -1.4829806e-08]), 7: array([-3.81966010e-01, -1.48298062e-08]), 8: (-0.2500000391499012, 0.7694208860778542), 9: (-0.0364745268802783, 0.47552826520750496), 10: (-0.03647452688027841, 0.4755282652075049), 11: (-0.5954915226289101, 0.29389260604054307), 12: (-0.59549152262891, 0.2938926060405431), 13: (-0.3819660103592873, -1.4829806160854275e-08), 14: (-0.3819660103592874, -1.4829806216365427e-08), 15: array([ 0.65450864, -1.42658482]), 16: array([-1.42658482, -0.38712539]), 17: array([ 1.42658482, -1.3141762 ])}
+ordered coordinates: [array([0.30901696, 0.95105655]), (-0.0364745268802783, 0.47552826520750496), array([-3.8196601e-01, -1.4829806e-08]), (-0.3819660103592873, -1.4829806160854275e-08), array([-3.81966010e-01, -1.48298063e-08]), (-0.3819660103592874, -1.4829806216365427e-08), array([-3.81966010e-01, -1.48298062e-08]), (-0.03647452688027841, 0.4755282652075049), array([0.30901696, 0.95105655])]
+len(ordered coordinate): 9
+lenght of positions in function b: 17
+lenght of positions in function c: 17
+remaining nodes: [2, 8, 11, 12]
+lenght of positions in function d: 17
+nodes inside cycle: []
+added face frozenset({1, 5, 6, 7, 9, 10, 13, 14}) to list
+nodes of subgraph: [10, 1, 2, 6, 8, 9, 12]
+recurse into cycle: frozenset({1, 2, 6, 8, 9, 12})
+nodes inside subgraph: [1, 2, 6, 8, 9, 10, 12]
+edges in subgraph: [(1, 8), (1, 9), (1, 10), (2, 8), (2, 12), (6, 9), (6, 12)]
+length of edges pre prune: 7
+edges: [(8, 1), (1, 9), (9, 6), (6, 12), (12, 2), (2, 8)]
+outer perimeter: {frozenset({8, 2}), frozenset({9, 6}), frozenset({1, 9}), frozenset({2, 12}), frozenset({8, 1}), frozenset({12, 6})}
+length of edges post prune: 5
+length of positions: 17
+graph edges: [(1, 8), (1, 10), (2, 8), (2, 12), (6, 12)]
+ordered_edges: {}
+nodes of subgraph: [12, 1, 2, 7, 8, 10, 11]
+recurse into cycle: frozenset({1, 2, 7, 8, 10, 11})
+nodes inside subgraph: [1, 2, 7, 8, 10, 11, 12]
+edges in subgraph: [(1, 8), (1, 10), (2, 8), (2, 11), (2, 12), (7, 10), (7, 11)]
+length of edges pre prune: 7
+edges: [(8, 1), (1, 10), (10, 7), (7, 11), (11, 2), (2, 8)]
+outer perimeter: {frozenset({8, 2}), frozenset({10, 7}), frozenset({8, 1}), frozenset({2, 11}), frozenset({11, 7}), frozenset({1, 10})}
+length of edges post prune: 5
+length of positions: 17
+graph edges: [(1, 8), (2, 8), (2, 11), (2, 12), (7, 11)]
+ordered_edges: {}
+CYCLES:
+frozenset({1, 5, 6, 7, 9, 10, 13, 14})
+frozenset({1, 5, 6, 7, 9, 10, 13, 14})
+[frozenset({8, 1}), frozenset({1, 9}), frozenset({1, 10}), frozenset({8, 2}), frozenset({2, 11}), frozenset({2, 12}), frozenset({13, 5}), frozenset({5, 14}), frozenset({9, 6}), frozenset({12, 6}), frozenset({13, 6}), frozenset({10, 7}), frozenset({11, 7}), frozenset({14, 7})]
+cycle frozenset({1, 5, 6, 7, 9, 10, 13, 14})'s edges: [frozenset({1, 9}), frozenset({1, 10}), frozenset({13, 5}), frozenset({5, 14}), frozenset({9, 6}), frozenset({13, 6}), frozenset({10, 7}), frozenset({14, 7})]
+edges: [(1, 9), (1, 10), (13, 5), (5, 14), (9, 6), (13, 6), (10, 7), (14, 7)]
+sorted vertex sequence: [1, 9, 6, 13, 5, 14, 7, 10]
+EDGES:
+frozenset({1, 5, 6, 7, 9, 10, 13, 14}) - [(1, 9), (9, 6), (6, 13), (13, 5), (5, 14), (14, 7), (7, 10), (10, 1)]
+NODES:
+frozenset({1, 5, 6, 7, 9, 10, 13, 14}) - [1, 9, 6, 13, 5, 14, 7, 10]
+ordered cycle vertices: [1, 9, 6, 13, 5, 14, 7, 10]
+ordered filtered nodes: [1, 6, 5, 7]
+SORTED FACES:
+[1, 6, 5, 7]
+FACES:
+[1, 6, 5, 7]
+EDGES:
+frozenset({1, 5, 6, 7}) - [1, 6, 5, 7]
+NODES:
+frozenset({1, 5, 6, 7}) - [(1, 6), (6, 5), (5, 7), (7, 1)]
+vertex set of face frozenset({3, 4, 5}): {8, 3, 4, 5}
+False
+splitting edge (3, 4)
+position A: [-0.80901698 -0.58778531]
+position B: [ 0.30901706 -0.95105651]
+splitting edge (3, 8)
+position A: [-0.80901698 -0.58778531]
+position B: [-3.81966010e-01 -1.48298062e-08]
+splitting edge (4, 5)
+position A: [ 0.30901706 -0.95105651]
+position B: [-3.81966010e-01 -1.48298063e-08]
+splitting edge (4, 8)
+position A: [ 0.30901706 -0.95105651]
+position B: [-3.81966010e-01 -1.48298062e-08]
+splitting edge (5, 8)
+position A: [-3.81966010e-01 -1.48298063e-08]
+position B: [-3.81966010e-01 -1.48298062e-08]
+MIDPOINT POSITIONS
+{1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: array([-3.8196601e-01, -1.4829806e-08]), 7: array([-3.81966010e-01, -1.48298062e-08]), 8: array([-3.81966010e-01, -1.48298062e-08]), 9: array([-1.41844043, -1.42658482]), 10: array([0.30901693, 1.42658482]), 11: array([ 0.30901708, -1.42658482]), 12: array([-0.80901708,  1.42658482]), 13: array([-0.80901694, -1.42658482]), 14: array([-1.41844068,  1.42658482]), 15: array([ 0.65450864, -1.42658482]), 16: array([-1.42658482, -0.38712539]), 17: array([ 1.42658482, -1.3141762 ])}
+length of positions: 17
+graph edges: [(3, 9), (3, 10), (4, 9), (4, 11), (4, 12), (5, 11), (5, 13), (8, 10), (8, 12), (8, 13)]
+frozenset({3, 4, 8, 9, 10, 12})
+[frozenset({9, 3}), frozenset({10, 3}), frozenset({9, 4}), frozenset({11, 4}), frozenset({4, 12}), frozenset({11, 5}), frozenset({13, 5}), frozenset({8, 10}), frozenset({8, 12}), frozenset({8, 13})]
+cycle frozenset({3, 4, 8, 9, 10, 12})'s edges: [frozenset({9, 3}), frozenset({10, 3}), frozenset({9, 4}), frozenset({4, 12}), frozenset({8, 10}), frozenset({8, 12})]
+edges: [(9, 3), (10, 3), (9, 4), (4, 12), (8, 10), (8, 12)]
+frozenset({4, 5, 8, 11, 12, 13})
+[frozenset({9, 3}), frozenset({10, 3}), frozenset({9, 4}), frozenset({11, 4}), frozenset({4, 12}), frozenset({11, 5}), frozenset({13, 5}), frozenset({8, 10}), frozenset({8, 12}), frozenset({8, 13})]
+cycle frozenset({4, 5, 8, 11, 12, 13})'s edges: [frozenset({11, 4}), frozenset({4, 12}), frozenset({11, 5}), frozenset({13, 5}), frozenset({8, 12}), frozenset({8, 13})]
+edges: [(11, 4), (4, 12), (11, 5), (13, 5), (8, 12), (8, 13)]
+sorted vertex sequence: [9, 3, 10, 8, 12, 4]
+sorted vertex sequence: [11, 4, 12, 8, 13, 5]
+ordered_edges: {frozenset({3, 4, 8, 9, 10, 12}): [(9, 3), (3, 10), (10, 8), (8, 12), (12, 4), (4, 9)], frozenset({4, 5, 8, 11, 12, 13}): [(11, 4), (4, 12), (12, 8), (8, 13), (13, 5), (5, 11)]}
+
+cycle: frozenset({3, 4, 8, 9, 10, 12})
+lenght of positions in function 0: 17
+lenght of positions in function a: 17
+ordered cycle closed in check: [9, 3, 10, 8, 12, 4, 9]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: array([-3.8196601e-01, -1.4829806e-08]), 7: array([-3.81966010e-01, -1.48298062e-08]), 8: array([-3.81966010e-01, -1.48298062e-08]), 9: (-0.2499999608500987, -0.7694209056941583), 10: (-0.5954914941436842, -0.29389266024518307), 11: (-0.036474477065702005, -0.4755282602787814), 12: (-0.03647447706570203, -0.47552826027878137), 13: (-0.38196601035928746, -1.4829806216365427e-08), 14: array([-1.41844068,  1.42658482]), 15: array([ 0.65450864, -1.42658482]), 16: array([-1.42658482, -0.38712539]), 17: array([ 1.42658482, -1.3141762 ])}
+ordered coordinates: [(-0.2499999608500987, -0.7694209056941583), array([-0.80901698, -0.58778531]), (-0.5954914941436842, -0.29389266024518307), array([-3.81966010e-01, -1.48298062e-08]), (-0.03647447706570203, -0.47552826027878137), array([ 0.30901706, -0.95105651]), (-0.2499999608500987, -0.7694209056941583)]
+len(ordered coordinate): 7
+lenght of positions in function b: 17
+lenght of positions in function c: 17
+remaining nodes: [5, 11, 13]
+lenght of positions in function d: 17
+nodes inside cycle: [5, 11, 13]
+
+cycle: frozenset({4, 5, 8, 11, 12, 13})
+lenght of positions in function 0: 17
+lenght of positions in function a: 17
+ordered cycle closed in check: [11, 4, 12, 8, 13, 5, 11]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: array([-3.8196601e-01, -1.4829806e-08]), 7: array([-3.81966010e-01, -1.48298062e-08]), 8: array([-3.81966010e-01, -1.48298062e-08]), 9: (-0.2499999608500987, -0.7694209056941583), 10: (-0.5954914941436842, -0.29389266024518307), 11: (-0.036474477065702005, -0.4755282602787814), 12: (-0.03647447706570203, -0.47552826027878137), 13: (-0.38196601035928746, -1.4829806216365427e-08), 14: array([-1.41844068,  1.42658482]), 15: array([ 0.65450864, -1.42658482]), 16: array([-1.42658482, -0.38712539]), 17: array([ 1.42658482, -1.3141762 ])}
+ordered coordinates: [(-0.036474477065702005, -0.4755282602787814), array([ 0.30901706, -0.95105651]), (-0.03647447706570203, -0.47552826027878137), array([-3.81966010e-01, -1.48298062e-08]), (-0.38196601035928746, -1.4829806216365427e-08), array([-3.81966010e-01, -1.48298063e-08]), (-0.036474477065702005, -0.4755282602787814)]
+len(ordered coordinate): 7
+lenght of positions in function b: 17
+lenght of positions in function c: 17
+remaining nodes: [3, 9, 10]
+lenght of positions in function d: 17
+nodes inside cycle: []
+added face frozenset({4, 5, 8, 11, 12, 13}) to list
+nodes of subgraph: [5, 11, 13, 3, 4, 8, 9, 10, 12]
+recurse into cycle: frozenset({3, 4, 8, 9, 10, 12})
+nodes inside subgraph: [3, 4, 5, 8, 9, 10, 11, 12, 13]
+edges in subgraph: [(3, 9), (3, 10), (4, 9), (4, 11), (4, 12), (5, 11), (5, 13), (8, 10), (8, 12), (8, 13)]
+length of edges pre prune: 10
+edges: [(9, 3), (3, 10), (10, 8), (8, 12), (12, 4), (4, 9)]
+outer perimeter: {frozenset({9, 3}), frozenset({12, 4}), frozenset({10, 3}), frozenset({8, 10}), frozenset({9, 4}), frozenset({8, 12})}
+length of edges post prune: 8
+length of positions: 17
+graph edges: [(3, 9), (3, 10), (4, 9), (4, 11), (5, 11), (5, 13), (8, 10), (8, 13)]
+frozenset({3, 4, 5, 8, 9, 10, 11, 13})
+[frozenset({9, 3}), frozenset({10, 3}), frozenset({9, 4}), frozenset({11, 4}), frozenset({11, 5}), frozenset({13, 5}), frozenset({8, 10}), frozenset({8, 13})]
+cycle frozenset({3, 4, 5, 8, 9, 10, 11, 13})'s edges: [frozenset({9, 3}), frozenset({10, 3}), frozenset({9, 4}), frozenset({11, 4}), frozenset({11, 5}), frozenset({13, 5}), frozenset({8, 10}), frozenset({8, 13})]
+edges: [(9, 3), (10, 3), (9, 4), (11, 4), (11, 5), (13, 5), (8, 10), (8, 13)]
+sorted vertex sequence: [9, 3, 10, 8, 13, 5, 11, 4]
+ordered_edges: {frozenset({3, 4, 5, 8, 9, 10, 11, 13}): [(9, 3), (3, 10), (10, 8), (8, 13), (13, 5), (5, 11), (11, 4), (4, 9)]}
+
+cycle: frozenset({3, 4, 5, 8, 9, 10, 11, 13})
+lenght of positions in function 0: 17
+lenght of positions in function a: 17
+ordered cycle closed in check: [9, 3, 10, 8, 13, 5, 11, 4, 9]
+positions: {1: array([0.30901696, 0.95105655]), 2: array([-0.80901703,  0.58778523]), 3: array([-0.80901698, -0.58778531]), 4: array([ 0.30901706, -0.95105651]), 5: array([-3.81966010e-01, -1.48298063e-08]), 6: array([-3.8196601e-01, -1.4829806e-08]), 7: array([-3.81966010e-01, -1.48298062e-08]), 8: array([-3.81966010e-01, -1.48298062e-08]), 9: (-0.2499999608500987, -0.7694209056941583), 10: (-0.5954914941436842, -0.29389266024518307), 11: (-0.036474477065702005, -0.4755282602787814), 12: (-0.03647447706570203, -0.47552826027878137), 13: (-0.38196601035928746, -1.4829806216365427e-08), 14: array([-1.41844068,  1.42658482]), 15: array([ 0.65450864, -1.42658482]), 16: array([-1.42658482, -0.38712539]), 17: array([ 1.42658482, -1.3141762 ])}
+ordered coordinates: [(-0.2499999608500987, -0.7694209056941583), array([-0.80901698, -0.58778531]), (-0.5954914941436842, -0.29389266024518307), array([-3.81966010e-01, -1.48298062e-08]), (-0.38196601035928746, -1.4829806216365427e-08), array([-3.81966010e-01, -1.48298063e-08]), (-0.036474477065702005, -0.4755282602787814), array([ 0.30901706, -0.95105651]), (-0.2499999608500987, -0.7694209056941583)]
+len(ordered coordinate): 9
+lenght of positions in function b: 17
+lenght of positions in function c: 17
+remaining nodes: [12]
+lenght of positions in function d: 17
+nodes inside cycle: []
+added face frozenset({3, 4, 5, 8, 9, 10, 11, 13}) to list
+CYCLES:
+frozenset({3, 4, 5, 8, 9, 10, 11, 13})
+frozenset({4, 5, 8, 11, 12, 13})
+frozenset({3, 4, 5, 8, 9, 10, 11, 13})
+[frozenset({9, 3}), frozenset({10, 3}), frozenset({9, 4}), frozenset({11, 4}), frozenset({4, 12}), frozenset({11, 5}), frozenset({13, 5}), frozenset({8, 10}), frozenset({8, 12}), frozenset({8, 13})]
+cycle frozenset({3, 4, 5, 8, 9, 10, 11, 13})'s edges: [frozenset({9, 3}), frozenset({10, 3}), frozenset({9, 4}), frozenset({11, 4}), frozenset({11, 5}), frozenset({13, 5}), frozenset({8, 10}), frozenset({8, 13})]
+edges: [(9, 3), (10, 3), (9, 4), (11, 4), (11, 5), (13, 5), (8, 10), (8, 13)]
+frozenset({4, 5, 8, 11, 12, 13})
+[frozenset({9, 3}), frozenset({10, 3}), frozenset({9, 4}), frozenset({11, 4}), frozenset({4, 12}), frozenset({11, 5}), frozenset({13, 5}), frozenset({8, 10}), frozenset({8, 12}), frozenset({8, 13})]
+cycle frozenset({4, 5, 8, 11, 12, 13})'s edges: [frozenset({11, 4}), frozenset({4, 12}), frozenset({11, 5}), frozenset({13, 5}), frozenset({8, 12}), frozenset({8, 13})]
+edges: [(11, 4), (4, 12), (11, 5), (13, 5), (8, 12), (8, 13)]
+sorted vertex sequence: [9, 3, 10, 8, 13, 5, 11, 4]
+sorted vertex sequence: [11, 4, 12, 8, 13, 5]
+EDGES:
+frozenset({3, 4, 5, 8, 9, 10, 11, 13}) - [(9, 3), (3, 10), (10, 8), (8, 13), (13, 5), (5, 11), (11, 4), (4, 9)]
+frozenset({4, 5, 8, 11, 12, 13}) - [(11, 4), (4, 12), (12, 8), (8, 13), (13, 5), (5, 11)]
+NODES:
+frozenset({3, 4, 5, 8, 9, 10, 11, 13}) - [9, 3, 10, 8, 13, 5, 11, 4]
+frozenset({4, 5, 8, 11, 12, 13}) - [11, 4, 12, 8, 13, 5]
+ordered cycle vertices: [9, 3, 10, 8, 13, 5, 11, 4]
+ordered filtered nodes: [3, 8, 5, 4]
+ordered cycle vertices: [11, 4, 12, 8, 13, 5]
+ordered filtered nodes: [4, 8, 5]
+SORTED FACES:
+[3, 8, 5, 4]
+[4, 8, 5]
+FACES:
+[3, 8, 5, 4]
+[4, 8, 5]
+EDGES:
+frozenset({8, 3, 4, 5}) - [3, 8, 5, 4]
+frozenset({8, 4, 5}) - [4, 8, 5]
+NODES:
+frozenset({8, 3, 4, 5}) - [(3, 8), (8, 5), (5, 4), (4, 3)]
+frozenset({8, 4, 5}) - [(4, 8), (8, 5), (5, 4)]
+positions: [array([0.30901696, 0.95105655]), array([-0.80901703,  0.58778523]), array([-3.81966010e-01, -1.48298063e-08])]
+positions: [array([-0.80901698, -0.58778531]), array([ 0.30901706, -0.95105651]), array([-3.81966010e-01, -1.48298063e-08])]
+        face       subface  distance
+0  (1, 2, 5)  (1, 5, 6, 7)  0.082911
+        face       subface  distance
+0  (3, 4, 5)  (8, 3, 4, 5)  0.016928
+1  (3, 4, 5)     (8, 4, 5)  0.058652
+
+PLACING SPLIT VERTICES
+{frozenset({1, 2, 5}):         face      sub_face  1  2  3  4
+0  (1, 2, 5)  (1, 5, 6, 7)  0  0  1  1, frozenset({3, 4, 5}):         face      sub_face  1  2  3  4
+0  (3, 4, 5)  (8, 3, 4, 5)  1  1  0  0
+1  (3, 4, 5)     (8, 4, 5)  0  1  0  0}
+[array([[0.08291144, 0.08291144, 0.08291144, 0.08291144]]), array([[0.01692843, 0.01692843, 0.01692843, 0.01692843],
+       [0.05865156, 0.05865156, 0.05865156, 0.05865156]])]
+induced edge crossing A shape: (1, 4)
+edge length differences A shape: (1, 4)
+induced edge crossing B shape: (2, 4)
+edge length differences B shape: (2, 4)
+(2, 4)
+(2, 4)
+Gurobi Optimizer version 9.5.2 build v9.5.2rc0 (linux64)
+Thread count: 12 physical cores, 24 logical processors, using up to 24 threads
+Optimize a model with 18 rows, 15 columns and 39 nonzeros
+Model fingerprint: 0x521884b9
+Variable types: 0 continuous, 15 integer (15 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [2e-04, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Found heuristic solution: objective 1.0023461
+Presolve removed 12 rows and 8 columns
+Presolve time: 0.00s
+Presolved: 6 rows, 7 columns, 14 nonzeros
+Found heuristic solution: objective 0.0025887
+Variable types: 0 continuous, 7 integer (7 binary)
+
+Root relaxation: objective 1.996797e-03, 3 iterations, 0.00 seconds (0.00 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0       0.0019968    0.00200  0.00%     -    0s
+
+Explored 1 nodes (3 simplex iterations) in 0.00 seconds (0.00 work units)
+Thread count was 24 (of 24 available processors)
+
+Solution count 3: 0.0019968 0.00258866 1.00235 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.996797433252e-03, best bound 1.996797433252e-03, gap 0.0000%
+ca[0] 1
+cb[0] 1
+ea[0,0] 1
+ea[0,1] 1
+eb[0,2] 1
+eb[0,3] 1
+selected sub faces: (0, 0)
+subface incidences: ([1, 1, 0, 0], [0, 0, 1, 1])
+selected sub_faces: {frozenset({1, 5, 6, 7}): frozenset({1, 2}), frozenset({8, 3, 4, 5}): frozenset({3, 4})}
+new vertices: [0, 5]
+{0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 0}
+labels:
+0 - {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 0}
+1 - {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 0}
+2 - {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 0}
+3 - {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 0}
+4 - {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 0}
+5 - {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 0}
