@@ -703,6 +703,7 @@ def get_target_edge_length(graph, positions):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+
     # Command Line Arguments
     cmd_args = sys.argv
     n_vertices, m_edges, seed = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
@@ -728,6 +729,11 @@ if __name__ == '__main__':
     graph = create_barabasi_albert_graph(n=n_vertices, m=m_edges, seed=seed, type=simulation_type)
     positions = embed_graph(graph=graph, embedding="kamada_kawai", n_iter=None, seed=None)
     labels = {node: node for node in graph.nodes}
+
+    # Save Initial Embedding
+    pickle.dump(graph, open(f"{output_directory}/graph.txt", 'wb'))
+    pickle.dump(positions, open(f"{output_directory}/positions.txt", 'wb'))
+    pickle.dump(labels, open(f"{output_directory}/labels.txt", 'wb'))
 
     # Calculate the target edge length (= the average edge length in the original embedding)
     target_edge_length = get_target_edge_length(graph, positions)

@@ -23,7 +23,7 @@ def create_barabasi_albert_graph(n, m, seed, root_dir="data/simulated", type="ba
         if type == "barabasi_albert":
                 graph = nx.barabasi_albert_graph(n=n, m=m, seed=seed)
         elif type == "watts_strogatz":
-            graph = nx.watts_strogatz_graph(n=n, k=m, p=0.5, seed=seed)
+            graph = nx.watts_strogatz_graph(n=n, k=m, p=0.8, seed=seed)
         np.savetxt(fname=file_path, X=nx.to_numpy_matrix(graph).astype(int), fmt='%i', delimiter=",")
 
     # Set Edge Attributes
