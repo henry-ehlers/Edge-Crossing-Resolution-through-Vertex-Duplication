@@ -38,9 +38,10 @@ def project_face_sight_lines(edges, vertices, inner_angles, edge_map, graph, pos
     bend_vertices = [key for key in inner_angles.keys() if inner_angles[key] > 180]
     connected_vertices = {vertex: {} for vertex in vertices}
     boundary_edges = nx.get_edge_attributes(graph, "boundary")
+    print(f"angles: {inner_angles}")
 
     for joint_vertex in bend_vertices:
-
+        print(f"JOINT VERTEX: {joint_vertex}")
         if joint_vertex not in real_nodes:
             print("NOT REAL")
             continue
@@ -1129,7 +1130,7 @@ def update(d, u):
 
 def find_outer_face_sight_cells(selected_faces: {frozenset},
                                 ordered_face_edges: {frozenset: [(int, int)]},
-                                graph,
+                                graph: nx.Graph,
                                 positions: {int: np.array},
                                 is_cycle: [bool],
                                 bounds):
@@ -1231,7 +1232,7 @@ def find_outer_face_sight_cells(selected_faces: {frozenset},
     # draw_graph(graph=outer_graph,
     #            positions=outer_positions)
     # save_drawn_graph(f"./final_outer.png")
-
+    # input("PRE ")
     # Identify all faces (i.e. sight cells in outer face)
     sight_cells, ordered_cell_nodes, ordered_cell_edges = find_inner_faces(graph=outer_graph,
                                                                            positions=outer_positions)
