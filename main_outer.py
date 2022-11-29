@@ -734,7 +734,8 @@ if __name__ == '__main__':
 
     # Resolve at least 50% of all edge crossings of the original embedding
     iteration_number = -1
-    while len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)) and split:
+    max_iteration = 0
+    while (len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)) and split) or (iteration_number < max_iteration):
         iteration_number += 1
 
         # Create Output Directory
