@@ -708,7 +708,7 @@ if __name__ == '__main__':
     diagnostics_file = f"{simulation_type}_{n_vertices}_{m_edges}_{seed}"
 
     # Create Output Directory
-    output_directory = f"./drawings/kamada_kawai/{simulation_type}_{n_vertices}_{m_edges}_{seed}"
+    output_directory = f"./drawings/kamada_kawai/outer_{simulation_type}_{n_vertices}_{m_edges}_{seed}"
 
     # Create or Load simulated graph
     print("\nCreation and Embedding of Graph")
@@ -734,8 +734,7 @@ if __name__ == '__main__':
 
     # Resolve at least 50% of all edge crossings of the original embedding
     iteration_number = -1
-    max_iteration = 0
-    while (len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)) and split) or (iteration_number < max_iteration):
+    while (len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)) and split):
         iteration_number += 1
 
         # Create Output Directory
@@ -760,3 +759,4 @@ if __name__ == '__main__':
         # Calculate the number of remaining edge crossings
         remaining_edge_crossings, remaining_vertex_crossings = locate_edge_crossings(graph=graph, positions=positions)
         # input(f"Did it split -> {split}?")
+        break

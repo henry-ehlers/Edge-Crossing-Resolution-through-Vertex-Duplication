@@ -720,7 +720,7 @@ if __name__ == '__main__':
     diagnostics_file = f"{simulation_type}_{n_vertices}_{m_edges}_{seed}"
 
     # Create Output Directory
-    output_directory = f"./drawings/kamada_kawai/{simulation_type}_{n_vertices}_{m_edges}_{seed}"
+    output_directory = f"./drawings/kamada_kawai/inner_{simulation_type}_{n_vertices}_{m_edges}_{seed}"
 
     # Create or Load simulated graph
     print("\nCreation and Embedding of Graph")
@@ -731,6 +731,7 @@ if __name__ == '__main__':
     labels = {node: node for node in graph.nodes}
 
     # Save Initial Embedding
+    Path(f"{output_directory}").mkdir(parents=True, exist_ok=True)
     pickle.dump(graph, open(f"{output_directory}/graph.txt", 'wb'))
     pickle.dump(positions, open(f"{output_directory}/positions.txt", 'wb'))
     pickle.dump(labels, open(f"{output_directory}/labels.txt", 'wb'))
@@ -745,7 +746,7 @@ if __name__ == '__main__':
 
     # Resolve at least 50% of all edge crossings of the original embedding
     iteration_number = -1
-    while len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)) and split:
+    while (len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)) and split):
         iteration_number += 1
 
         # Create Output Directory
@@ -770,3 +771,4 @@ if __name__ == '__main__':
         # Calculate the number of remaining edge crossings
         remaining_edge_crossings, remaining_vertex_crossings = locate_edge_crossings(graph=graph, positions=positions)
         # input(f"Did it split -> {split}?")
+        break
