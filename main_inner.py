@@ -437,7 +437,7 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
 
     # Draw the inner sight cell decomposed graph
     draw_graph(graph=p_graph, positions=p_positions)
-    save_drawn_graph(f"{drawing_directory}/graph_2.png")
+    save_drawn_graph(f"{drawing_directory}/graph_2.5.png")
 
     # sys.exit()
 
