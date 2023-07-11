@@ -394,19 +394,18 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
     t_0 = time.time()
     target_vertex, target_adjacency, r_graph, r_positions, r_crossings = identify_target_vertex(
         graph=graph, positions=positions)
-    print(drawing_directory)
     save_time_taken(t_0, "select_split_vertex", write_directory=drawing_directory, overwrite_file=True)
 
 
-    print(f"target vertex: {target_vertex}")
-    print(f"target adjacency: {target_adjacency}")
+    # print(f"target vertex: {target_vertex}")
+    # print(f"target adjacency: {target_adjacency}")
     # input("FLKSDFJ")
     if target_vertex is None:
         return False, graph, positions, labels
 
     # Draw the remaining graph
-    draw_graph(graph=r_graph, positions=r_positions)
-    save_drawn_graph(f"{drawing_directory}/graph_1.png")
+    # draw_graph(graph=r_graph, positions=r_positions)
+    # save_drawn_graph(f"{drawing_directory}/graph_1.png")
 
     # Planarize Graph after removal of target vertex
     print("\nPlanarize Remaining Graph after target removal")
@@ -424,38 +423,40 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
     # input("CONNECTING SINGLETONS")
 
     # Draw the remaining graph
-    draw_graph(graph=p_graph, positions=p_positions)
-    save_drawn_graph(f"{drawing_directory}/graph_1.5.png")
+    # draw_graph(graph=p_graph, positions=p_positions)
+    # save_drawn_graph(f"{drawing_directory}/graph_1.5.png")
 
     # virtual_edge_map = planarize_graph(graph=p_graph,
     #                                    positions=p_positions,
     #                                    edge_crossings=r_crossings,
     #                                    largest_index=max(graph.nodes))
-    print(f"virtual edge set:")
-    [print(f"{key} - {item}") for key, item in virtual_edge_map.items()]
+    # print(f"virtual edge set:")
+    # [print(f"{key} - {item}") for key, item in virtual_edge_map.items()]
 
     # Draw the planarized graph
     draw_graph(graph=p_graph, positions=p_positions)
     save_drawn_graph(f"{drawing_directory}/graph_2.png")
 
     # Get Inner Faces
-    print(f"\nIdentify the Inner Faces")
+    # print(f"\nIdentify the Inner Faces")
+    t_0 = time.time()
     outer_bounds = get_embedding_square(graph=p_graph, positions=p_positions, scaler=1.5)
-    print(f"outer bounds: {outer_bounds}")
+    # print(f"outer bounds: {outer_bounds}")
     # input("as;lkdfjals;kdf")
     inner_face_incidence, inner_graph_object = get_inner_faces(target_vertices=target_adjacency,
                                                                graph=p_graph,
                                                                positions=p_positions,
                                                                outer_bounds=outer_bounds)
-    print("POSITIONS:")
-    [print(f"{key} - {value}") for key, value in p_positions.items()]
-    print("INCIDENCES")
-    print(inner_face_incidence)
+    save_time_taken(t_0, "face_decomposition", write_directory=drawing_directory, overwrite_file=False)
+    # print("POSITIONS:")
+    # [print(f"{key} - {value}") for key, value in p_positions.items()]
+    # print("INCIDENCES")
+    # print(inner_face_incidence)
     # input("")
 
     # Draw the inner sight cell decomposed graph
-    draw_graph(graph=p_graph, positions=p_positions)
-    save_drawn_graph(f"{drawing_directory}/graph_2.5.png")
+    # draw_graph(graph=p_graph, positions=p_positions)
+    # save_drawn_graph(f"{drawing_directory}/graph_2.5.png")
 
     # sys.exit()
 
@@ -548,6 +549,7 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
 
     d_graph, d_positions = p_graph, p_positions
 
+    t_0 = time.time()
     connected_nodes = inner_graph_object['connected_nodes']
     complete_edge_map = inner_graph_object['edge_map']
     incidence_table = inner_face_incidence
@@ -556,24 +558,32 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                                       targets=target_adjacency,
                                                       positions=d_positions,
                                                       target_length=target_edge_length)
-
+    t_0 = time.time()
     selected_cells = weighted_select_embedding_faces(incidence_table=incidence_table,
                                                      edge_length_table=edge_length_table,
                                                      target_vertices=target_adjacency)
 
     selected_faces = [incidence_table.at[row, "identifier"] for row in selected_cells]
+    save_time_taken(t_0, "subface_selection", write_directory=drawing_directory, overwrite_file=False)
 
+    save_time_taken(t_0,
+                    "sightcell_decomposition_and_selection",
+                    write_directory=drawing_directory,
+                    overwrite_file=False)
+
+    t_0 = time.time()
     s_graph, s_positions, s_edge_map = draw_all_line_segments(graph=d_graph,
                                                               positions=d_positions,
                                                               virtual_edge_set=complete_edge_map,
                                                               bounds=outer_bounds,
                                                               already_extended=connected_nodes)
+    save_time_taken(t_0, "line_segment_drawing", write_directory=drawing_directory, overwrite_file=False)
     # print(f"\nS edge Map:")
-    [print(f"{k} - {v}") for k, v in s_edge_map.items()]
+    # [print(f"{k} - {v}") for k, v in s_edge_map.items()]
 
     # Draw the segment graph
-    draw_graph(graph=s_graph, positions=s_positions)
-    save_drawn_graph(f"{drawing_directory}/graph_4.png")
+    # draw_graph(graph=s_graph, positions=s_positions)
+    # save_drawn_graph(f"{drawing_directory}/graph_4.png")
 
     # print(f"\nCull Non-Selected Line Segments")
     # print(f"cells: {incidence_table['identifier'].tolist()}")
@@ -603,6 +613,7 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
     # input("CHECK")
 
     # Cull all segments which do not intersect the two selected faces
+    t_0 = time.time()
     c_graph, c_positions, intersection_map = cull_all_line_segment_graph(
         target_faces=selected_faces,
         face_edge_map=complete_face_edges,
@@ -610,26 +621,28 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
         segment_edge_map=s_edge_map,
         graph=s_graph,
         positions=s_positions)
-
+    save_time_taken(t_0, "line_segment_culling", write_directory=drawing_directory, overwrite_file=False)
     # Draw the segment graph
-    draw_graph(graph=c_graph, positions=c_positions)
-    save_drawn_graph(f"{drawing_directory}/graph_5.png")
+    # draw_graph(graph=c_graph, positions=c_positions)
+    # save_drawn_graph(f"{drawing_directory}/graph_5.png")
 
     # Create Subface Graph ---------------------------------------------------------------------------------------------
 
     #
+    t_0 = time.time()
     subface_edge_set, subface_vertex_map = create_subface_graph(graph=c_graph,
                                                                 positions=c_positions,
                                                                 target_faces=selected_faces,
                                                                 face_vertex_map=complete_vertex_map,
                                                                 face_intersection_map=intersection_map)
-
+    save_time_taken(t_0, "line_segment_subgraphs", write_directory=drawing_directory, overwrite_file=False)
     # Draw the segment graph
-    draw_graph(graph=c_graph, positions=c_positions)
-    save_drawn_graph(f"{drawing_directory}/graph_6.png")
+    # draw_graph(graph=c_graph, positions=c_positions)
+    # save_drawn_graph(f"{drawing_directory}/graph_6.png")
 
     # Identify all edge crossings in the faces, planarize the graph, and update the face's vertex sets
-    print(f"\nSUBFACE CREATION")
+    # print(f"\nSUBFACE CREATION")
+    t_0 = time.time()
     face_edge_crossings, face_vertex_crossings = locate_edge_crossings(graph=c_graph,
                                                                        positions=c_positions)
     plane_face_virtual_edge_map = planarize_graph(graph=c_graph,
@@ -637,13 +650,15 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                                   edge_crossings=face_edge_crossings)
     update_face_vertex_map(vertex_map=subface_vertex_map,
                            virtual_edge_map=plane_face_virtual_edge_map)
+    save_time_taken(t_0, "line_segment_crossings", write_directory=drawing_directory, overwrite_file=False)
 
     # Draw the segment graph
-    draw_graph(graph=c_graph, positions=c_positions)
-    save_drawn_graph(f"{drawing_directory}/graph_7.png")
+    # draw_graph(graph=c_graph, positions=c_positions)
+    # save_drawn_graph(f"{drawing_directory}/graph_7.png")
 
     # Select Subfaces
-    print(f"\nSUBFACE SELECTION")
+    # print(f"\nSUBFACE SELECTION")
+    t_0 = time.time()
     plane_graph_sub_faces = find_all_subfaces(target_faces=selected_faces,
                                               face_vertex_map=subface_vertex_map,
                                               graph=c_graph,
@@ -659,7 +674,7 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                                                face_centroids=face_centroids,
                                                                subfaces=plane_graph_sub_faces,
                                                                subface_centroids=subface_centroids)
-    [print(val) for key, val in subface_distances.items()]
+    # [print(val) for key, val in subface_distances.items()]
     # input("CLKSL:KDJF:LKJ")
 
     # Calculate the number of edge crossing induced by connected each subface to all target neighbors
@@ -669,11 +684,11 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                                               target_neighbors=target_adjacency)
 
     # Draw the segment graph
-    draw_graph(graph=c_graph, positions=c_positions)
-    save_drawn_graph(f"{drawing_directory}/graph_8.png")
+    # draw_graph(graph=c_graph, positions=c_positions)
+    # save_drawn_graph(f"{drawing_directory}/graph_8.png")
 
     # Place Copies
-    print(f"\nPLACING SPLIT VERTICES")
+    #print(f"\nPLACING SPLIT VERTICES")
 
     # Get the number of induced edge crossings in the form of a dictionary of pandas dataframes
     induced_edge_crossing_table = get_edge_crossing_table(induced_edge_crossings=induced_edge_crossings,
@@ -684,26 +699,29 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
                                                    subface_distances=subface_distances,
                                                    target_faces=selected_faces,
                                                    target_vertices=target_adjacency)
+    save_time_taken(t_0, "line_segment_select_sightcells", write_directory=drawing_directory, overwrite_file=False)
     # input()
-    print(f"selected sub_faces: {selected_sub_faces}")
+    #print(f"selected sub_faces: {selected_sub_faces}")
 
+    t_0 = time.time()
     n_graph, n_positions = place_split_vertices(faces=selected_faces,
                                                 selected_sub_faces=selected_sub_faces,
                                                 centroids=subface_centroids,
                                                 target_vertex=target_vertex,
                                                 graph=r_graph,
                                                 positions=r_positions)
+    save_time_taken(t_0, "place_new_vertex", write_directory=drawing_directory, overwrite_file=False)
 
     new_vertices = [v for v in n_graph.nodes() if v not in r_graph.nodes]
-    print(f"new vertices: {new_vertices}")
+    #print(f"new vertices: {new_vertices}")
     [labels.update({v: labels[target_vertex]}) for v in new_vertices]
-    print(labels)
-    print(f"labels:")
-    [print(f"{vertex} - {labels}") for vertex, label in labels.items()]
+    # print(labels)
+    # print(f"labels:")
+    # [print(f"{vertex} - {labels}") for vertex, label in labels.items()]
 
     # Draw the segment graph
-    draw_graph(graph=n_graph, positions=n_positions, labels=labels)
-    save_drawn_graph(f"{drawing_directory}/graph_9.png")
+    # draw_graph(graph=n_graph, positions=n_positions, labels=labels)
+    # save_drawn_graph(f"{drawing_directory}/graph_9.png")
 
     return True, n_graph, n_positions, labels
 
@@ -764,7 +782,8 @@ if __name__ == '__main__':
 
     # Resolve at least 50% of all edge crossings of the original embedding
     iteration_number = -1
-    while (len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)) and split):
+    # while (len(remaining_edge_crossings) > (0.5 * len(initial_edge_crossings)) and split):
+    while (iteration_number < 0 and split):
         iteration_number += 1
 
         # Create Output Directory
