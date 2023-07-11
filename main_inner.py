@@ -8,6 +8,7 @@ import numpy as np
 import datetime
 import pickle
 import sys
+import time
 
 from src.graph_simulation import *
 from src.vertex_splitting import *
@@ -372,6 +373,17 @@ def get_inner_faces(target_vertices: [int], graph, positions, outer_bounds):
     return inner_incidence_table, new_graph_object
 
 
+def save_time_taken(t_0, label, write_directory=".", overwrite_file=False):
+    t_1 = time.time()
+    delta_t = t_1 - t_0
+    if overwrite_file:
+        with open(f'{write_directory}/delta_t.txt', "w") as f:
+            f.write(f"step,dt\n{label},{delta_t}\n")
+    else:
+        with open(f'{write_directory}/delta_t.txt', "a") as f:
+            f.write(f"{label},{delta_t}\n")
+    f.close()
+
 def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_directory="."):
     # Draw Initial Embedding
     draw_graph(graph=graph, positions=positions, labels=labels)
@@ -379,8 +391,12 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
 
     # Identify Target and Remove it from the embedding
     print("\nIdentify Target Vertex and Remove it from the Embedding")
+    t_0 = time.time()
     target_vertex, target_adjacency, r_graph, r_positions, r_crossings = identify_target_vertex(
         graph=graph, positions=positions)
+    print(drawing_directory)
+    save_time_taken(t_0, "select_split_vertex", write_directory=drawing_directory, overwrite_file=True)
+
 
     print(f"target vertex: {target_vertex}")
     print(f"target adjacency: {target_adjacency}")
@@ -394,11 +410,13 @@ def split_vertex(graph, positions, labels, target_edge_length=1.0, drawing_direc
 
     # Planarize Graph after removal of target vertex
     print("\nPlanarize Remaining Graph after target removal")
+    t_0 = time.time()
     rr_graph, rr_positions = copy.deepcopy(r_graph), copy.deepcopy(r_positions)
     virtual_edge_map = planarize_graph(graph=rr_graph,
                                        positions=rr_positions,
                                        edge_crossings=r_crossings,
                                        largest_index=max(graph.nodes))
+    save_time_taken(t_0, "graph_planarization", write_directory=drawing_directory, overwrite_file=False)
 
     #
     p_graph, p_positions = copy.deepcopy(rr_graph), copy.deepcopy(rr_positions)
